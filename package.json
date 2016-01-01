@@ -1,0 +1,30 @@
+{
+  "name": "epubtools",
+  "author": {
+    "name": "David Herron",
+    "email": "david@davidherron.com",
+    "url": "http://davidherron.com"
+  },
+  "version": "0.1.0",
+  "description": "Generate EPUB3 documents and assets",
+  "main": "epubber.js",
+  "bin": {
+    "epubtools": "cli.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "EPUB3"
+  ],
+  "engines": {
+    "node": ">=4.2.0"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "archiver": "^0.21.0",
+    "async": "^1.5.0",
+    "commander": "^2.9.0",
+    "xmldom": "*"
+  }
+}
