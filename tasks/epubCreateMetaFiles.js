@@ -1,9 +1,9 @@
 /**
- * epubBundle
+ *
  *
  * Copyright 2015 David Herron
  *
- * This file is part of epubtools (http://akashacms.com/).
+ * This file is part of AkashaCMS-epub (http://akashacms.com/).
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,14 +17,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
- 
-var util = require('util');
+
+var fs   = require('fs');
+var path = require('path');
+var epubber = require('../epubber');
 
 module.exports = function(grunt) {
-    grunt.registerTask('epubBundle', function() {
-        var dirName = grunt.config.get('epubtools.dirName');
-        var epubFileName = grunt.config.get('epubtools.bookYaml.epub');
+    grunt.registerTask('epubCreateMetaFiles', function() {
         var done = this.async();
-        require('../epubber').bundleEPUB(dirName, epubFileName, done);
+        var dirName = grunt.config.get('epubtools.dirName');
+        var bookYaml = grunt.config.get('epubtools.bookYaml');
+        epubber.yamlCheck(bookYaml, err => {
+            if (err) done(err);
+            else epubber.makeOPFNCX(dirName, bookYaml, done);
+        });
     });
 };
