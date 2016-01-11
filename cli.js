@@ -44,7 +44,20 @@ program
             }
         });
     });
+    
 
+program
+    .command('extract <epubFileName> <dirName>')
+    .description('Extract an EPUB3 file to a directory')
+    .action((epubFileName, dirName) => {
+        epubber.unpack(epubFileName, dirName, err => {
+            if (err) {
+                // console.error(err);
+                console.error(err.stack);
+            }
+        });
+    });
+    
 program
     .command('mimetype <dirName>')
     .description('Create an EPUB3 mimetype file in a directory')
@@ -101,6 +114,17 @@ program
         });
     });
 
+program
+    .command('check <dirName>')
+    .description('Check an EPUB directory for valid HTML')
+    .action(dirName => {
+        epubber.checkEPUBfiles(dirName, err => {
+            if (err) {
+                // console.error(err);
+                console.error(err.stack);
+            }
+        });
+    });
 
 
 function readYaml(bookYaml) {

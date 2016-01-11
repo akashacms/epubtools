@@ -17,8 +17,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
- 
+
+'use strict';
+
 var archiver  = require('archiver');
+var unzip     = require('node-unzip-2');
 var async     = require('async');
 var path      = require('path');
 var util      = require('util');
@@ -111,6 +114,17 @@ exports.createContainerXmlFile = function(dirName, bookYaml, done) {
 
 exports.unpack = function(epubFileName, outDir, done) {
     // unzip the EPUB into the directory
+    // util.log('unpack '+ epubFileName +' '+ outDir);
+    
+    fs.mkdirs(outDir, err => {
+        if (err) return done(err);
+        
+        var unzipExtractor = unzip.Extract({ path: outDir });
+        unzipExtractor.on('error', err => { done(err); });
+        unzipExtractor.on('close', () => { done(); });
+    
+        fs.createReadStream(epubFileName).pipe(unzipExtractor);
+    });
 };
 
 exports.makeOPFNCX = function(dirName, bookYaml, done) {
@@ -162,6 +176,17 @@ exports.makeOPFNCX = function(dirName, bookYaml, done) {
             });
         });
     })
+    .then(()   => { done();    })
+    .catch(err => { done(err); });
+};
+
+exports.checkEPUBfiles = function(dirName, done) {
+    
+    // For each HTML file
+    //    Check <a>, <style> and <link> URL for these problems
+    //         Link starts with '/'
+    //         Relative link is bad
+    checkHtmlProblems(dirName)
     .then(()   => { done();    })
     .catch(err => { done(err); });
 };
@@ -276,14 +301,14 @@ function archiveFiles(dirName, epubFileName, opfXml, opfFileName) {
         
         var manifests = opfXml.getElementsByTagName("manifest");
         var manifest;
-        for (var mnum = 0; mnum < manifests.length; mnum++) {
-            var elem = manifests.item(mnum);
+        for (let elem of nodeListIterator(manifests)) {
             if (elem.nodeName.toUpperCase() === 'manifest'.toUpperCase()) manifest = elem;
         }
         if (manifest) {
-            for (elem = manifest.firstChild; elem; elem = elem.nextSibling) {
-                if (elem.nodeName.toUpperCase() === 'item'.toUpperCase()) {
-                    var itemHref = elem.getAttribute('href');
+            var items = manifest.getElementsByTagName('item');
+            for (let item of nodeListIterator(items)) {
+                if (item.nodeName.toUpperCase() === 'item'.toUpperCase()) {
+                    var itemHref = item.getAttribute('href');
                     
                     if (itemHref === "mimetype"
                      || itemHref === opfFileName
@@ -324,14 +349,14 @@ function scanTocHtml(tocHtml, tocId, tocHref, ncx, manifest, opfspine, bookYaml)
         
         var navs = doc.getElementsByTagName("nav");
         var thenav;
-        for (var navno = 0; navno < navs.length; navno++) {
-            if (navs[navno].id === tocId) {
-                thenav = navs[navno];
+        for (let nav of nodeListIterator(navs)) {
+            if (nav.id === tocId) {
+                thenav = nav;
                 break;
             }
         }
         if (!thenav) {
-            return next(new Error('no <nav id="'+ tocId +'">'));
+            return reject(new Error('no <nav id="'+ tocId +'">'));
         }
         // logger.info('found nav');
         
@@ -347,7 +372,7 @@ function scanTocHtml(tocHtml, tocId, tocHref, ncx, manifest, opfspine, bookYaml)
             }
         }
         if (!topol) {
-            return next(new Error('no <nav><ol type= start=></ol></nav>'));
+            return reject(new Error('no <nav><ol type= start=></ol></nav>'));
         }
         // logger.info('found topol');
         
@@ -399,8 +424,7 @@ function scanTocHtml(tocHtml, tocId, tocHref, ncx, manifest, opfspine, bookYaml)
         function scanOL(ol) {
             // logger.info('scanOL ol.length='+ ol.childNodes.length);
             var chaps = [];
-            for (var olno = 0; olno < ol.childNodes.length; olno++) {
-                var olchild = ol.childNodes[olno];
+            for (let olchild of nodeListIterator(ol.childNodes)) {
                 // logger.info('olchild.nodeName '+ olchild.nodeName);
                 if (olchild.nodeName && olchild.nodeName.toUpperCase() === 'li'.toUpperCase()) {
                     var section; // section refers to chapters or subchapters
@@ -438,15 +462,16 @@ function scanTocHtml(tocHtml, tocId, tocHref, ncx, manifest, opfspine, bookYaml)
                         }
                     }
                     if (!section) {
-                        return next(new Error('<li> has no <a> children'))
+                        console.error('<li> has no <a> children in TOC='+ tocHref);
+                    } else {
+                        if (subchapters) section.subchapters = subchapters;
+                        chaps.push(section);
                     }
-                    if (subchapters) section.subchapters = subchapters;
-                    chaps.push(section);
                 }
             }
             // logger.info(util.inspect(chaps));
             return chaps;
-        };
+        }
         var chapters = scanOL(topol);
         
         // logger.info(util.inspect(config.akashacmsEPUB.chapters));
@@ -501,7 +526,7 @@ function assetsManifest(dirName, bookYaml, headerScripts, manifest) {
                 if (err || !stats) {
                     // Shouldn't get this, because globfs will only give us
                     // files which exist
-                    logger.error('ERROR '+ basedir +' '+ fpath +' '+ err);
+                    // logger.error('ERROR '+ basedir +' '+ fpath +' '+ err);
                     fini();
                 } else if (stats.isDirectory()) {
                     // Skip directories
@@ -569,23 +594,18 @@ function makeOpfXml(bookYaml, manifest, opfspine) {
         var metadata;
         var manifestElem;
         var spine;
+        var elem;
         	
         var metadatas = OPFXML.getElementsByTagName("metadata");
-        // util.log(util.inspect(rootfile));
-        for (var metanum = 0; metanum < metadatas.length; metanum++) {
-            var elem = metadatas.item(metanum);
+        for (let elem of nodeListIterator(metadatas)) {
             if (elem.nodeName.toUpperCase() === 'metadata'.toUpperCase()) metadata = elem;
         }
         var manifests = OPFXML.getElementsByTagName("manifest");
-        // util.log(util.inspect(rootfile));
-        for (var manifestnum = 0; manifestnum < manifests.length; manifestnum++) {
-            var elem = manifests.item(manifestnum);
+        for (let elem of nodeListIterator(manifests)) {
             if (elem.nodeName.toUpperCase() === 'manifest'.toUpperCase()) manifestElem = elem;
         }
         var spines = OPFXML.getElementsByTagName("spine");
-        // util.log(util.inspect(rootfile));
-        for (var spinenum = 0; spinenum < spines.length; spinenum++) {
-            var elem = spines.item(spinenum);
+        for (let elem of nodeListIterator(spines)) {
             if (elem.nodeName.toUpperCase() === 'spine'.toUpperCase()) spine = elem;
         }
 
@@ -599,8 +619,6 @@ function makeOpfXml(bookYaml, manifest, opfspine) {
         if (typeof bookYaml.published.date == 'undefined' || bookYaml.published.date === null) {
             reject(new Error('no dates'));
         }
-        
-        var elem;
         
         if (typeof bookYaml.identifiers !== 'undefined' && bookYaml.identifiers !== null) {
             bookYaml.identifiers.forEach((identifier) => {
@@ -787,43 +805,37 @@ function makeNCXXML(dirName, bookYaml, chapters) {
         
         var heads = NCXXML.getElementsByTagName("head");
         // util.log(util.inspect(rootfile));
-        for (var headnum = 0; headnum < heads.length; headnum++) {
-            var elem = heads.item(headnum);
+        for (let elem of nodeListIterator(heads)) {
             if (elem.nodeName.toUpperCase() === 'head'.toUpperCase()) headElem = elem;
         }
         
         var docTitles = NCXXML.getElementsByTagName("docTitle");
         // util.log(util.inspect(rootfile));
-        for (var doctitlesnum = 0; doctitlesnum < docTitles.length; doctitlesnum++) {
-            var elem = docTitles.item(doctitlesnum);
+        for (let elem of nodeListIterator(docTitles)) {
             if (elem.nodeName.toUpperCase() === 'docTitle'.toUpperCase()) docTitleElem = elem;
         }
         var docTitleTexts = docTitleElem.getElementsByTagName("text");
-        for (var doctextsnum = 0; doctextsnum < docTitleTexts.length; doctextsnum++) {
-            var elem = docTitleTexts.item(doctextsnum);
+        for (let elem of nodeListIterator(docTitleTexts)) {
             if (elem.nodeName.toUpperCase() === 'text'.toUpperCase()) docTitleText = elem;
         }
         
         var docAuthors = NCXXML.getElementsByTagName("docAuthor");
         // util.log(util.inspect(rootfile));
-        for (var docauthorsnum = 0; docauthorsnum < docAuthors.length; docauthorsnum++) {
-            var elem = docAuthors.item(docauthorsnum);
+        for (let elem of nodeListIterator(docAuthors)) {
             if (elem.nodeName.toUpperCase() === 'docAuthor'.toUpperCase()) docAuthorElem = elem;
         }
         var docAuthorTexts = docAuthorElem.getElementsByTagName("text");
-        for (var docauthorsnum = 0; docauthorsnum < docAuthorTexts.length; docauthorsnum++) {
-            var elem = docAuthorTexts.item(docauthorsnum);
+        for (let elem of nodeListIterator(docAuthorTexts)) {
             if (elem.nodeName.toUpperCase() === 'text'.toUpperCase()) docAuthorText = elem;
         }
         
         var navMaps = NCXXML.getElementsByTagName("navMap");
         // util.log(util.inspect(rootfile));
-        for (var navMapsnum = 0; navMapsnum < navMaps.length; navMapsnum++) {
-            var elem = navMaps.item(navMapsnum);
+        for (let elem of nodeListIterator(navMaps)) {
             if (elem.nodeName.toUpperCase() === 'navMap'.toUpperCase()) navMapElem = elem;
         }
         
-        var uniqueID = undefined;
+        var uniqueID;
         bookYaml.identifiers.forEach(function(identifier) {
             if (typeof identifier.unique !== 'undefined' && identifier.unique !== null) uniqueID = identifier;
         });
@@ -915,6 +927,69 @@ function makeNCXXML(dirName, bookYaml, chapters) {
     });
 }
 
+function checkHtmlProblems(dirName) {
+    return new Promise((resolve, reject) => {
+        globfs.operate(dirName, [ "**/*.html" ], (basedir, fpath, fini) => {
+                
+            // logger.trace('asset file '+ path.join(basedir, fpath));
+            
+            fs.stat(path.join(basedir, fpath), (err, stats) => {
+                if (err || !stats) {
+                    // Shouldn't get this, because globfs will only give us
+                    // files which exist
+                    // logger.error('ERROR '+ basedir +' '+ fpath +' '+ err);
+                    fini();
+                } else if (stats.isDirectory()) {
+                    // Skip directories
+                    // logger.trace('isDirectory '+ basedir +' '+ fpath);
+                    fini();
+                } else {
+                    checkHtmlProblemsForFile(basedir, fpath)
+                    .then(() => { fini(); })
+                    .catch(err => { fini(err); });
+                }
+            });
+        },
+        err => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+}
+
+function checkHtmlProblemsForFile(basedir, fpath) {
+    return new Promise((resolve, reject) => {
+        fs.readFile(path.join(basedir, fpath), 'utf8', (err, html) => {
+            if (err) return reject(err);
+            
+            var doc = jsdom.jsdom(html, {});
+            
+            var links = doc.getElementsByTagName("a");
+            for (let link of nodeListIterator(links)) {
+                var href = link.getAttribute('href');
+                var urlp = url.parse(href);
+                // we only need to concern ourselves with local links
+                if (! urlp.protocol && !urlp.slashes && !urlp.host && urlp.pathname) {
+                    if (urlp.pathname.startsWith('/')) {
+                        return reject(new Error('Internal link cannot be absolute '+ fpath +' url='+ href));
+                    }
+                }
+            }
+            
+            var imgs = doc.getElementsByTagName("img");
+            for (let img of nodeListIterator(imgs)) {
+                var src = img.getAttribute('src');
+                var srcp = url.parse(src);
+                if (srcp.protocol || srcp.slashes || srcp.host) {
+                    return reject(new Error('Cannot link to external images '+ fpath +' src='+ src));
+                }
+            }
+            
+            resolve();
+        });
+    });
+}
+
 function rewriteURL(metadata, sourceURL, allowExternal) {
 	var urlSource = url.parse(sourceURL, true, true);
 	if (urlSource.protocol || urlSource.slashes) {
@@ -923,44 +998,18 @@ function rewriteURL(metadata, sourceURL, allowExternal) {
         } else return sourceURL;
     } else {
 		var pRenderedUrl;
+		var ret;
         if (urlSource.pathname && urlSource.pathname.match(/^\//)) { // absolute URL
             var prefix = computeRelativePrefixToRoot(metadata.rendered_url);
             // logger.trace('absolute - prefix for '+ metadata.rendered_url +' == '+ prefix);
-            var ret = path.normalize(prefix+sourceURL);
+            ret = path.normalize(prefix+sourceURL);
             // logger.trace('Rewrote '+ sourceURL +' to '+ ret);
             return ret;
         } else {
-            var ret = sourceURL; //   path.normalize(docdir+'/'+sourceURL);
+            ret = sourceURL; //   path.normalize(docdir+'/'+sourceURL);
             // logger.trace('Rewrote '+ sourceURL +' to '+ ret);
             return ret;
         }
-        
-        /* else if (urlSource.pathname.match(/^\.\//)) { // ./
-            // pRenderedUrl = url.parse(metadata.rendered_url);
-            // var docpath = pRenderedUrl.pathname;
-            // var docdir = path.dirname(docpath);
-            // logger.trace('Cur Dir - renderedURL '+ metadata.rendered_url +' docdir '+ docdir);
-            var ret = sourceURL; // path.normalize(docdir+'/'+sourceURL);
-            // logger.trace('Rewrote '+ sourceURL +' to '+ ret);
-            return ret;
-        } else if (urlSource.pathname.match(/^\.\.\//)) { // ../
-            // pRenderedUrl = url.parse(metadata.rendered_url);
-            // var docpath = pRenderedUrl.pathname;
-            // var docdir = path.dirname(docpath);
-            // logger.trace('Parent Dir - renderedURL '+ metadata.rendered_url +' docdir '+ docdir);
-            var ret = sourceURL; // path.normalize(docdir+'/'+sourceURL);
-            // logger.trace('Rewrote '+ sourceURL +' to '+ ret);
-            return ret;
-        } else { // anything else
-            // logger.trace('anything else '+ metadata.rendered_url);
-            // logger.trace(util.inspect(metadata));
-            // pRenderedUrl = url.parse(metadata.rendered_url);
-            // var docpath = pRenderedUrl.pathname;
-            // var docdir = path.dirname(docpath);
-            var ret = sourceURL; //   path.normalize(docdir+'/'+sourceURL);
-            // logger.trace('Rewrote '+ sourceURL +' to '+ ret);
-            return ret;
-        } */
     }
 }
 
@@ -984,3 +1033,20 @@ var w3cdate = function(date) {
     );
 };
 
+function nodeListIterator(nodeList) {
+    nodeList[Symbol.iterator] = function() {
+        return {
+            next: function() {
+                if (this._index < nodeList.length) {
+                    var ret = nodeList.item(this._index);
+                    this._index++;
+                    return { value: ret, done: false };
+                } else {
+                    return { done: true };
+                }
+            },
+            _index: 0
+        };
+    };
+    return nodeList;
+}
