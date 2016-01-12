@@ -962,6 +962,8 @@ function checkHtmlProblemsForFile(basedir, fpath) {
         fs.readFile(path.join(basedir, fpath), 'utf8', (err, html) => {
             if (err) return reject(err);
             
+            // util.log('... '+ fpath);
+            
             var doc = jsdom.jsdom(html, {});
             
             var links = doc.getElementsByTagName("a");
@@ -971,7 +973,7 @@ function checkHtmlProblemsForFile(basedir, fpath) {
                 // we only need to concern ourselves with local links
                 if (! urlp.protocol && !urlp.slashes && !urlp.host && urlp.pathname) {
                     if (urlp.pathname.startsWith('/')) {
-                        return reject(new Error('Internal link cannot be absolute '+ fpath +' url='+ href));
+                        console.error('Internal link cannot be absolute '+ fpath +' url='+ href);
                     }
                 }
             }
@@ -981,7 +983,11 @@ function checkHtmlProblemsForFile(basedir, fpath) {
                 var src = img.getAttribute('src');
                 var srcp = url.parse(src);
                 if (srcp.protocol || srcp.slashes || srcp.host) {
-                    return reject(new Error('Cannot link to external images '+ fpath +' src='+ src));
+                    console.error('Cannot link to external images '+ fpath +' src='+ src);
+                } else {
+                    if (srcp.pathname.startsWith('/')) {
+                        console.error('Internal image source cannot be absolute '+ fpath +' src='+ src);
+                    }
                 }
             }
             
