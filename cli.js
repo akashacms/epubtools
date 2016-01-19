@@ -23,118 +23,65 @@
 var program   = require('commander');
 var epubber   = require('./epubber');
 var util      = require('util');
-var yaml      = require('js-yaml');
 var fs        = require('fs');
             
 'use strict';
 
 process.title = 'epubtools';
+program.version('0.0.1');
 
 program
-   .version('0.0.1');
-
-program
-    .command('package <dirName> <epubFileName>')
+    .command('package <dirName> <bookYaml>')
     .description('Package an EPUB3 file from a directory')
-    .action((dirName, epubFileName) => {
-        epubber.bundleEPUB(dirName, epubFileName, err => {
-            if (err) {
-                // console.error(err);
-                console.error(err.stack);
-            }
-        });
+    .action((dirName, bookYamlFN) => {
+        epubber.readYaml(bookYamlFN)
+        .then(bookYaml => { return epubber.yamlCheck(bookYaml); })
+        .then(bookYaml => { return epubber.bundleEPUB(dirName, bookYaml.epub); })
+        .catch(err => { console.error(err.stack); });
     });
-    
 
 program
     .command('extract <epubFileName> <dirName>')
     .description('Extract an EPUB3 file to a directory')
     .action((epubFileName, dirName) => {
-        epubber.unpack(epubFileName, dirName, err => {
-            if (err) {
-                // console.error(err);
-                console.error(err.stack);
-            }
-        });
+        epubber.unpack(epubFileName, dirName)
+        .catch(err => { console.error(err.stack); });
     });
     
 program
     .command('mimetype <dirName>')
     .description('Create an EPUB3 mimetype file in a directory')
     .action(dirName => {
-        epubber.createMimetypeFile(dirName, err => {
-            if (err) {
-                // console.error(err);
-                console.error(err.stack);
-            }
-        });
+        epubber.createMimetypeFile(dirName)
+        .catch(err => { console.error(err.stack); });
     });
 
 program
     .command('containerxml <dirName> <bookYaml>')
     .description('Create an EPUB3 container.xml file in a directory')
     .action((dirName, bookYamlFN) => {
-        readYaml(bookYamlFN)
-        .then(bookYaml => {
-            return new Promise((resolve, reject) => {
-                epubber.yamlCheck(bookYaml, err => {
-                    if (err) reject(err);
-                    else epubber.createContainerXmlFile(dirName, bookYaml, err => {
-                        if (err) reject(err);
-                        else resolve();
-                    });
-                });
-            });
-        })
-        .catch(err => {
-            // console.error(err);
-            console.error(err.stack);
-        });
+        epubber.readYaml(bookYamlFN)
+        .then(bookYaml => { return epubber.yamlCheck(bookYaml); })
+        .then(bookYaml => { return epubber.createContainerXmlFile(dirName, bookYaml); })
+        .catch(err => { console.error(err.stack); });
     });
 
 program
     .command('makemeta <dirName> <bookYaml>')
     .description('Create OPF and NCX files in a directory')
     .action((dirName, bookYamlFN) => {
-        readYaml(bookYamlFN)
-        .then(bookYaml => {
-            return new Promise((resolve, reject) => {
-                epubber.yamlCheck(bookYaml, err => {
-                    if (err) reject(err);
-                    else epubber.makeOPFNCX(dirName, bookYaml, err => {
-                        if (err) reject(err);
-                        else resolve();
-                    });
-                });
-            });
-        })
-        .catch(err => {
-            // console.error(err);
-            console.error(err.stack);
-        });
+        epubber.readYaml(bookYamlFN)
+        .then(bookYaml => { return epubber.yamlCheck(bookYaml); })
+        .then(bookYaml => { return epubber.makeOPFNCX(dirName, bookYaml); })
+        .catch(err => { console.error(err.stack); });
     });
 
 program
     .command('check <dirName>')
     .description('Check an EPUB directory for valid HTML')
     .action(dirName => {
-        epubber.checkEPUBfiles(dirName, err => {
-            if (err) {
-                // console.error(err);
-                console.error(err.stack);
-            }
-        });
+        epubber.checkEPUBfiles(dirName)
+        .catch(err => { console.error(err.stack); });
     });
-
-
-function readYaml(bookYaml) {
-    return new Promise((resolve, reject) => {
-        fs.readFile(bookYaml, 'utf8', (err, yamlText) => {
-            if (err) reject(err);
-            else resolve(yaml.safeLoad(yamlText));
-        });
-    });
-}
-
 
 program.parse(process.argv);

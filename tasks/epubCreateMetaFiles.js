@@ -27,9 +27,9 @@ module.exports = function(grunt) {
         var done = this.async();
         var dirName = grunt.config.get('epubtools.dirName');
         var bookYaml = grunt.config.get('epubtools.bookYaml');
-        epubber.yamlCheck(bookYaml, err => {
-            if (err) done(err);
-            else epubber.makeOPFNCX(dirName, bookYaml, done);
-        });
+        epubber.yamlCheck(bookYaml)
+        .then(bookYaml => { return epubber.makeOPFNCX(dirName, bookYaml); })
+        .then(() => { done(); })
+        .catch(err => { done(err); });
     });
 };

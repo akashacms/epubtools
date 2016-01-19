@@ -19,12 +19,15 @@
  */
  
 var util = require('util');
+var epubber = require('../epubber');
 
 module.exports = function(grunt) {
     grunt.registerTask('epubBundle', function() {
         var dirName = grunt.config.get('epubtools.dirName');
         var epubFileName = grunt.config.get('epubtools.bookYaml.epub');
         var done = this.async();
-        require('../epubber').bundleEPUB(dirName, epubFileName, done);
+        epubber.bundleEPUB(dirName, epubFileName)
+        .then(() => { done(); })
+        .catch(err => { done(err); });
     });
 };

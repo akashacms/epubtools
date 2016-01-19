@@ -26,6 +26,8 @@ module.exports = function(grunt) {
         var dirName = grunt.config.get('epubtools.unpackTo');
         var bookYaml = grunt.config.get('epubtools.bookYaml');
         var epubFileName = bookYaml.epub;
-        epubber.unpack(epubFileName, dirName, done);
+        epubber.unpack(epubFileName, dirName)
+        .then(() => { done(); })
+        .catch(err => { done(err); });
     });
 };

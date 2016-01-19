@@ -35,46 +35,71 @@ var mime      = require('mime');
 var uuid      = require('uuid');
 var sprintf   = require("sprintf-js").sprintf,
     vsprintf  = require("sprintf-js").vsprintf;
+var yaml      = require('js-yaml');
 
-exports.yamlCheck = function(bookYaml, done) {
-    if (!bookYaml.opf) return done(new Error('no OPF file specified'));
-
-    if (!bookYaml.identifiers) {
-        return done(new Error('no UUID .. suggest \
-          identifiers: [ { unique: true, idstring: "urn:uuid"'+ uuid.v1() +' } ] \
-        '));
-    } else {
-        var uniqueCount = 0;
-        bookYaml.identifiers.forEach(identifier => {
-            if (typeof identifier.unique !== 'undefined' && identifier.unique !== null) uniqueCount++;
+exports.readYaml = function(bookYaml) {
+    return new Promise((resolve, reject) => {
+        fs.readFile(bookYaml, 'utf8', (err, yamlText) => {
+            if (err) reject(err);
+            else resolve(yaml.safeLoad(yamlText));
         });
-        if (uniqueCount !== 1) return done(new Error("There can be only one - unique identifier, that is, found="+ uniqueCount));
-    }
-    
-    var rightnow = w3cdate(new Date());
-    if (!bookYaml.published) bookYaml.published = {};
-    if (!bookYaml.published || !bookYaml.published.date) {
-        return done(new Error('no published.date suggest '+ rightnow));
-    }
-    bookYaml.published.modified = rightnow;
-    
-    if (!bookYaml.toc || !bookYaml.toc.href) {
-        return done(new Error('No toc entry'));
-    }
-    
-    // util.log(util.inspect(bookYaml));
-    done();
+    });
 };
 
-exports.createMimetypeFile = function(dirName, done) {
-    fs.writeFile(path.join(dirName, "mimetype"), "application/epub+zip", "utf8", done);
+exports.yamlCheck = function(bookYaml) {
+    
+    return new Promise((resolve, reject) => {
+        
+        if (!bookYaml.opf) return reject(new Error('no OPF file specified'));
+    
+        if (!bookYaml.identifiers) {
+            return reject(new Error('no UUID .. suggest \
+              identifiers: [ { unique: true, idstring: "urn:uuid"'+ uuid.v1() +' } ] \
+            '));
+        } else {
+            var uniqueCount = 0;
+            bookYaml.identifiers.forEach(identifier => {
+                if (typeof identifier.unique !== 'undefined' && identifier.unique !== null) uniqueCount++;
+            });
+            if (uniqueCount !== 1) return reject(new Error("There can be only one - unique identifier, that is, found="+ uniqueCount));
+        }
+        
+        var rightnow = w3cdate(new Date());
+        if (!bookYaml.published) bookYaml.published = {};
+        if (!bookYaml.published || !bookYaml.published.date) {
+            return reject(new Error('no published.date suggest '+ rightnow));
+        }
+        bookYaml.published.modified = rightnow;
+        
+        if (!bookYaml.toc || !bookYaml.toc.href) {
+            return reject(new Error('No toc entry'));
+        }
+        
+        // util.log(util.inspect(bookYaml));
+        
+        resolve(bookYaml);
+    });
 };
 
-exports.makeMetaInfDir = function(dirName, done) {
-    fs.mkdirs(path.join(dirName, "META-INF"), done);
+exports.createMimetypeFile = function(dirName) {
+    return new Promise((resolve, reject) => {
+        fs.writeFile(path.join(dirName, "mimetype"), "application/epub+zip", "utf8", err => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
 };
 
-exports.createContainerXmlFile = function(dirName, bookYaml, done) {
+exports.makeMetaInfDir = function(dirName) {
+    return new Promise((resolve, reject) => {
+        fs.mkdirs(path.join(dirName, "META-INF"), err => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+};
+
+exports.createContainerXmlFile = function(dirName, bookYaml) {
     
     // util.log('createContainerXmlFile '+ dirName +' '+ util.inspect(bookYaml));
     
@@ -105,130 +130,143 @@ exports.createContainerXmlFile = function(dirName, bookYaml, done) {
     elem.setAttribute('media-type', 'application/oebps-package+xml');
     rfs.appendChild(elem);
     
-    exports.makeMetaInfDir(dirName, err => {
-        if (err) done(err);
-        else fs.writeFile(path.join(dirName, "META-INF", "container.xml"),
-                          new xmldom.XMLSerializer().serializeToString(containerXml), "utf8", done);
+    return exports.makeMetaInfDir(dirName)
+    .then(() => {
+        return new Promise((resolve, reject) => {
+            fs.writeFile(path.join(dirName, "META-INF", "container.xml"),
+                         new xmldom.XMLSerializer().serializeToString(containerXml), "utf8",
+                         err => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
     });
 };
 
-exports.unpack = function(epubFileName, outDir, done) {
+exports.unpack = function(epubFileName, outDir) {
     // unzip the EPUB into the directory
     // util.log('unpack '+ epubFileName +' '+ outDir);
     
-    fs.mkdirs(outDir, err => {
-        if (err) return done(err);
+    return new Promise((resolve, reject) => {
+        fs.mkdirs(outDir, err => {
+            if (err) return reject(err);
+            
+            var unzipExtractor = unzip.Extract({ path: outDir });
+            unzipExtractor.on('error', err => { reject(err); });
+            unzipExtractor.on('close', () => { resolve(); });
         
-        var unzipExtractor = unzip.Extract({ path: outDir });
-        unzipExtractor.on('error', err => { done(err); });
-        unzipExtractor.on('close', () => { done(); });
-    
-        fs.createReadStream(epubFileName).pipe(unzipExtractor);
+            fs.createReadStream(epubFileName).pipe(unzipExtractor);
+        });
     });
 };
 
-exports.makeOPFNCX = function(dirName, bookYaml, done) {
-    
-    // read the designated TOC file (toc.html)
+exports.makeOPFNCX = function(dirName, bookYaml) {
+    return new Promise((resolve, reject) => {
+           
+        // read the designated TOC file (toc.html)
+            
+        var manifest = [];
+        var opfspine = [];
+        var chapters;
+        var tocHtml;
+        var OPFXML;
+        var NCXXML;
         
-    var manifest = [];
-    var opfspine = [];
-    var chapters;
-    var tocHtml;
-    var OPFXML;
-    var NCXXML;
+        var headerScripts = {};
+        if (bookYaml.stylesheets)      headerScripts.stylesheets = bookYaml.stylesheets;
+        if (bookYaml.javaScriptTop)    headerScripts.javaScriptTop = bookYaml.javaScriptTop;
+        if (bookYaml.javaScriptBottom) headerScripts.javaScriptBottom = bookYaml.javaScriptBottom;
     
-    var headerScripts = {};
-    if (bookYaml.stylesheets)      headerScripts.stylesheets = bookYaml.stylesheets;
-    if (bookYaml.javaScriptTop)    headerScripts.javaScriptTop = bookYaml.javaScriptTop;
-    if (bookYaml.javaScriptBottom) headerScripts.javaScriptBottom = bookYaml.javaScriptBottom;
-
-    readTOC(dirName, bookYaml.toc.href)
-    .then(_tocHtml => {
-        tocHtml = _tocHtml;
-        return scanTocHtml(tocHtml, bookYaml.toc.id, bookYaml.toc.href, bookYaml.ncx, manifest, opfspine, bookYaml);
-    })
-    .then(tocData => {
-        chapters = tocData.chapters;
-        return assetsManifest(dirName, bookYaml, headerScripts, manifest);
-    })
-    .then(() => {
-        return makeOpfXml(bookYaml, manifest, opfspine);
-    })
-    .then(_OPFXML => {
-        OPFXML = _OPFXML;
-        return new Promise((resolve, reject) => {
-            fs.writeFile(path.join(dirName, bookYaml.opf), new xmldom.XMLSerializer().serializeToString(OPFXML), 'utf8', err => {
-                if (err) reject(err);
-                else resolve();
+        readTOC(dirName, bookYaml.toc.href)
+        .then(_tocHtml => {
+            tocHtml = _tocHtml;
+            return scanTocHtml(tocHtml, bookYaml.toc.id, bookYaml.toc.href, bookYaml.ncx, manifest, opfspine, bookYaml);
+        })
+        .then(tocData => {
+            chapters = tocData.chapters;
+            return assetsManifest(dirName, bookYaml, headerScripts, manifest);
+        })
+        .then(() => {
+            return makeOpfXml(bookYaml, manifest, opfspine);
+        })
+        .then(_OPFXML => {
+            OPFXML = _OPFXML;
+            return new Promise((resolve, reject) => {
+                fs.writeFile(path.join(dirName, bookYaml.opf), new xmldom.XMLSerializer().serializeToString(OPFXML), 'utf8', err => {
+                    if (err) reject(err);
+                    else resolve();
+                });
             });
-        });
-    })
-    .then(() => {
-        return makeNCXXML(dirName, bookYaml, chapters);
-    })
-    .then(_NCXXML => {
-        NCXXML = _NCXXML;
-        return new Promise((resolve, reject) => {
-            fs.writeFile(path.join(dirName, bookYaml.ncx.href), new xmldom.XMLSerializer().serializeToString(NCXXML), 'utf8', err => {
-                if (err) reject(err);
-                else resolve();
+        })
+        .then(() => {
+            return makeNCXXML(dirName, bookYaml, chapters);
+        })
+        .then(_NCXXML => {
+            NCXXML = _NCXXML;
+            return new Promise((resolve, reject) => {
+                fs.writeFile(path.join(dirName, bookYaml.ncx.href), new xmldom.XMLSerializer().serializeToString(NCXXML), 'utf8', err => {
+                    if (err) reject(err);
+                    else resolve();
+                });
             });
-        });
-    })
-    .then(()   => { done();    })
-    .catch(err => { done(err); });
+        })
+        .then(()   => { resolve();    })
+        .catch(err => { reject(err); });
+    });
 };
 
-exports.checkEPUBfiles = function(dirName, done) {
+exports.checkEPUBfiles = function(dirName) {
     
     // For each HTML file
     //    Check <a>, <style> and <link> URL for these problems
     //         Link starts with '/'
     //         Relative link is bad
-    checkHtmlProblems(dirName)
-    .then(()   => { done();    })
-    .catch(err => { done(err); });
+    return checkHtmlProblems(dirName);
 };
 
 exports.bundleEPUB = function(dirName, epubFileName, done) {
+    return new Promise((resolve, reject) => {
     
-    // util.log(dirName +' '+ epubFileName);
-    
-    // read container.xml -- extract OPF file name
-    // read OPF file
-    // write mimetype file
-    // write container.xml
-    // write OPF file
-    // for each entry in OPF - write that file
-    // when done, finalize
-    
+        // util.log(dirName +' '+ epubFileName);
         
-    var containerXmlText;
-    var containerXml;
-    var opfFileName;
-    var opfXmlText;
-    var opfXml;
-
-    readContainerXml(dirName)
-    .then(containerXmlData => {
-        containerXmlText = containerXmlData.containerXmlText;
-        containerXml     = containerXmlData.containerXml;
-        return findOpfFileName(containerXml);
-    })
-    .then(_opfFileName  => {
-        opfFileName = _opfFileName;
-        return readOPF(dirName, opfFileName);
-    })
-    .then(opfXmlData => {
-        opfXmlText = opfXmlData.opfXmlText;
-        opfXml = opfXmlData.opfXml;
-        return archiveFiles(dirName, epubFileName, opfXml, opfFileName);
-    })
-    .then(()   => { done();    })
-    .catch(err => { done(err); });
+        // read container.xml -- extract OPF file name
+        // read OPF file
+        // write mimetype file
+        // write container.xml
+        // write OPF file
+        // for each entry in OPF - write that file
+        // when done, finalize
+        
+            
+        var containerXmlText;
+        var containerXml;
+        var opfFileName;
+        var opfXmlText;
+        var opfXml;
+    
+        readContainerXml(dirName)
+        .then(containerXmlData => {
+            containerXmlText = containerXmlData.containerXmlText;
+            containerXml     = containerXmlData.containerXml;
+            return findOpfFileName(containerXml);
+        })
+        .then(_opfFileName  => {
+            opfFileName = _opfFileName;
+            return readOPF(dirName, opfFileName);
+        })
+        .then(opfXmlData => {
+            opfXmlText = opfXmlData.opfXmlText;
+            opfXml = opfXmlData.opfXml;
+            return archiveFiles(dirName, epubFileName, opfXml, opfFileName);
+        })
+        .then(()   => { resolve();    })
+        .catch(err => { reject(err); });
+    });
 };
 
+/* exports.renderMarkdown = function(done) {
+    
+}; */
 
 function readContainerXml(dirName) {
     return new Promise((resolve, reject) => {

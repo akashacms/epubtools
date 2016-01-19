@@ -24,6 +24,8 @@ module.exports = function(grunt) {
     grunt.registerTask('epubMimetypeFile', function() {
         var done = this.async();
         var dirName = grunt.config.get('epubtools.dirName');
-        epubber.createMimetypeFile(dirName, done);
+        epubber.createMimetypeFile(dirName)
+        .then(() => { done(); })
+        .catch(err => { done(err); });
     });
 };
