@@ -25,10 +25,10 @@ var epubber = require('../epubber');
 module.exports = function(grunt) {
     grunt.registerTask('epubContainerXml', function() {
         var done = this.async();
-        var dirName = grunt.config.get('epubtools.dirName');
+        var rendered = grunt.config.get('epubtools.renderTo');
         var bookYaml = grunt.config.get('epubtools.bookYaml');
         epubber.yamlCheck(bookYaml)
-        .then(bookYaml => { return epubber.createContainerXmlFile(dirName, bookYaml); })
+        .then(bookYaml => { return epubber.createContainerXmlFile(rendered, bookYaml); })
         .then(() => { done(); })
         .catch(err => { done(err); });
     });

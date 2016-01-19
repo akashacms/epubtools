@@ -23,10 +23,10 @@ var epubber = require('../epubber');
 
 module.exports = function(grunt) {
     grunt.registerTask('epubBundle', function() {
-        var dirName = grunt.config.get('epubtools.dirName');
+        var renderTo = grunt.config.get('epubtools.renderTo');
         var epubFileName = grunt.config.get('epubtools.bookYaml.epub');
         var done = this.async();
-        epubber.bundleEPUB(dirName, epubFileName)
+        epubber.bundleEPUB(renderTo, epubFileName)
         .then(() => { done(); })
         .catch(err => { done(err); });
     });

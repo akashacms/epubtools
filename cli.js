@@ -31,12 +31,12 @@ process.title = 'epubtools';
 program.version('0.0.1');
 
 program
-    .command('package <dirName> <bookYaml>')
-    .description('Package an EPUB3 file from a directory')
-    .action((dirName, bookYamlFN) => {
+    .command('package <rendered> <bookYaml>')
+    .description('Package aedEPUB3 file from a directory')
+    .action((rendered, bookYamlFN) => {
         epubber.readYaml(bookYamlFN)
         .then(bookYaml => { return epubber.yamlCheck(bookYaml); })
-        .then(bookYaml => { return epubber.bundleEPUB(dirName, bookYaml.epub); })
+        .then(bookYaml => { return epubber.bundleEPUB(rendered, bookYaml.epub); })
         .catch(err => { console.error(err.stack); });
     });
 
@@ -49,38 +49,46 @@ program
     });
     
 program
-    .command('mimetype <dirName>')
+    .command('stats <rendered>')
+    .description('Print text statistics for rendered HTML file in a directory')
+    .action(rendered => {
+        epubber.printTextStats(rendered)
+        .catch(err => { console.error(err.stack); });
+    });
+
+program
+    .command('mimetype <rendered>')
     .description('Create an EPUB3 mimetype file in a directory')
-    .action(dirName => {
-        epubber.createMimetypeFile(dirName)
+    .action(rendered => {
+        epubber.createMimetypeFile(rendered)
         .catch(err => { console.error(err.stack); });
     });
 
 program
-    .command('containerxml <dirName> <bookYaml>')
+    .command('containerxml <rendered> <bookYaml>')
     .description('Create an EPUB3 container.xml file in a directory')
-    .action((dirName, bookYamlFN) => {
+    .action((rendered, bookYamlFN) => {
         epubber.readYaml(bookYamlFN)
         .then(bookYaml => { return epubber.yamlCheck(bookYaml); })
-        .then(bookYaml => { return epubber.createContainerXmlFile(dirName, bookYaml); })
+        .then(bookYaml => { return epubber.createContainerXmlFile(rendered, bookYaml); })
         .catch(err => { console.error(err.stack); });
     });
 
 program
-    .command('makemeta <dirName> <bookYaml>')
+    .command('makemeta <rendered> <bookYaml>')
     .description('Create OPF and NCX files in a directory')
-    .action((dirName, bookYamlFN) => {
+    .action((rendered, bookYamlFN) => {
         epubber.readYaml(bookYamlFN)
         .then(bookYaml => { return epubber.yamlCheck(bookYaml); })
-        .then(bookYaml => { return epubber.makeOPFNCX(dirName, bookYaml); })
+        .then(bookYaml => { return epubber.makeOPFNCX(rendered, bookYaml); })
         .catch(err => { console.error(err.stack); });
     });
 
 program
-    .command('check <dirName>')
+    .command('check <rendered>')
     .description('Check an EPUB directory for valid HTML')
-    .action(dirName => {
-        epubber.checkEPUBfiles(dirName)
+    .action(rendered => {
+        epubber.checkEPUBfiles(rendered)
         .catch(err => { console.error(err.stack); });
     });
 

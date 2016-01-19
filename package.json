@@ -34,6 +34,7 @@
     "node-unzip-2": "^0.2.1",
     "sprintf-js": "^1.0.3",
     "uuid": "^2.0.1",
-    "xmldom": "*"
+    "xmldom": "*",
+    "text-statistics": "*"
   }
 }
