@@ -32,7 +32,7 @@ program.version('0.0.1');
 
 program
     .command('package <rendered> <bookYaml>')
-    .description('Package aedEPUB3 file from a directory')
+    .description('Package an EPUB3 file from a directory')
     .action((rendered, bookYamlFN) => {
         epubber.readYaml(bookYamlFN)
         .then(bookYaml => { return epubber.yamlCheck(bookYaml); })
@@ -47,12 +47,37 @@ program
         epubber.unpack(epubFileName, dirName)
         .catch(err => { console.error(err.stack); });
     });
+
+/* program
+    .command('copy <srcdir> <destdir> [exts..]')
+    .description('Copy stuff from one directory to another')
+    .action((srcdir, destdir) => {
+        // TODO Need to get extensions from command line
+        epubber.copyStuff(srcdir, destdir)
+        .catch(err => { console.error(err.stack); });
+    }); */
     
+/* DOESN't BELONG program
+    .command('rendermarkdown <docsdir> <renderTo>')
+    .description('Render Markdown files in one directory to another')
+    .action((docsdir, renderTo) => {
+        epubber.renderMarkdown(docsdir, renderTo)
+        .catch(err => { console.error(err.stack); });
+    }); */
+
 program
     .command('stats <rendered>')
     .description('Print text statistics for rendered HTML file in a directory')
     .action(rendered => {
         epubber.printTextStats(rendered)
+        .catch(err => { console.error(err.stack); });
+    });
+
+program
+    .command('words <rendered>')
+    .description('Print word count statistics for rendered HTML file in a directory')
+    .action(rendered => {
+        epubber.printWordCountStats(rendered)
         .catch(err => { console.error(err.stack); });
     });
 

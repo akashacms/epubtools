@@ -37,6 +37,21 @@ var sprintf   = require("sprintf-js").sprintf,
     vsprintf  = require("sprintf-js").vsprintf;
 var yaml      = require('js-yaml');
 var textStatistics = require('text-statistics');
+// DOESN'T BELONG
+// var ejs       = require('ejs');
+// var yfm       = require('yfm');
+// var md        = require('markdown-it')({
+//  html:         true,         // Enable html tags in source
+//  xhtmlOut:     false,        // Use '/' to close single tags (<br />)
+//  breaks:       false,        // Convert '\n' in paragraphs into <br>
+//  // langPrefix:   'language-',  // CSS language prefix for fenced blocks
+//  linkify:      true,         // Autoconvert url-like texts to links
+//  typographer:  true,         // Enable smartypants and other sweet transforms
+//
+//  // Highlighter function. Should return escaped html,
+//  // or '' if input not changed
+//  highlight: function (/*str, , lang*/) { return ''; }
+// });
 
 exports.readYaml = function(bookYaml) {
     return new Promise((resolve, reject) => {
@@ -116,6 +131,171 @@ exports.printTextStats = function(rendered) {
             if (err) reject(err);
             else resolve();
         });
+    });
+};
+
+exports.printWordCountStats = function(rendered) {
+    return new Promise((resolve, reject) => {
+        globfs.operate(rendered, [ "**/*.html" ], (basedir, fpath, fini) => {
+            fs.readFile(path.join(basedir, fpath), 'utf8', (err, text) => {
+                if (err) return fini(err);
+                
+                var stats = textStatistics(text);
+                console.log(fpath +' '+ stats.textLength() +' '+ stats.letterCount() +' '+ stats.wordCount() +' '+ stats.sentenceCount()
+                            +' '+ stats.averageWordsPerSentence() +' '+ stats.averageSyllablesPerWord()
+                            +' '+ stats.wordsWithThreeSyllables() +' '+ stats.percentageWordsWithThreeSyllables());
+                
+                fini();
+            });
+        },
+        err => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+};
+
+/* DOESN'T BELONG
+exports.renderMarkdown = function(docdir, renderTo) {
+    return new Promise((resolve, reject) => {
+        globfs.operate(docdir, [ "** /*.html.md", "** /*.md" ], (basedir, fpath, fini) => {
+            
+            var fnRenderTo;
+            if (fpath.endsWith('.html.md')) {
+                let fn = path.basename(fpath, '.html.md');
+                fnRenderTo = path.join(path.dirname(fpath), fn + '.html');
+            } else if (fpath.endsWith('.md')) {
+                let fn = path.extname(fpath, '.md');
+                fnRenderTo = path.join(path.dirname(fpath), fn + '.html');
+            }
+            
+            var readFrom = path.join(basedir, fpath);
+            var renderPath = path.join(renderTo, fnRenderTo);
+            
+            // util.log('renderMarkdown '+ readFrom +' to '+ renderPath);
+            
+            new Promise((resolve, reject) => {
+                fs.readFile(readFrom, 'utf8', (err, text) => {
+                    if (err) reject(err);
+                    else resolve(text);
+                });
+            })
+            .then(markdownText => {
+	            var fm = yfm(markdownText);
+                var html = md.render(fm.content);
+                fm.context.content = html;
+	            // util.log(util.inspect(fm));
+	            return fm;
+            })
+            .then(fm => {
+                return new Promise((resolve, reject) => {
+                    fs.mkdirs(path.dirname(renderPath), err => {
+                        if (err) reject(err);
+                        else resolve(fm);
+                    });
+                });
+            })
+            .then(fm => {
+                return new Promise((resolve, reject) => {
+                    if (fm.context.layout) {
+                        var layoutPath = path.join('layouts', fm.context.layout);
+                        // util.log('    with layout '+ layoutPath);
+                        fs.readFile(layoutPath, 'utf8', (err, template) => {
+                            if (err) return reject(err);
+                            var rendered = ejs.render(template, fm.context);
+                            resolve(rendered);
+                        });
+                    } else {
+                        resolve(fm.context.content);
+                    }
+                });
+            })
+            .then(rendered => {
+                return new Promise((resolve, reject) => {
+                    fs.writeFile(renderPath, rendered, 'utf8', err => {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+            })
+            .then(() => { fini(); })
+            .catch(err => { fini(err); });
+            
+        }, (err) => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+}; */
+
+/* NOT NECESSARY -- can rely on globfs or other tools for this task
+// TODO Finish this
+exports.copyStuff = function(srcdir, destdir, extensions) {
+    return new Promise((resolve, reject) => {
+        // Take the extensions (if any) make array with ** /*.ext entries
+        // Otherwise the array just contains "** /*"
+        
+        var patterns;
+        if (!extensions) {
+            patterns = [ '** /*' ];
+        } else {
+            for (let ext of extensions) {
+                patterns.push('** /*'+ ext);
+            }
+        }
+        
+        globfs.copy(srcdir, patterns, destdir, {},
+        err => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+}; */
+
+// TODO Finish this
+exports.convert2html = function(rendered, htmlFileName) {
+    return new Promise((resolve, reject) => {
+        // Start an empty HTML file
+        // Pick up .opf file
+        // Consult manifest object, and each item element
+        //     Read the referenced file
+        //     Extract the stuff from its body tag
+        //     Append that body tag into the HTML file
+        //     Append HTML for page break
+        // Once last file is processed, write HTML file to disk
+        
+        var containerXmlText;
+        var containerXml;
+        var opfFileName;
+        var opfXmlText;
+        var opfXml;
+    
+        readContainerXml(rendered)
+        .then(containerXmlData => {
+            containerXmlText = containerXmlData.containerXmlText;
+            containerXml     = containerXmlData.containerXml;
+            return findOpfFileName(containerXml);
+        })
+        .then(_opfFileName  => {
+            opfFileName = _opfFileName;
+            return readOPF(rendered, opfFileName);
+        })
+        .then(opfXmlData => {
+            opfXmlText = opfXmlData.opfXmlText;
+            opfXml = opfXmlData.opfXml;
+            return;
+        })
+        .then(() => {
+            // Create empty HTML file
+        })
+        .then(() => {
+            // Step through manifest items, appending to the HTML
+        })
+        .then(() => {
+            // Write the HTML file
+        })
+        .then(()   => { resolve();    })
+        .catch(err => { reject(err); });
     });
 };
 
@@ -301,10 +481,6 @@ exports.bundleEPUB = function(rendered, epubFileName) {
         .catch(err => { reject(err); });
     });
 };
-
-/* exports.renderMarkdown = function(done) {
-    
-}; */
 
 function readContainerXml(rendered) {
     return new Promise((resolve, reject) => {
