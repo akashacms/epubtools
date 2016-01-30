@@ -7,10 +7,10 @@
   },
   "version": "0.1.4",
   "description": "Generate EPUB3 documents and assets",
-  "homepage": "https://github.com/akashacms/epubtools",
+  "homepage": "https://github.com/epubtools/epubtools",
   "repository": {
     "type": "git",
-    "url": "https://github.com/akashacms/epubtools.git"
+    "url": "https://github.com/epubtools/epubtools.git"
   },
   "main": "epubber.js",
   "bin": {
