@@ -58,9 +58,10 @@ const error = require('debug')('epubtools:error');
 // });
 
 exports.readYaml = function(bookYaml) {
+    log('readYaml '+ bookYaml);
     return new Promise((resolve, reject) => {
         fs.readFile(bookYaml, 'utf8', (err, yamlText) => {
-            if (err) reject(err);
+            if (err) { error(err); reject(err); }
             else resolve(yaml.safeLoad(yamlText));
         });
     });
@@ -257,7 +258,7 @@ exports.copyStuff = function(srcdir, destdir, extensions) {
 }; */
 
 // TODO Finish this
-exports.convert2html = function(rendered, htmlFileName) {
+exports.convert2html = function(fnyaml) {
     log('convert2html');
     
     // Start an empty HTML file
@@ -270,27 +271,38 @@ exports.convert2html = function(rendered, htmlFileName) {
     // Once last file is processed, write HTML file to disk
     
 
-    return readContainerXml(rendered)
-    .then(containerXmlData => {
-        return {
-            containerXmlText: containerXmlData.containerXmlText,
-            containerXml:     containerXmlData.containerXml,
-            opfFileName:      findOpfFileName(containerXmlData.containerXml)
-        };
-    })
-    .then(data  => {
-        return readOPF(rendered, data.opfFileName)
-        .then(opfXmlData => {
-            data.opfXmlData = opfXmlData;
-            data.opfXmlText = data.opfXmlData.opfXmlText;
-            data.opfXml = data.opfXmlData.opfXml;
-            log('after readOPF');
-            return data;
+    return exports.readYaml(fnyaml)
+    .then(convertYaml => {
+        log(util.inspect(convertYaml));
+        return new Promise((resolve, reject) => {
+            fs.mkdirs(convertYaml.output.dir, err => {
+                if (err) reject(err);
+                else resolve(convertYaml);
+            });
         });
     })
-    .then(data => {
+    .then(convertYaml => {
+        return readContainerXml(convertYaml.rendered)  
+        .then(containerXmlData => {
+            convertYaml.containerXmlText = containerXmlData.containerXmlText;
+            convertYaml.containerXml     = containerXmlData.containerXml;
+            convertYaml.opfFileName      = findOpfFileName(containerXmlData.containerXml);
+            return convertYaml;
+        })
+        .catch(err => { error(err); throw err; });
+    })
+    .then(convertYaml  => {
+        return readOPF(convertYaml.rendered, convertYaml.opfFileName)
+        .then(opfXmlData => {
+            convertYaml.opfXmlData = opfXmlData;
+            convertYaml.opfXmlText = opfXmlData.opfXmlText;
+            convertYaml.opfXml     = opfXmlData.opfXml;
+            return convertYaml;
+        })
+        .catch(err => { error(err); throw err; });
+    })
+    .then(convertYaml => {
         // Create empty HTML file
-        log('before create empty HTML');
         return new Promise((resolve, reject) => {
             jsdom.env(`<!DOCTYPE html>
             <html>
@@ -305,51 +317,59 @@ exports.convert2html = function(rendered, htmlFileName) {
             </html>
             `, ['http://code.jquery.com/jquery.js'],
             (err, window) => {
-                if (err) {
-                    error(err);
-                    return reject(err);
-                }
-                data.outputJSwindow = window;
-                log('created empty HTML');
-                resolve(data);
+                if (err) { error(err); return reject(err); }
+                convertYaml.outputJSwindow = window;
+                resolve(convertYaml);
             });
         });
     })
-    .then(data => {
+    .then(convertYaml => {
+        if (convertYaml.title)
+            convertYaml.outputJSwindow.$(`<title>${convertYaml.title}</title>`).prependTo("head");
+        if (convertYaml.stylesheet) {
+            convertYaml.outputJSwindow.$(`<link rel="stylesheet" href="${convertYaml.stylesheet}" type="text/css" />`).appendTo("head");
+            return new Promise((resolve, reject) => {
+                fs.copy(path.join(convertYaml.rendered, convertYaml.stylesheet),
+                        path.join(convertYaml.output.dir, convertYaml.stylesheet),
+                err => {
+                    if (err) reject(err);
+                    else resolve(convertYaml);
+                });
+            });
+        }
+        else return convertYaml;
+    })
+    .then(convertYaml => {
         // Step through manifest items, appending to the HTML
         // log(data.outputJSwindow.$().html());
-        log('before concatHTML');
-        return concatHTML(rendered, data.opfXml, data.opfFileName, data.outputJSwindow)
-        .then(foo => {
-            log('fini concatHTML');
-            return data;
-        })
-        .catch(err => { 
-            error(err);
-            throw err;
-        });
+        return concatHTML(convertYaml.rendered,
+                          convertYaml.opfXml,
+                          convertYaml.opfFileName,
+                          convertYaml.outputJSwindow,
+                          convertYaml.output.dir)
+        .then(foo  => { return convertYaml; })
+        .catch(err => { error(err); throw err; });
     })
-    .then(data => {
+    .then(convertYaml => {
         // Generate the HTML
-        // log(util.inspect(data));
-        data.outputJSwindow.$("script").remove();
-        log('before serialize');
-        data.outputHtml = require("jsdom").serializeDocument(data.outputJSwindow.document);
+        // log(util.inspect(convertYaml));
+        convertYaml.outputJSwindow.$("script").remove();
+        convertYaml.outputHtml = require("jsdom").serializeDocument(convertYaml.outputJSwindow.document);
         // data.outputHtml = data.outputJSwindow.$().html();
-        return data;
+        return convertYaml;
     })
-    .then(data => {
+    .then(convertYaml => {
         // Write the HTML file
         return new Promise((resolve, reject) => {
-            // log(data.outputHtml);
-            fs.writeFile(htmlFileName, data.outputHtml, 'utf8', err => {
+            // log(convertYaml.outputHtml);
+            fs.writeFile(path.join(convertYaml.output.dir, convertYaml.output.fname),
+                         convertYaml.outputHtml, 'utf8',
+            err => {
                 if (err) reject(err);
                 else resolve();
             });
         });
     });
-    // .then(()   => { resolve();    })
-    // .catch(err => { reject(err); });
 };
 
 exports.createMimetypeFile = function(rendered) {
@@ -573,12 +593,9 @@ function readOPF(rendered, opfName) {
     });
 }
 
-function concatHTML(rendered, opfXml, opfFileName, outputJSwindow) {
-    
+function concatHTML(rendered, opfXml, opfFileName, outputJSwindow, outputDir) {
     
     return new Promise((resolve, reject) => {
-        
-        var htmlPromises = [];
         
         var manifests = opfXml.getElementsByTagName("manifest");
         var manifest;
@@ -586,6 +603,8 @@ function concatHTML(rendered, opfXml, opfFileName, outputJSwindow) {
             if (elem.nodeName.toUpperCase() === 'manifest'.toUpperCase()) manifest = elem;
         }
         if (manifest) {
+            
+            // First, create an array of the file names to use
             var itemHrefs = [];
             var items = manifest.getElementsByTagName('item');
             for (let item of nodeListIterator(items)) {
@@ -604,10 +623,17 @@ function concatHTML(rendered, opfXml, opfFileName, outputJSwindow) {
                 }
             }
             
+            // Then step through that array doing these things
+            //    * read the named file
+            //    * remove the script tag added by jsdom
+            //    * copy any referenced images, fixing the img src= attribute
+            //    * append the <body> of file to the output window
             async.eachSeries(itemHrefs,
             (itemHref, done) => {
                 
-                fs.readFile(path.join(rendered, itemHref), 'utf8', (err, text) => {
+                let itemFileName = path.join(rendered, itemHref);
+                fs.readFile(itemFileName, 'utf8',
+                (err, text) => {
                     if (err) return done(err);
                     
                     log('readFile '+ itemHref);
@@ -615,7 +641,19 @@ function concatHTML(rendered, opfXml, opfFileName, outputJSwindow) {
                     text, ['http://code.jquery.com/jquery.js'],
                     (err, window) => {
                         if (err) { error(err); return done(err); }
-                	    window.$("script").remove();
+                        // Remove the script tag added by jsdom
+                	    window.$('body script.jsdom[src*="jquery"]').remove();
+                	    window.$('img').each(function(index) {
+                	        // an img src=path/to/file.jpg becomes just src=files.jpg on output
+                	        let imgsrc = window.$(this).attr('src');
+                	        log('copying '+ imgsrc +' to '+ path.join(outputDir, path.basename(imgsrc)));
+                	        let itemDirName = path.dirname(itemFileName);
+                	        // have to do copySync here because of the difficulty
+                	        // of handling this as an asynchronous operation
+                	        fs.copySync(path.join(itemDirName, imgsrc),
+                	                    path.join(outputDir, path.basename(imgsrc)));
+                	        window.$(this).attr('src', path.basename(imgsrc));
+                	    });
                 	    let bodyText = window.$("body").html();
                 	    outputJSwindow.$(bodyText).appendTo('body');
                 	    outputJSwindow.$('<div class="page-break"></div>').appendTo('body');
@@ -629,6 +667,8 @@ function concatHTML(rendered, opfXml, opfFileName, outputJSwindow) {
                 else resolve();
             });
         
+        } else {
+            reject(new Error(`no manifest in ${opfFileName}`));
         }
     });
 }

@@ -118,10 +118,10 @@ program
     });
 
 program
-    .command('tohtml <rendered> <fnhtml>')
-    .description('Check an EPUB directory for valid HTML')
-    .action((rendered, fnhtml) => {
-        epubber.convert2html(rendered, fnhtml)
+    .command('tohtml <convertYaml>')
+    .description('Convert EPUB to HTML')
+    .action(convertYaml => {
+        epubber.convert2html(convertYaml)
         .catch(err => { console.error(err.stack); });
     });
 
