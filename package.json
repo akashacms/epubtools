@@ -35,6 +35,7 @@
     "sprintf-js": "^1.0.3",
     "uuid": "^2.0.1",
     "xmldom": "*",
-    "text-statistics": "*"
+    "text-statistics": "*",
+    "debug": "*"
   }
 }

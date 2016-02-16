@@ -117,4 +117,12 @@ program
         .catch(err => { console.error(err.stack); });
     });
 
+program
+    .command('tohtml <rendered> <fnhtml>')
+    .description('Check an EPUB directory for valid HTML')
+    .action((rendered, fnhtml) => {
+        epubber.convert2html(rendered, fnhtml)
+        .catch(err => { console.error(err.stack); });
+    });
+
 program.parse(process.argv);

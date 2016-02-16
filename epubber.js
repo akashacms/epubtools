@@ -37,6 +37,10 @@ var sprintf   = require("sprintf-js").sprintf,
     vsprintf  = require("sprintf-js").vsprintf;
 var yaml      = require('js-yaml');
 var textStatistics = require('text-statistics');
+
+const log   = require('debug')('epubtools:epubber');
+const error = require('debug')('epubtools:error');
+
 // DOESN'T BELONG
 // var ejs       = require('ejs');
 // var yfm       = require('yfm');
@@ -254,49 +258,98 @@ exports.copyStuff = function(srcdir, destdir, extensions) {
 
 // TODO Finish this
 exports.convert2html = function(rendered, htmlFileName) {
-    return new Promise((resolve, reject) => {
-        // Start an empty HTML file
-        // Pick up .opf file
-        // Consult manifest object, and each item element
-        //     Read the referenced file
-        //     Extract the stuff from its body tag
-        //     Append that body tag into the HTML file
-        //     Append HTML for page break
-        // Once last file is processed, write HTML file to disk
-        
-        var containerXmlText;
-        var containerXml;
-        var opfFileName;
-        var opfXmlText;
-        var opfXml;
+    log('convert2html');
     
-        readContainerXml(rendered)
-        .then(containerXmlData => {
-            containerXmlText = containerXmlData.containerXmlText;
-            containerXml     = containerXmlData.containerXml;
-            return findOpfFileName(containerXml);
-        })
-        .then(_opfFileName  => {
-            opfFileName = _opfFileName;
-            return readOPF(rendered, opfFileName);
-        })
+    // Start an empty HTML file
+    // Pick up .opf file
+    // Consult manifest object, and each item element
+    //     Read the referenced file
+    //     Extract the stuff from its body tag
+    //     Append that body tag into the HTML file
+    //     Append HTML for page break
+    // Once last file is processed, write HTML file to disk
+    
+
+    return readContainerXml(rendered)
+    .then(containerXmlData => {
+        return {
+            containerXmlText: containerXmlData.containerXmlText,
+            containerXml:     containerXmlData.containerXml,
+            opfFileName:      findOpfFileName(containerXmlData.containerXml)
+        };
+    })
+    .then(data  => {
+        return readOPF(rendered, data.opfFileName)
         .then(opfXmlData => {
-            opfXmlText = opfXmlData.opfXmlText;
-            opfXml = opfXmlData.opfXml;
-            return;
+            data.opfXmlData = opfXmlData;
+            data.opfXmlText = data.opfXmlData.opfXmlText;
+            data.opfXml = data.opfXmlData.opfXml;
+            log('after readOPF');
+            return data;
+        });
+    })
+    .then(data => {
+        // Create empty HTML file
+        log('before create empty HTML');
+        return new Promise((resolve, reject) => {
+            jsdom.env(`<!DOCTYPE html>
+            <html>
+            <head>
+            <style>
+            @media print {
+                div.page-break {page-break-after: always;}
+            }
+            </style>
+            </head>
+            <body></body>
+            </html>
+            `, ['http://code.jquery.com/jquery.js'],
+            (err, window) => {
+                if (err) {
+                    error(err);
+                    return reject(err);
+                }
+                data.outputJSwindow = window;
+                log('created empty HTML');
+                resolve(data);
+            });
+        });
+    })
+    .then(data => {
+        // Step through manifest items, appending to the HTML
+        // log(data.outputJSwindow.$().html());
+        log('before concatHTML');
+        return concatHTML(rendered, data.opfXml, data.opfFileName, data.outputJSwindow)
+        .then(foo => {
+            log('fini concatHTML');
+            return data;
         })
-        .then(() => {
-            // Create empty HTML file
-        })
-        .then(() => {
-            // Step through manifest items, appending to the HTML
-        })
-        .then(() => {
-            // Write the HTML file
-        })
-        .then(()   => { resolve();    })
-        .catch(err => { reject(err); });
+        .catch(err => { 
+            error(err);
+            throw err;
+        });
+    })
+    .then(data => {
+        // Generate the HTML
+        // log(util.inspect(data));
+        data.outputJSwindow.$("script").remove();
+        log('before serialize');
+        data.outputHtml = require("jsdom").serializeDocument(data.outputJSwindow.document);
+        // data.outputHtml = data.outputJSwindow.$().html();
+        return data;
+    })
+    .then(data => {
+        // Write the HTML file
+        return new Promise((resolve, reject) => {
+            // log(data.outputHtml);
+            fs.writeFile(htmlFileName, data.outputHtml, 'utf8', err => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
     });
+    // .then(()   => { resolve();    })
+    // .catch(err => { reject(err); });
 };
 
 exports.createMimetypeFile = function(rendered) {
@@ -520,6 +573,66 @@ function readOPF(rendered, opfName) {
     });
 }
 
+function concatHTML(rendered, opfXml, opfFileName, outputJSwindow) {
+    
+    
+    return new Promise((resolve, reject) => {
+        
+        var htmlPromises = [];
+        
+        var manifests = opfXml.getElementsByTagName("manifest");
+        var manifest;
+        for (let elem of nodeListIterator(manifests)) {
+            if (elem.nodeName.toUpperCase() === 'manifest'.toUpperCase()) manifest = elem;
+        }
+        if (manifest) {
+            var itemHrefs = [];
+            var items = manifest.getElementsByTagName('item');
+            for (let item of nodeListIterator(items)) {
+                if (item.nodeName.toUpperCase() === 'item'.toUpperCase()) {
+                    let itemHref = item.getAttribute('href');
+                    let mediaType = item.getAttribute('media-type');
+                    
+                    if (itemHref === "mimetype"
+                     || itemHref === opfFileName
+                     || itemHref === path.join("META-INF", "container.xml")
+                     || mediaType !== "application/xhtml+xml") {
+                        // Skip these special files
+                        continue;
+                    }
+                    itemHrefs.push(itemHref);
+                }
+            }
+            
+            async.eachSeries(itemHrefs,
+            (itemHref, done) => {
+                
+                fs.readFile(path.join(rendered, itemHref), 'utf8', (err, text) => {
+                    if (err) return done(err);
+                    
+                    log('readFile '+ itemHref);
+                    jsdom.env(
+                    text, ['http://code.jquery.com/jquery.js'],
+                    (err, window) => {
+                        if (err) { error(err); return done(err); }
+                	    window.$("script").remove();
+                	    let bodyText = window.$("body").html();
+                	    outputJSwindow.$(bodyText).appendTo('body');
+                	    outputJSwindow.$('<div class="page-break"></div>').appendTo('body');
+                	    log('processed '+ itemHref);
+                        done();
+                    });
+                });
+            },
+            err => {
+                if (err) reject(err);
+                else resolve();
+            });
+        
+        }
+    });
+}
+
 function archiveFiles(rendered, epubFileName, opfXml, opfFileName) {
     
     return new Promise((resolve, reject) => {
@@ -613,7 +726,7 @@ function scanTocHtml(tocHtml, tocId, tocHref, ncx, manifest, opfspine, bookYaml)
         // logger.info('found nav');
         
         var topol;
-        for (var navchild = 0; navchild < thenav.childNodes.length; navchild++) {
+        for (let navchild = 0; navchild < thenav.childNodes.length; navchild++) {
             if (thenav.childNodes[navchild].nodeName
              && thenav.childNodes[navchild].nodeName.toUpperCase() === 'ol'.toUpperCase()
              && thenav.childNodes[navchild].hasAttributes()
@@ -683,16 +796,29 @@ function scanTocHtml(tocHtml, tocId, tocHref, ncx, manifest, opfspine, bookYaml)
                     var subchapters;
                     section = undefined;
                     subchapters = undefined;
-                    for (var childno = 0; childno < olchild.childNodes.length; childno++) {
+                    for (let childno = 0; childno < olchild.childNodes.length; childno++) {
                         // logger.info('olchild.childNodes[childno].nodeName '+ olchild.childNodes[childno].nodeName);
                         if (olchild.childNodes[childno].nodeName
                          && olchild.childNodes[childno].nodeName.toUpperCase() === 'ol'.toUpperCase()) {
                             subchapters = scanOL(olchild.childNodes[childno]);
                         } else if (olchild.childNodes[childno].nodeName
                                 && olchild.childNodes[childno].nodeName.toUpperCase() === 'a'.toUpperCase()) {
-                            var anchor = olchild.childNodes[childno];
+                            let anchor = olchild.childNodes[childno];
                             
-                            manifest.push({
+                            let href = anchor.getAttribute('href');
+                            let hrefP = url.parse(href);
+                            
+                            // Detect any files that are already in manifest
+                            // Only add to manifest stuff which isn't already there
+                            let inManifest = false;
+                            for (let mi = 0; mi < manifest.length; mi++) {
+                                let item = manifest[mi];
+                                if (item.href === hrefP.pathname) {
+                                    inManifest = true;
+                                }
+                            }
+                            
+                            if (!inManifest) manifest.push({
                                 id: anchor.getAttribute('id'),
                                 type: "application/xhtml+xml",
                                 href: anchor.getAttribute('href')
