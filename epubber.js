@@ -951,7 +951,9 @@ function makeOpfXml(bookYaml, manifest, opfspine) {
         // <dc:date><%= date %></dc:date>
         if (typeof bookYaml.published.date !== 'undefined' && bookYaml.published.date) {
             elem = OPFXML.createElementNS("http://purl.org/dc/elements/1.1/", 'dc:date');
-            elem.appendChild(OPFXML.createTextNode(bookYaml.published.date));
+            let date = w3cdate(new Date(bookYaml.published.date));
+            util.log(`published.date ${bookYaml.published.date} => ${date}`);
+            elem.appendChild(OPFXML.createTextNode(date));
             metadata.appendChild(elem);
         }
         
@@ -959,8 +961,13 @@ function makeOpfXml(bookYaml, manifest, opfspine) {
         if (typeof bookYaml.published.modified !== 'undefined' && bookYaml.published.modified) {
             elem = OPFXML.createElement('meta');
             elem.setAttribute('property', "dcterms:modified");
-            elem.appendChild(OPFXML.createTextNode(bookYaml.published.modified));
-            metadata.appendChild(elem);
+            let mdate = new Date(bookYaml.published.modified);
+            if (mdate) {
+                let date = w3cdate(mdate);
+                util.log(`modified.date ${bookYaml.published.modified} => ${date}`);
+                elem.appendChild(OPFXML.createTextNode(date));
+                metadata.appendChild(elem);
+            }
         }
         
         // <dc:format><%= format %></dc:format>
@@ -1325,7 +1332,7 @@ function computeRelativePrefixToRoot(source) {
 }
 
 
-var w3cdate = function(date) {
+function w3cdate(date) {
     return sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
            date.getUTCFullYear(),
           (date.getUTCMonth() + 1),
