@@ -923,8 +923,14 @@ function makeOpfXml(bookYaml, manifest, opfspine) {
                 if (typeof identifier.unique !== 'undefined' && identifier.unique !== null) {
                     elem.setAttribute('id', "epub-unique-identifier");
                 }
-                elem.appendChild(OPFXML.createTextNode(identifier.idstring));
-                metadata.appendChild(elem);
+                if (typeof identifier.urn && identifier.urn != null) {
+                    elem.appendChild(OPFXML.createTextNode(identifier.urn));
+                    metadata.appendChild(elem);
+                } else if (typeof identifier.uuid && identifier.uuid != null) {
+                    elem.appendChild(OPFXML.createTextNode("urn:uuid:"+identifier.uuid));
+                    metadata.appendChild(elem);
+                }
+                // TODO Format for other ID formats like ISBN
             });
         }
         
@@ -952,7 +958,6 @@ function makeOpfXml(bookYaml, manifest, opfspine) {
         if (typeof bookYaml.published.date !== 'undefined' && bookYaml.published.date) {
             elem = OPFXML.createElementNS("http://purl.org/dc/elements/1.1/", 'dc:date');
             let date = w3cdate(new Date(bookYaml.published.date));
-            util.log(`published.date ${bookYaml.published.date} => ${date}`);
             elem.appendChild(OPFXML.createTextNode(date));
             metadata.appendChild(elem);
         }
@@ -964,7 +969,6 @@ function makeOpfXml(bookYaml, manifest, opfspine) {
             let mdate = new Date(bookYaml.published.modified);
             if (mdate) {
                 let date = w3cdate(mdate);
-                util.log(`modified.date ${bookYaml.published.modified} => ${date}`);
                 elem.appendChild(OPFXML.createTextNode(date));
                 metadata.appendChild(elem);
             }
