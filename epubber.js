@@ -366,11 +366,6 @@ exports.makeOPFNCX = function(rendered, bookYaml) {
         var OPFXML;
         var NCXXML;
         
-        var headerScripts = {};
-        if (bookYaml.stylesheets)      headerScripts.stylesheets = bookYaml.stylesheets;
-        if (bookYaml.javaScriptTop)    headerScripts.javaScriptTop = bookYaml.javaScriptTop;
-        if (bookYaml.javaScriptBottom) headerScripts.javaScriptBottom = bookYaml.javaScriptBottom;
-    
         readTOC(rendered, bookYaml.toc.href)
         .then(_tocHtml => {
             tocHtml = _tocHtml;
@@ -378,7 +373,7 @@ exports.makeOPFNCX = function(rendered, bookYaml) {
         })
         .then(tocData => {
             chapters = tocData.chapters;
-            return assetsManifest(rendered, bookYaml, headerScripts, manifest);
+            return assetsManifest(rendered, bookYaml, manifest);
         })
         .then(() => {
             return makeOpfXml(bookYaml, manifest, opfspine);
@@ -806,30 +801,11 @@ function scanTocHtml(tocHtml, tocId, tocHref, ncx, manifest, opfspine, bookYaml)
     });
 }
 
-function assetsManifest(rendered, bookYaml, headerScripts, manifest) {
+function assetsManifest(rendered, bookYaml, manifest) {
     
     
     return new Promise((resolve, reject) => {
             
-        // Stylesheet and JavaScript files are listed in the config
-        if (headerScripts.stylesheets)
-            headerScripts.stylesheets.forEach(function(cssentry) {
-                manifest.push({
-                    id: cssentry.id,
-                    type: "text/css",
-                    href: rewriteURL({ rendered_url: bookYaml.opf }, cssentry.href, false)  // MAP this URL
-                });
-            });
-    
-        if (headerScripts.javaScriptTop)
-            headerScripts.javaScriptTop.concat(headerScripts.javaScriptBottom).forEach(function(jsentry) {
-                manifest.push({
-                    id: jsentry.id,
-                    type: "application/javascript",
-                    href: rewriteURL({ rendered_url: bookYaml.opf }, jsentry.href, false)  // MAP this URL
-                });
-            });
-        
         // There had formerly been a list of allowed file extensions in globfs.operate
         //
         // Turns out to have been too restrictive because those who wanted to
@@ -876,14 +852,14 @@ function assetsManifest(rendered, bookYaml, headerScripts, manifest) {
                         var mimetype;
                         if (fpath.match(/\.ttf$/i)) mimetype = "application/vnd.ms-opentype";
                         else if (fpath.match(/\.otf$/i)) mimetype = "application/vnd.ms-opentype";
+                        else if (fpath.match(/\.js$/i)) mimetype = "application/javascript";
+                        else if (fpath.match(/\.css/i)) mimetype = "text/css";
                         else mimetype = mime.lookup(fpath);
                         
                         manifest.push({
                             id: "asset" + assetNum++,
                             type: mimetype,
-                            href: rewriteURL({
-                                rendered_url: bookYaml.opf
-                            }, fpath, false)
+                            href: rewriteURL({ rendered_url: bookYaml.opf }, fpath, false)
                         });
                     }
                     fini();
