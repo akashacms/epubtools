@@ -70,35 +70,36 @@ exports.readYaml = function(bookYaml) {
 exports.yamlCheck = function(bookYaml) {
     
     return new Promise((resolve, reject) => {
+        try {
+            if (!bookYaml.opf) return reject(new Error('no OPF file specified'));
         
-        if (!bookYaml.opf) return reject(new Error('no OPF file specified'));
-    
-        if (!bookYaml.identifiers) {
-            return reject(new Error('no UUID .. suggest \
-              identifiers: [ { unique: true, idstring: "urn:uuid"'+ uuid.v1() +' } ] \
-            '));
-        } else {
-            var uniqueCount = 0;
-            bookYaml.identifiers.forEach(identifier => {
-                if (typeof identifier.unique !== 'undefined' && identifier.unique !== null) uniqueCount++;
-            });
-            if (uniqueCount !== 1) return reject(new Error("There can be only one - unique identifier, that is, found="+ uniqueCount));
-        }
-        
-        var rightnow = w3cdate(new Date());
-        if (!bookYaml.published) bookYaml.published = {};
-        if (!bookYaml.published || !bookYaml.published.date) {
-            return reject(new Error('no published.date suggest '+ rightnow));
-        }
-        bookYaml.published.modified = rightnow;
-        
-        if (!bookYaml.toc || !bookYaml.toc.href) {
-            return reject(new Error('No toc entry'));
-        }
-        
-        // util.log(util.inspect(bookYaml));
-        
-        resolve(bookYaml);
+            if (!bookYaml.identifiers) {
+                return reject(new Error('no UUID .. suggest \
+                  identifiers: [ { unique: true, idstring: "urn:uuid"'+ uuid.v1() +' } ] \
+                '));
+            } else {
+                var uniqueCount = 0;
+                bookYaml.identifiers.forEach(identifier => {
+                    if (typeof identifier.unique !== 'undefined' && identifier.unique !== null) uniqueCount++;
+                });
+                if (uniqueCount !== 1) return reject(new Error("There can be only one - unique identifier, that is, found="+ uniqueCount));
+            }
+            
+            var rightnow = w3cdate(new Date());
+            if (!bookYaml.published) bookYaml.published = {};
+            if (!bookYaml.published || !bookYaml.published.date) {
+                return reject(new Error('no published.date suggest '+ rightnow));
+            }
+            bookYaml.published.modified = rightnow;
+            
+            if (!bookYaml.toc || !bookYaml.toc.href) {
+                return reject(new Error('No toc entry'));
+            }
+            
+            // util.log(util.inspect(bookYaml));
+            
+            resolve(bookYaml);
+        } catch (err) { reject(err); }
     });
 };
 
@@ -495,141 +496,145 @@ function concatHTML(rendered, opfXml, opfFileName, outputJSwindow, outputDir) {
     
     return new Promise((resolve, reject) => {
         
-        var manifests = opfXml.getElementsByTagName("manifest");
-        var manifest;
-        for (let elem of nodeListIterator(manifests)) {
-            if (elem.nodeName.toUpperCase() === 'manifest'.toUpperCase()) manifest = elem;
-        }
-        if (manifest) {
-            
-            // First, create an array of the file names to use
-            var itemHrefs = [];
-            var items = manifest.getElementsByTagName('item');
-            for (let item of nodeListIterator(items)) {
-                if (item.nodeName.toUpperCase() === 'item'.toUpperCase()) {
-                    let itemHref = item.getAttribute('href');
-                    let mediaType = item.getAttribute('media-type');
-                    
-                    if (itemHref === "mimetype"
-                     || itemHref === opfFileName
-                     || itemHref === path.join("META-INF", "container.xml")
-                     || mediaType !== "application/xhtml+xml") {
-                        // Skip these special files
-                        continue;
-                    }
-                    itemHrefs.push(itemHref);
-                }
+        try {
+            var manifests = opfXml.getElementsByTagName("manifest");
+            var manifest;
+            for (let elem of nodeListIterator(manifests)) {
+                if (elem.nodeName.toUpperCase() === 'manifest'.toUpperCase()) manifest = elem;
             }
-            
-            // Then step through that array doing these things
-            //    * read the named file
-            //    * remove the script tag added by jsdom
-            //    * copy any referenced images, fixing the img src= attribute
-            //    * append the <body> of file to the output window
-            async.eachSeries(itemHrefs,
-            (itemHref, done) => {
+            if (manifest) {
                 
-                let itemFileName = path.join(rendered, itemHref);
-                fs.readFile(itemFileName, 'utf8',
-                (err, text) => {
-                    if (err) return done(err);
+                // First, create an array of the file names to use
+                var itemHrefs = [];
+                var items = manifest.getElementsByTagName('item');
+                for (let item of nodeListIterator(items)) {
+                    if (item.nodeName.toUpperCase() === 'item'.toUpperCase()) {
+                        let itemHref = item.getAttribute('href');
+                        let mediaType = item.getAttribute('media-type');
+                        
+                        if (itemHref === "mimetype"
+                         || itemHref === opfFileName
+                         || itemHref === path.join("META-INF", "container.xml")
+                         || mediaType !== "application/xhtml+xml") {
+                            // Skip these special files
+                            continue;
+                        }
+                        itemHrefs.push(itemHref);
+                    }
+                }
+                
+                // Then step through that array doing these things
+                //    * read the named file
+                //    * remove the script tag added by jsdom
+                //    * copy any referenced images, fixing the img src= attribute
+                //    * append the <body> of file to the output window
+                async.eachSeries(itemHrefs,
+                (itemHref, done) => {
                     
-                    log('readFile '+ itemHref);
-                    jsdom.env(
-                    text, ['http://code.jquery.com/jquery.js'],
-                    (err, window) => {
-                        if (err) { error(err); return done(err); }
-                        // Remove the script tag added by jsdom
-                	    window.$('body script.jsdom[src*="jquery"]').remove();
-                	    window.$('img').each(function(index) {
-                	        // an img src=path/to/file.jpg becomes just src=files.jpg on output
-                	        let imgsrc = window.$(this).attr('src');
-                	        log('copying '+ imgsrc +' to '+ path.join(outputDir, path.basename(imgsrc)));
-                	        let itemDirName = path.dirname(itemFileName);
-                	        // have to do copySync here because of the difficulty
-                	        // of handling this as an asynchronous operation
-                	        fs.copySync(path.join(itemDirName, imgsrc),
-                	                    path.join(outputDir, path.basename(imgsrc)));
-                	        window.$(this).attr('src', path.basename(imgsrc));
-                	    });
-                	    let bodyText = window.$("body").html();
-                	    outputJSwindow.$(bodyText).appendTo('body');
-                	    outputJSwindow.$('<div class="page-break"></div>').appendTo('body');
-                	    log('processed '+ itemHref);
-                        done();
+                    let itemFileName = path.join(rendered, itemHref);
+                    fs.readFile(itemFileName, 'utf8',
+                    (err, text) => {
+                        if (err) return done(err);
+                        
+                        log('readFile '+ itemHref);
+                        jsdom.env(
+                        text, ['http://code.jquery.com/jquery.js'],
+                        (err, window) => {
+                            if (err) { error(err); return done(err); }
+                            // Remove the script tag added by jsdom
+                            window.$('body script.jsdom[src*="jquery"]').remove();
+                            window.$('img').each(function(index) {
+                                // an img src=path/to/file.jpg becomes just src=files.jpg on output
+                                let imgsrc = window.$(this).attr('src');
+                                log('copying '+ imgsrc +' to '+ path.join(outputDir, path.basename(imgsrc)));
+                                let itemDirName = path.dirname(itemFileName);
+                                // have to do copySync here because of the difficulty
+                                // of handling this as an asynchronous operation
+                                fs.copySync(path.join(itemDirName, imgsrc),
+                                            path.join(outputDir, path.basename(imgsrc)));
+                                window.$(this).attr('src', path.basename(imgsrc));
+                            });
+                            let bodyText = window.$("body").html();
+                            outputJSwindow.$(bodyText).appendTo('body');
+                            outputJSwindow.$('<div class="page-break"></div>').appendTo('body');
+                            log('processed '+ itemHref);
+                            done();
+                        });
                     });
+                },
+                err => {
+                    if (err) reject(err);
+                    else resolve();
                 });
-            },
-            err => {
-                if (err) reject(err);
-                else resolve();
-            });
-        
-        } else {
-            reject(new Error(`no manifest in ${opfFileName}`));
-        }
+            
+            } else {
+                reject(new Error(`no manifest in ${opfFileName}`));
+            }
+        } catch(err) { reject(err); }
     });
 }
 
 function archiveFiles(rendered, epubFileName, opfXml, opfFileName) {
     
     return new Promise((resolve, reject) => {
-        var archive = archiver('zip');
-        
-        var output = fs.createWriteStream(epubFileName);
-                
-        output.on('close', () => {
-            // logger.info(archive.pointer() + ' total bytes');
-            // logger.info('archiver has been finalized and the output file descriptor has closed.');
-            resolve();
-        });
-        
-        archive.on('error', err => {
-            // logger.info('*********** BundleEPUB ERROR '+ err);
-            reject(err);
-        });
-        
-        archive.pipe(output);
-        
-        // The mimetype file must be the first entry, and must not be compressed
-        archive.append(
-            fs.createReadStream(path.join(rendered, "mimetype")),
-            { name: "mimetype", store: true });
-        archive.append(
-            fs.createReadStream(path.join(rendered, "META-INF", "container.xml")),
-            { name: path.join("META-INF", "container.xml") });
-        archive.append(
-            fs.createReadStream(path.join(rendered, opfFileName)),
-            { name: opfFileName });
-        
-        var manifests = opfXml.getElementsByTagName("manifest");
-        var manifest;
-        for (let elem of nodeListIterator(manifests)) {
-            if (elem.nodeName.toUpperCase() === 'manifest'.toUpperCase()) manifest = elem;
-        }
-        if (manifest) {
-            var items = manifest.getElementsByTagName('item');
-            for (let item of nodeListIterator(items)) {
-                if (item.nodeName.toUpperCase() === 'item'.toUpperCase()) {
-                    var itemHref = item.getAttribute('href');
+        try {
+            var archive = archiver('zip');
+            
+            var output = fs.createWriteStream(epubFileName);
                     
-                    if (itemHref === "mimetype"
-                     || itemHref === opfFileName
-                     || itemHref === path.join("META-INF", "container.xml")) {
-                        // Skip these special files
-                        continue;
+            output.on('close', () => {
+                // logger.info(archive.pointer() + ' total bytes');
+                // logger.info('archiver has been finalized and the output file descriptor has closed.');
+                resolve();
+            });
+            
+            archive.on('error', err => {
+                // logger.info('*********** BundleEPUB ERROR '+ err);
+                reject(err);
+            });
+            
+            archive.pipe(output);
+            
+            // The mimetype file must be the first entry, and must not be compressed
+            archive.append(
+                fs.createReadStream(path.join(rendered, "mimetype")),
+                { name: "mimetype", store: true });
+            archive.append(
+                fs.createReadStream(path.join(rendered, "META-INF", "container.xml")),
+                { name: path.join("META-INF", "container.xml") });
+            archive.append(
+                fs.createReadStream(path.join(rendered, opfFileName)),
+                { name: opfFileName });
+            
+            var manifests = opfXml.getElementsByTagName("manifest");
+            var manifest;
+            for (let elem of nodeListIterator(manifests)) {
+                if (elem.nodeName.toUpperCase() === 'manifest'.toUpperCase()) manifest = elem;
+            }
+            if (manifest) {
+                var items = manifest.getElementsByTagName('item');
+                for (let item of nodeListIterator(items)) {
+                    if (item.nodeName.toUpperCase() === 'item'.toUpperCase()) {
+                        var itemHref = item.getAttribute('href');
+                        
+                        if (itemHref === "mimetype"
+                         || itemHref === opfFileName
+                         || itemHref === path.join("META-INF", "container.xml")) {
+                            // Skip these special files
+                            continue;
+                        }
+                        
+                        archive.append(
+                            fs.createReadStream(path.join(rendered, itemHref)),
+                            { name: itemHref }
+                        );
                     }
-                    
-                    archive.append(
-                        fs.createReadStream(path.join(rendered, itemHref)),
-                        { name: itemHref }
-                    );
                 }
             }
-        }
-        
-        archive.finalize();
+            
+            archive.finalize();
 
+        } catch(e) { reject(e); }
     });
 
 }
@@ -648,156 +653,157 @@ function readTOC(rendered, tocHref) {
 function scanTocHtml(tocHtml, tocId, tocHref, ncx, manifest, opfspine, bookYaml) {
     
     return new Promise((resolve, reject) => {
-        var doc = jsdom.jsdom(tocHtml, {});
-        
-        var navs = doc.getElementsByTagName("nav");
-        var thenav;
-        for (let nav of nodeListIterator(navs)) {
-            if (nav.id === tocId) {
-                thenav = nav;
-                break;
-            }
-        }
-        if (!thenav) {
-            return reject(new Error('no <nav id="'+ tocId +'">'));
-        }
-        // logger.info('found nav');
-        
-        var topol;
-        for (let navchild = 0; navchild < thenav.childNodes.length; navchild++) {
-            if (thenav.childNodes[navchild].nodeName
-             && thenav.childNodes[navchild].nodeName.toUpperCase() === 'ol'.toUpperCase()
-             && thenav.childNodes[navchild].hasAttributes()
-             && thenav.childNodes[navchild].getAttribute('start')
-             && thenav.childNodes[navchild].getAttribute('type')) {
-                topol = thenav.childNodes[navchild];
-                break;
-            }
-        }
-        if (!topol) {
-            return reject(new Error('no <nav><ol type= start=></ol></nav>'));
-        }
-        // logger.info('found topol');
-        
-        
-        // cover image/file manifest and opfspine entries
-        
-        manifest.push({
-            id: bookYaml.cover.idImage,
-            properties: "cover-image",
-            href: rewriteURL({ rendered_url: bookYaml.opf }, bookYaml.cover.src, false),
-            type: bookYaml.cover.type
-        });
-        
-        if (bookYaml.cover.coverHtml) {
-            manifest.push({
-                id: bookYaml.cover.coverHtml.id,
-                href: rewriteURL({ rendered_url: bookYaml.opf }, bookYaml.cover.coverHtml.href, false),
-                type: "application/xhtml+xml"
-            });
-            opfspine.push({
-                idref: bookYaml.cover.coverHtml.id,
-                linear: "yes"
-            });
-        }
-        
-        // Add specific manifest and opfspine entries for TOC and NCX files
-        
-        manifest.push({
-            id: tocId,
-            properties: "nav",
-            type: "application/xhtml+xml",
-            href: tocHref
-        });
-        opfspine.push({
-            idref: tocId,
-            linear: "yes"
-        });
-        // logger.trace('_scanForBookMetadata '+ util.inspect(config.akashacmsEPUB.manifest));
-        if (ncx) {
-            manifest.push({
-                id: ncx.id,
-                type: "application/x-dtbncx+xml",
-                href: ncx.href
-            });
-        }
-        
-        // Scan the nested tree of ol's to capture data for .manifest .opfspine and .chapters
-        var spineorder = 0;
-        function scanOL(ol) {
-            // logger.info('scanOL ol.length='+ ol.childNodes.length);
-            var chaps = [];
-            for (let olchild of nodeListIterator(ol.childNodes)) {
-                // logger.info('olchild.nodeName '+ olchild.nodeName);
-                if (olchild.nodeName && olchild.nodeName.toUpperCase() === 'li'.toUpperCase()) {
-                    var section; // section refers to chapters or subchapters
-                    var subchapters;
-                    section = undefined;
-                    subchapters = undefined;
-                    for (let childno = 0; childno < olchild.childNodes.length; childno++) {
-                        // logger.info('olchild.childNodes[childno].nodeName '+ olchild.childNodes[childno].nodeName);
-                        if (olchild.childNodes[childno].nodeName
-                         && olchild.childNodes[childno].nodeName.toUpperCase() === 'ol'.toUpperCase()) {
-                            subchapters = scanOL(olchild.childNodes[childno]);
-                        } else if (olchild.childNodes[childno].nodeName
-                                && olchild.childNodes[childno].nodeName.toUpperCase() === 'a'.toUpperCase()) {
-                            let anchor = olchild.childNodes[childno];
-                            
-                            let href = anchor.getAttribute('href');
-                            let hrefP = url.parse(href);
-                            
-                            // Detect any files that are already in manifest
-                            // Only add to manifest stuff which isn't already there
-                            let inManifest = false;
-                            for (let mi = 0; mi < manifest.length; mi++) {
-                                let item = manifest[mi];
-                                if (item.href === hrefP.pathname) {
-                                    inManifest = true;
-                                }
-                            }
-                            
-                            if (!inManifest) manifest.push({
-                                id: anchor.getAttribute('id'),
-                                type: "application/xhtml+xml",
-                                href: anchor.getAttribute('href')
-                            });
-                            
-                            opfspine.push({
-                                idref: anchor.getAttribute('id'),
-                                linear: "yes"
-                            });
-                            
-                            section = {
-                                id: anchor.getAttribute('id'),
-                                title: anchor.textContent,
-                                href: anchor.getAttribute('href'),
-                                type: "application/xhtml+xml",
-                                navclass: "book",
-                                spineorder: ++spineorder
-                            };
-                        }
-                    }
-                    if (!section) {
-                        console.error('<li> has no <a> children in TOC='+ tocHref);
-                    } else {
-                        if (subchapters) section.subchapters = subchapters;
-                        chaps.push(section);
-                    }
+        try {
+            var doc = jsdom.jsdom(tocHtml, {});
+            
+            var navs = doc.getElementsByTagName("nav");
+            var thenav;
+            for (let nav of nodeListIterator(navs)) {
+                if (nav.id === tocId) {
+                    thenav = nav;
+                    break;
                 }
             }
-            // logger.info(util.inspect(chaps));
-            return chaps;
-        }
-        var chapters = scanOL(topol);
-        
-        // logger.info(util.inspect(config.akashacmsEPUB.chapters));
-        
-        resolve({
-            manifest: manifest,
-            opfspine: opfspine,
-            chapters: chapters
-        });
+            if (!thenav) {
+                return reject(new Error('no <nav id="'+ tocId +'">'));
+            }
+            // logger.info('found nav');
             
+            var topol;
+            for (let navchild = 0; navchild < thenav.childNodes.length; navchild++) {
+                if (thenav.childNodes[navchild].nodeName
+                 && thenav.childNodes[navchild].nodeName.toUpperCase() === 'ol'.toUpperCase()
+                 && thenav.childNodes[navchild].hasAttributes()
+                 && thenav.childNodes[navchild].getAttribute('start')
+                 && thenav.childNodes[navchild].getAttribute('type')) {
+                    topol = thenav.childNodes[navchild];
+                    break;
+                }
+            }
+            if (!topol) {
+                return reject(new Error('no <nav><ol type= start=></ol></nav>'));
+            }
+            // logger.info('found topol');
+            
+            
+            // cover image/file manifest and opfspine entries
+            
+            manifest.push({
+                id: bookYaml.cover.idImage,
+                properties: "cover-image",
+                href: rewriteURL({ rendered_url: bookYaml.opf }, bookYaml.cover.src, false),
+                type: bookYaml.cover.type
+            });
+            
+            if (bookYaml.cover.coverHtml) {
+                manifest.push({
+                    id: bookYaml.cover.coverHtml.id,
+                    href: rewriteURL({ rendered_url: bookYaml.opf }, bookYaml.cover.coverHtml.href, false),
+                    type: "application/xhtml+xml"
+                });
+                opfspine.push({
+                    idref: bookYaml.cover.coverHtml.id,
+                    linear: "yes"
+                });
+            }
+            
+            // Add specific manifest and opfspine entries for TOC and NCX files
+            
+            manifest.push({
+                id: tocId,
+                properties: "nav",
+                type: "application/xhtml+xml",
+                href: tocHref
+            });
+            opfspine.push({
+                idref: tocId,
+                linear: "yes"
+            });
+            // logger.trace('_scanForBookMetadata '+ util.inspect(config.akashacmsEPUB.manifest));
+            if (ncx) {
+                manifest.push({
+                    id: ncx.id,
+                    type: "application/x-dtbncx+xml",
+                    href: ncx.href
+                });
+            }
+            
+            // Scan the nested tree of ol's to capture data for .manifest .opfspine and .chapters
+            var spineorder = 0;
+            var scanOL = function(ol) {
+                // logger.info('scanOL ol.length='+ ol.childNodes.length);
+                var chaps = [];
+                for (let olchild of nodeListIterator(ol.childNodes)) {
+                    // logger.info('olchild.nodeName '+ olchild.nodeName);
+                    if (olchild.nodeName && olchild.nodeName.toUpperCase() === 'li'.toUpperCase()) {
+                        var section; // section refers to chapters or subchapters
+                        var subchapters;
+                        section = undefined;
+                        subchapters = undefined;
+                        for (let childno = 0; childno < olchild.childNodes.length; childno++) {
+                            // logger.info('olchild.childNodes[childno].nodeName '+ olchild.childNodes[childno].nodeName);
+                            if (olchild.childNodes[childno].nodeName
+                             && olchild.childNodes[childno].nodeName.toUpperCase() === 'ol'.toUpperCase()) {
+                                subchapters = scanOL(olchild.childNodes[childno]);
+                            } else if (olchild.childNodes[childno].nodeName
+                                    && olchild.childNodes[childno].nodeName.toUpperCase() === 'a'.toUpperCase()) {
+                                let anchor = olchild.childNodes[childno];
+                                
+                                let href = anchor.getAttribute('href');
+                                let hrefP = url.parse(href);
+                                
+                                // Detect any files that are already in manifest
+                                // Only add to manifest stuff which isn't already there
+                                let inManifest = false;
+                                for (let mi = 0; mi < manifest.length; mi++) {
+                                    let item = manifest[mi];
+                                    if (item.href === hrefP.pathname) {
+                                        inManifest = true;
+                                    }
+                                }
+                                
+                                if (!inManifest) manifest.push({
+                                    id: anchor.getAttribute('id'),
+                                    type: "application/xhtml+xml",
+                                    href: anchor.getAttribute('href')
+                                });
+                                
+                                opfspine.push({
+                                    idref: anchor.getAttribute('id'),
+                                    linear: "yes"
+                                });
+                                
+                                section = {
+                                    id: anchor.getAttribute('id'),
+                                    title: anchor.textContent,
+                                    href: anchor.getAttribute('href'),
+                                    type: "application/xhtml+xml",
+                                    navclass: "book",
+                                    spineorder: ++spineorder
+                                };
+                            }
+                        }
+                        if (!section) {
+                            console.error('<li> has no <a> children in TOC='+ tocHref);
+                        } else {
+                            if (subchapters) section.subchapters = subchapters;
+                            chaps.push(section);
+                        }
+                    }
+                }
+                // logger.info(util.inspect(chaps));
+                return chaps;
+            }
+            var chapters = scanOL(topol);
+            
+            // logger.info(util.inspect(config.akashacmsEPUB.chapters));
+            
+            resolve({
+                manifest: manifest,
+                opfspine: opfspine,
+                chapters: chapters
+            });
+        } catch(err) { reject(err); }
     });
 }
 
@@ -1095,143 +1101,146 @@ function makeOpfXml(bookYaml, manifest, opfspine) {
 
 function makeNCXXML(rendered, bookYaml, chapters) {
     return new Promise((resolve, reject) => {
-        var NCXXML = new xmldom.DOMParser().parseFromString('<?xml version="1.0" encoding="UTF-8"?> \
-            <ncx version="2005-1" xml:lang="en" xmlns="http://www.daisy.org/z3986/2005/ncx/"> \
-              <head> </head> \
-              <docTitle> <text></text> </docTitle> \
-              <docAuthor> <text></text> </docAuthor> \
-              <navMap> </navMap> \
-            </ncx>', 'text/xml');
+        try {
             
-        var headElem;
-        var docTitleElem;
-        var docTitleText;
-        var docAuthorElem;
-        var docAuthorText;
-        var navMapElem;
-        var elem;
-        
-        var heads = NCXXML.getElementsByTagName("head");
-        // util.log(util.inspect(rootfile));
-        for (let elem of nodeListIterator(heads)) {
-            if (elem.nodeName.toUpperCase() === 'head'.toUpperCase()) headElem = elem;
-        }
-        
-        var docTitles = NCXXML.getElementsByTagName("docTitle");
-        // util.log(util.inspect(rootfile));
-        for (let elem of nodeListIterator(docTitles)) {
-            if (elem.nodeName.toUpperCase() === 'docTitle'.toUpperCase()) docTitleElem = elem;
-        }
-        var docTitleTexts = docTitleElem.getElementsByTagName("text");
-        for (let elem of nodeListIterator(docTitleTexts)) {
-            if (elem.nodeName.toUpperCase() === 'text'.toUpperCase()) docTitleText = elem;
-        }
-        
-        var docAuthors = NCXXML.getElementsByTagName("docAuthor");
-        // util.log(util.inspect(rootfile));
-        for (let elem of nodeListIterator(docAuthors)) {
-            if (elem.nodeName.toUpperCase() === 'docAuthor'.toUpperCase()) docAuthorElem = elem;
-        }
-        var docAuthorTexts = docAuthorElem.getElementsByTagName("text");
-        for (let elem of nodeListIterator(docAuthorTexts)) {
-            if (elem.nodeName.toUpperCase() === 'text'.toUpperCase()) docAuthorText = elem;
-        }
-        
-        var navMaps = NCXXML.getElementsByTagName("navMap");
-        // util.log(util.inspect(rootfile));
-        for (let elem of nodeListIterator(navMaps)) {
-            if (elem.nodeName.toUpperCase() === 'navMap'.toUpperCase()) navMapElem = elem;
-        }
-        
-        var uniqueID;
-        bookYaml.identifiers.forEach(function(identifier) {
-            if (typeof identifier.unique !== 'undefined' && identifier.unique !== null) uniqueID = identifier;
-        });
-        if (!uniqueID) reject(new Error("No Identifier"));
-        
-        // <meta name="dtb:uid" content="<%= uniqueID.ncxidentifier %>"/>
-        // <meta name="dtb:uid" content="<%= uniqueID.idstring %>"/>
-        if (uniqueID.ncxidentifier) {
-            elem = NCXXML.createElement('meta');
-            elem.setAttribute('name', "dtb:uid");
-            elem.setAttribute('content', uniqueID.ncxidentifier);
-            headElem.appendChild(elem);
-        } else {
-            elem = NCXXML.createElement('meta');
-            elem.setAttribute('name', "dtb:uid");
-            elem.setAttribute('content', uniqueID.idstring);
-            headElem.appendChild(elem);
-        }
-        
-        // <meta name="dtb:depth" content="1"/> <!-- 1 or higher -->
-        elem = NCXXML.createElement('meta');
-        elem.setAttribute('name', "dtb:depth");
-        elem.setAttribute('content', "1");
-        headElem.appendChild(elem);
-        
-        // <meta name="dtb:totalPageCount" content="0"/> <!-- must be 0 -->
-        elem = NCXXML.createElement('meta');
-        elem.setAttribute('name', "dtb:totalPageCount");
-        elem.setAttribute('content', "0");
-        headElem.appendChild(elem);
-        
-        // <meta name="dtb:maxPageNumber" content="0"/> <!-- must be 0 -->
-        elem = NCXXML.createElement('meta');
-        elem.setAttribute('name', "dtb:maxPageNumber");
-        elem.setAttribute('content', "0");
-        headElem.appendChild(elem);
-        
-        docTitleText.appendChild(NCXXML.createTextNode(bookYaml.title));
-        docAuthorText.appendChild(NCXXML.createTextNode(bookYaml.creators[0].nameReversed));
-        
-        // <navPoint class="<%= chapter.navclass %>" id="<%= chapter.id %>" playOrder="<%= chapter.spineorder %>">
-        //     <navLabel><text><%= chapter.title %></text></navLabel>
-        //     <content src="<%= chapter.href %>" />
-        //     <%
-        //     if (chapter.hasOwnProperty("subchapters") && chapter.subchapters) {
-        //         chapter.subchapters.forEach(function(subchapter) {
-        //             %>
-        //             <%- partial('toc-navpoint.ncx.ejs', { chapter: subchapter }) %>
-        //             <%
-        //         });
-        //     }
-        //     %>
-        // </navPoint>
-        
-        // console.log(util.inspect(chapters));
-        
-        var navPointForChapter = function(chapter) {
-            var navPoint = NCXXML.createElement('navPoint');
-            navPoint.setAttribute('class', chapter.navclass);
-            navPoint.setAttribute('id', chapter.id);
-            navPoint.setAttribute('playOrder', chapter.spineorder);
+            var NCXXML = new xmldom.DOMParser().parseFromString('<?xml version="1.0" encoding="UTF-8"?> \
+                <ncx version="2005-1" xml:lang="en" xmlns="http://www.daisy.org/z3986/2005/ncx/"> \
+                  <head> </head> \
+                  <docTitle> <text></text> </docTitle> \
+                  <docAuthor> <text></text> </docAuthor> \
+                  <navMap> </navMap> \
+                </ncx>', 'text/xml');
+                
+            var headElem;
+            var docTitleElem;
+            var docTitleText;
+            var docAuthorElem;
+            var docAuthorText;
+            var navMapElem;
+            var elem;
             
-            var navLabel = NCXXML.createElement('navLabel');
-            var navLabelText = NCXXML.createElement('text');
-            navLabelText.appendChild(NCXXML.createTextNode(chapter.title));
-            navLabel.appendChild(navLabelText);
-            navPoint.appendChild(navLabel);
+            var heads = NCXXML.getElementsByTagName("head");
+            // util.log(util.inspect(rootfile));
+            for (let elem of nodeListIterator(heads)) {
+                if (elem.nodeName.toUpperCase() === 'head'.toUpperCase()) headElem = elem;
+            }
             
-            var content = NCXXML.createElement('content');
-            content.setAttribute('src', chapter.href);
-            navPoint.appendChild(content);
+            var docTitles = NCXXML.getElementsByTagName("docTitle");
+            // util.log(util.inspect(rootfile));
+            for (let elem of nodeListIterator(docTitles)) {
+                if (elem.nodeName.toUpperCase() === 'docTitle'.toUpperCase()) docTitleElem = elem;
+            }
+            var docTitleTexts = docTitleElem.getElementsByTagName("text");
+            for (let elem of nodeListIterator(docTitleTexts)) {
+                if (elem.nodeName.toUpperCase() === 'text'.toUpperCase()) docTitleText = elem;
+            }
             
-            return navPoint;
-        };
-
-        var handleNavChapters = function(appendTo, chapters) {
-            chapters.forEach(chapter => {
-                var navPoint = navPointForChapter(chapter);
-                appendTo.appendChild(navPoint);
-                if (chapter.hasOwnProperty("subchapters") && chapter.subchapters) {
-                    handleNavChapters(navPoint, chapter.subchapters);
-                }
+            var docAuthors = NCXXML.getElementsByTagName("docAuthor");
+            // util.log(util.inspect(rootfile));
+            for (let elem of nodeListIterator(docAuthors)) {
+                if (elem.nodeName.toUpperCase() === 'docAuthor'.toUpperCase()) docAuthorElem = elem;
+            }
+            var docAuthorTexts = docAuthorElem.getElementsByTagName("text");
+            for (let elem of nodeListIterator(docAuthorTexts)) {
+                if (elem.nodeName.toUpperCase() === 'text'.toUpperCase()) docAuthorText = elem;
+            }
+            
+            var navMaps = NCXXML.getElementsByTagName("navMap");
+            // util.log(util.inspect(rootfile));
+            for (let elem of nodeListIterator(navMaps)) {
+                if (elem.nodeName.toUpperCase() === 'navMap'.toUpperCase()) navMapElem = elem;
+            }
+            
+            var uniqueID;
+            bookYaml.identifiers.forEach(function(identifier) {
+                if (typeof identifier.unique !== 'undefined' && identifier.unique !== null) uniqueID = identifier;
             });
-        };
-        
-        handleNavChapters(navMapElem, chapters);
+            if (!uniqueID) reject(new Error("No Identifier"));
+            
+            // <meta name="dtb:uid" content="<%= uniqueID.ncxidentifier %>"/>
+            // <meta name="dtb:uid" content="<%= uniqueID.idstring %>"/>
+            if (uniqueID.ncxidentifier) {
+                elem = NCXXML.createElement('meta');
+                elem.setAttribute('name', "dtb:uid");
+                elem.setAttribute('content', uniqueID.ncxidentifier);
+                headElem.appendChild(elem);
+            } else {
+                elem = NCXXML.createElement('meta');
+                elem.setAttribute('name', "dtb:uid");
+                elem.setAttribute('content', uniqueID.idstring);
+                headElem.appendChild(elem);
+            }
+            
+            // <meta name="dtb:depth" content="1"/> <!-- 1 or higher -->
+            elem = NCXXML.createElement('meta');
+            elem.setAttribute('name', "dtb:depth");
+            elem.setAttribute('content', "1");
+            headElem.appendChild(elem);
+            
+            // <meta name="dtb:totalPageCount" content="0"/> <!-- must be 0 -->
+            elem = NCXXML.createElement('meta');
+            elem.setAttribute('name', "dtb:totalPageCount");
+            elem.setAttribute('content', "0");
+            headElem.appendChild(elem);
+            
+            // <meta name="dtb:maxPageNumber" content="0"/> <!-- must be 0 -->
+            elem = NCXXML.createElement('meta');
+            elem.setAttribute('name', "dtb:maxPageNumber");
+            elem.setAttribute('content', "0");
+            headElem.appendChild(elem);
+            
+            docTitleText.appendChild(NCXXML.createTextNode(bookYaml.title));
+            docAuthorText.appendChild(NCXXML.createTextNode(bookYaml.creators[0].nameReversed));
+            
+            // <navPoint class="<%= chapter.navclass %>" id="<%= chapter.id %>" playOrder="<%= chapter.spineorder %>">
+            //     <navLabel><text><%= chapter.title %></text></navLabel>
+            //     <content src="<%= chapter.href %>" />
+            //     <%
+            //     if (chapter.hasOwnProperty("subchapters") && chapter.subchapters) {
+            //         chapter.subchapters.forEach(function(subchapter) {
+            //             %>
+            //             <%- partial('toc-navpoint.ncx.ejs', { chapter: subchapter }) %>
+            //             <%
+            //         });
+            //     }
+            //     %>
+            // </navPoint>
+            
+            // console.log(util.inspect(chapters));
+            
+            var navPointForChapter = function(chapter) {
+                var navPoint = NCXXML.createElement('navPoint');
+                navPoint.setAttribute('class', chapter.navclass);
+                navPoint.setAttribute('id', chapter.id);
+                navPoint.setAttribute('playOrder', chapter.spineorder);
+                
+                var navLabel = NCXXML.createElement('navLabel');
+                var navLabelText = NCXXML.createElement('text');
+                navLabelText.appendChild(NCXXML.createTextNode(chapter.title));
+                navLabel.appendChild(navLabelText);
+                navPoint.appendChild(navLabel);
+                
+                var content = NCXXML.createElement('content');
+                content.setAttribute('src', chapter.href);
+                navPoint.appendChild(content);
+                
+                return navPoint;
+            };
     
-        resolve(NCXXML);
+            var handleNavChapters = function(appendTo, chapters) {
+                chapters.forEach(chapter => {
+                    var navPoint = navPointForChapter(chapter);
+                    appendTo.appendChild(navPoint);
+                    if (chapter.hasOwnProperty("subchapters") && chapter.subchapters) {
+                        handleNavChapters(navPoint, chapter.subchapters);
+                    }
+                });
+            };
+            
+            handleNavChapters(navMapElem, chapters);
+        
+            resolve(NCXXML);
+        } catch(e) { reject(e); }
     });
 }
 
