@@ -23,10 +23,10 @@
 var archiver  = require('archiver');
 var unzip     = require('node-unzip-2');
 var async     = require('async');
+var co        = require('co');
 var path      = require('path');
 var util      = require('util');
-// var fs        = require('fs');
-var fs        = require('fs-extra');
+var fs        = require('fs-extra-promise');
 var url       = require('url');
 var xmldom    = require('xmldom');
 var jsdom     = require('jsdom');
@@ -57,51 +57,43 @@ const error = require('debug')('epubtools:error');
 //  highlight: function (/*str, , lang*/) { return ''; }
 // });
 
-exports.readYaml = function(bookYaml) {
+exports.readYaml = co.wrap(function* (bookYaml) {
     log('readYaml '+ bookYaml);
-    return new Promise((resolve, reject) => {
-        fs.readFile(bookYaml, 'utf8', (err, yamlText) => {
-            if (err) { error(err); reject(err); }
-            else resolve(yaml.safeLoad(yamlText));
+    var yamlText = yield fs.readFileAsync(bookYaml, 'utf8');
+    return yaml.safeLoad(yamlText);
+});
+
+exports.yamlCheck = co.wrap(function* (bookYaml) {
+
+    if (!bookYaml.opf) throw new Error('no OPF file specified');
+
+    if (!bookYaml.identifiers) {
+        throw new Error('no UUID .. suggest \
+          identifiers: [ { unique: true, idstring: "urn:uuid"'+ uuid.v1() +' } ] \
+        ');
+    } else {
+        var uniqueCount = 0;
+        bookYaml.identifiers.forEach(identifier => {
+            if (typeof identifier.unique !== 'undefined' && identifier.unique !== null) uniqueCount++;
         });
-    });
-};
+        if (uniqueCount !== 1) throw new Error("There can be only one - unique identifier, that is, found="+ uniqueCount);
+    }
 
-exports.yamlCheck = function(bookYaml) {
+    var rightnow = w3cdate(new Date());
+    if (!bookYaml.published) bookYaml.published = {};
+    if (!bookYaml.published || !bookYaml.published.date) {
+        throw new Error('no published.date suggest '+ rightnow);
+    }
+    bookYaml.published.modified = rightnow;
 
-    return new Promise((resolve, reject) => {
-        try {
-            if (!bookYaml.opf) return reject(new Error('no OPF file specified'));
+    if (!bookYaml.toc || !bookYaml.toc.href) {
+        throw new Error('No toc entry');
+    }
 
-            if (!bookYaml.identifiers) {
-                return reject(new Error('no UUID .. suggest \
-                  identifiers: [ { unique: true, idstring: "urn:uuid"'+ uuid.v1() +' } ] \
-                '));
-            } else {
-                var uniqueCount = 0;
-                bookYaml.identifiers.forEach(identifier => {
-                    if (typeof identifier.unique !== 'undefined' && identifier.unique !== null) uniqueCount++;
-                });
-                if (uniqueCount !== 1) return reject(new Error("There can be only one - unique identifier, that is, found="+ uniqueCount));
-            }
+    // util.log(util.inspect(bookYaml));
 
-            var rightnow = w3cdate(new Date());
-            if (!bookYaml.published) bookYaml.published = {};
-            if (!bookYaml.published || !bookYaml.published.date) {
-                return reject(new Error('no published.date suggest '+ rightnow));
-            }
-            bookYaml.published.modified = rightnow;
-
-            if (!bookYaml.toc || !bookYaml.toc.href) {
-                return reject(new Error('No toc entry'));
-            }
-
-            // util.log(util.inspect(bookYaml));
-
-            resolve(bookYaml);
-        } catch (err) { reject(err); }
-    });
-};
+    return bookYaml;
+});
 
 exports.printTextStats = function(rendered) {
     return new Promise((resolve, reject) => {
@@ -141,23 +133,21 @@ exports.printTextStats = function(rendered) {
 };
 
 exports.printWordCountStats = function(rendered) {
-    return new Promise((resolve, reject) => {
-        globfs.operate(rendered, [ "**/*.html" ], (basedir, fpath, fini) => {
-            fs.readFile(path.join(basedir, fpath), 'utf8', (err, text) => {
-                if (err) return fini(err);
+    return globfs.operateAsync(rendered, [ "**/*.html" ], (basedir, fpath, fini) => {
+        fs.readFile(path.join(basedir, fpath), 'utf8', (err, text) => {
+            if (err) return fini(err);
 
-                var stats = textStatistics(text);
-                console.log(fpath +' '+ stats.textLength() +' '+ stats.letterCount() +' '+ stats.wordCount() +' '+ stats.sentenceCount()
-                            +' '+ stats.averageWordsPerSentence() +' '+ stats.averageSyllablesPerWord()
-                            +' '+ stats.wordsWithThreeSyllables() +' '+ stats.percentageWordsWithThreeSyllables());
+            var stats = textStatistics(text);
+            console.log(fpath +' '+ stats.textLength() +' '+ stats.letterCount() +' '+ stats.wordCount() +' '+ stats.sentenceCount()
+                        +' '+ stats.averageWordsPerSentence() +' '+ stats.averageSyllablesPerWord()
+                        +' '+ stats.wordsWithThreeSyllables() +' '+ stats.percentageWordsWithThreeSyllables());
 
-                fini();
-            });
-        },
-        err => {
-            if (err) reject(err);
-            else resolve();
+            fini();
         });
+    },
+    err => {
+        if (err) reject(err);
+        else resolve();
     });
 };
 
@@ -277,24 +267,13 @@ exports.convert2html = function(fnyaml) {
 };
 
 exports.createMimetypeFile = function(rendered) {
-    return new Promise((resolve, reject) => {
-        fs.writeFile(path.join(rendered, "mimetype"), "application/epub+zip", "utf8", err => {
-            if (err) reject(err);
-            else resolve();
-        });
-    });
+    return fs.writeFileAsync(
+        path.join(rendered, "mimetype"),
+        "application/epub+zip",
+        "utf8");
 };
 
-exports.makeMetaInfDir = function(rendered) {
-    return new Promise((resolve, reject) => {
-        fs.mkdirs(path.join(rendered, "META-INF"), err => {
-            if (err) reject(err);
-            else resolve();
-        });
-    });
-};
-
-exports.createContainerXmlFile = function(rendered, bookYaml) {
+exports.createContainerXmlFile = co.wrap(function* (rendered, bookYaml) {
 
     // util.log('createContainerXmlFile '+ rendered +' '+ util.inspect(bookYaml));
 
@@ -325,85 +304,56 @@ exports.createContainerXmlFile = function(rendered, bookYaml) {
     elem.setAttribute('media-type', 'application/oebps-package+xml');
     rfs.appendChild(elem);
 
-    return exports.makeMetaInfDir(rendered)
-    .then(() => {
-        return new Promise((resolve, reject) => {
-            fs.writeFile(path.join(rendered, "META-INF", "container.xml"),
-                         new xmldom.XMLSerializer().serializeToString(containerXml), "utf8",
-                         err => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
-    });
-};
+    yield fs.mkdirsAsync(path.join(rendered, "META-INF"));
+    yield fs.writeFileAsync(
+        path.join(rendered, "META-INF", "container.xml"),
+        new xmldom.XMLSerializer().serializeToString(containerXml),
+        "utf8");
+});
 
-exports.unpack = function(epubFileName, unpackTo) {
+exports.unpack = co.wrap(function* (epubFileName, unpackTo) {
     // unzip the EPUB into the directory
     // util.log('unpack '+ epubFileName +' '+ unpackTo);
 
-    return new Promise((resolve, reject) => {
-        fs.mkdirs(unpackTo, err => {
-            if (err) return reject(err);
+    yield fs.mkdirsAsync(unpackTo);
+    yield new Promise((resolve, reject) => {
+        var unzipExtractor = unzip.Extract({ path: unpackTo });
+        unzipExtractor.on('error', err => { reject(err); });
+        unzipExtractor.on('close', () => { resolve(); });
 
-            var unzipExtractor = unzip.Extract({ path: unpackTo });
-            unzipExtractor.on('error', err => { reject(err); });
-            unzipExtractor.on('close', () => { resolve(); });
-
-            fs.createReadStream(epubFileName).pipe(unzipExtractor);
-        });
+        fs.createReadStream(epubFileName).pipe(unzipExtractor);
     });
-};
+});
 
-exports.makeOPFNCX = function(rendered, bookYaml) {
-    return new Promise((resolve, reject) => {
+exports.makeOPFNCX = co.wrap(function* (rendered, bookYaml) {
 
-        // read the designated TOC file (toc.html)
+    // read the designated TOC file (toc.html)
 
-        var manifest = [];
-        var opfspine = [];
-        var chapters;
-        var tocHtml;
-        var OPFXML;
-        var NCXXML;
 
-        readTOC(rendered, bookYaml.toc.href)
-        .then(_tocHtml => {
-            tocHtml = _tocHtml;
-            return scanTocHtml(tocHtml, bookYaml.toc.id, bookYaml.toc.href, bookYaml.ncx, manifest, opfspine, bookYaml);
-        })
-        .then(tocData => {
-            chapters = tocData.chapters;
-            return assetsManifest(rendered, bookYaml, manifest);
-        })
-        .then(() => {
-            return makeOpfXml(bookYaml, manifest, opfspine);
-        })
-        .then(_OPFXML => {
-            OPFXML = _OPFXML;
-            return new Promise((resolve, reject) => {
-                fs.writeFile(path.join(rendered, bookYaml.opf), new xmldom.XMLSerializer().serializeToString(OPFXML), 'utf8', err => {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            });
-        })
-        .then(() => {
-            return makeNCXXML(rendered, bookYaml, chapters);
-        })
-        .then(_NCXXML => {
-            NCXXML = _NCXXML;
-            return new Promise((resolve, reject) => {
-                fs.writeFile(path.join(rendered, bookYaml.ncx.href), new xmldom.XMLSerializer().serializeToString(NCXXML), 'utf8', err => {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            });
-        })
-        .then(()   => { resolve();    })
-        .catch(err => { reject(err); });
-    });
-};
+    var manifest = [];
+    var opfspine = [];
+
+    var tocHtml = yield fs.readFileAsync(path.join(rendered, bookYaml.toc.href), 'utf8');
+    var tocData = yield scanTocHtml(tocHtml,
+                                    bookYaml.toc.id,
+                                    bookYaml.toc.href,
+                                    bookYaml.ncx,
+                                    manifest,
+                                    opfspine,
+                                    bookYaml);
+    var chapters = tocData.chapters;
+    yield assetsManifest(rendered, bookYaml, manifest);
+    var OPFXML = yield makeOpfXml(bookYaml, manifest, opfspine);
+    yield fs.writeFileAsync(
+        path.join(rendered, bookYaml.opf),
+        new xmldom.XMLSerializer().serializeToString(OPFXML),
+        'utf8');
+    var NCXXML = yield makeNCXXML(rendered, bookYaml, chapters);
+    yield fs.writeFileAsync(
+        path.join(rendered, bookYaml.ncx.href),
+        new xmldom.XMLSerializer().serializeToString(NCXXML),
+        'utf8');
+});
 
 exports.checkEPUBfiles = function(rendered) {
 
@@ -414,58 +364,37 @@ exports.checkEPUBfiles = function(rendered) {
     return checkHtmlProblems(rendered);
 };
 
-exports.bundleEPUB = function(rendered, epubFileName) {
-    return new Promise((resolve, reject) => {
-
-        // util.log(rendered +' '+ epubFileName);
-
-        // read container.xml -- extract OPF file name
-        // read OPF file
-        // write mimetype file
-        // write container.xml
-        // write OPF file
-        // for each entry in OPF - write that file
-        // when done, finalize
 
 
-        var containerXmlText;
-        var containerXml;
-        var opfFileName;
-        var opfXmlText;
-        var opfXml;
+exports.bundleEPUB = co.wrap(function* (rendered, epubFileName) {
 
-        readContainerXml(rendered)
-        .then(containerXmlData => {
-            containerXmlText = containerXmlData.containerXmlText;
-            containerXml     = containerXmlData.containerXml;
-            return findOpfFileName(containerXml);
-        })
-        .then(_opfFileName  => {
-            opfFileName = _opfFileName;
-            return readOPF(rendered, opfFileName);
-        })
-        .then(opfXmlData => {
-            opfXmlText = opfXmlData.opfXmlText;
-            opfXml = opfXmlData.opfXml;
-            return archiveFiles(rendered, epubFileName, opfXml, opfFileName);
-        })
-        .then(()   => { resolve();    })
-        .catch(err => { reject(err); });
-    });
-};
+    // util.log(rendered +' '+ epubFileName);
 
-function readContainerXml(rendered) {
-    return new Promise((resolve, reject) => {
-        fs.readFile(path.join(rendered, "META-INF", "container.xml"), 'utf8',
-            (err, data) => {
-                if (err) return reject(err);
-                resolve({
-                    containerXmlText: data,
-                    containerXml: new xmldom.DOMParser().parseFromString(data, 'text/xml')
-                });
-            });
-    });
-}
+    // read container.xml -- extract OPF file name
+    // read OPF file
+    // write mimetype file
+    // write container.xml
+    // write OPF file
+    // for each entry in OPF - write that file
+    // when done, finalize
+
+    var containerXmlData = yield readContainerXml(rendered);
+    var containerXmlText = containerXmlData.containerXmlText;
+    var containerXml     = containerXmlData.containerXml;
+    var opfFileName      = findOpfFileName(containerXml);
+    var opfXmlData       = yield readOPF(rendered, opfFileName);
+    var opfXmlText       = opfXmlData.opfXmlText;
+    var opfXml           = opfXmlData.opfXml;
+    yield archiveFiles(rendered, epubFileName, opfXml, opfFileName);
+});
+
+var readContainerXml = co.wrap(function* (rendered) {
+    var data = yield fs.readFileAsync(path.join(rendered, "META-INF", "container.xml"), 'utf8');
+    return {
+        containerXmlText: data,
+        containerXml: new xmldom.DOMParser().parseFromString(data, 'text/xml')
+    };
+});
 
 function findOpfFileName(containerXml) {
     var rootfiles = containerXml.getElementsByTagName("rootfile");
@@ -479,18 +408,13 @@ function findOpfFileName(containerXml) {
     return rootfile.getAttribute('full-path');
 }
 
-function readOPF(rendered, opfName) {
-    return new Promise((resolve, reject) => {
-        fs.readFile(path.join(rendered, opfName), 'utf8',
-            (err, data) => {
-                if (err) return reject(err);
-                resolve({
-                    opfXmlText: data,
-                    opfXml: new xmldom.DOMParser().parseFromString(data, 'text/xml')
-                });
-            });
-    });
-}
+var readOPF = co.wrap(function* (rendered, opfName) {
+    var data = yield fs.readFileAsync(path.join(rendered, opfName), 'utf8');
+    return {
+        opfXmlText: data,
+        opfXml: new xmldom.DOMParser().parseFromString(data, 'text/xml')
+    };
+});
 
 function concatHTML(rendered, opfXml, opfFileName, outputJSwindow, outputDir) {
 
@@ -576,6 +500,8 @@ function concatHTML(rendered, opfXml, opfFileName, outputJSwindow, outputDir) {
 
 function archiveFiles(rendered, epubFileName, opfXml, opfFileName) {
 
+    // console.log(`archiveFiles ${rendered} ${epubFileName} ${opfFileName}`);
+
     return new Promise((resolve, reject) => {
         try {
             var archive = archiver('zip');
@@ -639,173 +565,160 @@ function archiveFiles(rendered, epubFileName, opfXml, opfFileName) {
 
 }
 
-// read the designated TOC file (toc.html)
-function readTOC(rendered, tocHref) {
-    return new Promise((resolve, reject) => {
-        fs.readFile(path.join(rendered, tocHref), 'utf8',
-            (err, data) => {
-                if (err) reject(err);
-                else resolve(data);
-            });
-    });
-}
-
 function scanTocHtml(tocHtml, tocId, tocHref, ncx, manifest, opfspine, bookYaml) {
 
-    return new Promise((resolve, reject) => {
-        try {
-            var doc = jsdom.jsdom(tocHtml, {});
+    return co(function* () {
+        var doc = jsdom.jsdom(tocHtml, {});
 
-            var navs = doc.getElementsByTagName("nav");
-            var thenav;
-            for (let nav of nodeListIterator(navs)) {
-                if (nav.id === tocId) {
-                    thenav = nav;
-                    break;
-                }
+        var navs = doc.getElementsByTagName("nav");
+        var thenav;
+        for (let nav of nodeListIterator(navs)) {
+            if (nav.id === tocId) {
+                thenav = nav;
+                break;
             }
-            if (!thenav) {
-                return reject(new Error('no <nav id="'+ tocId +'">'));
+        }
+        if (!thenav) {
+            throw new Error('no <nav id="'+ tocId +'">');
+        }
+        // logger.info('found nav');
+
+        var topol;
+        for (let navchild = 0; navchild < thenav.childNodes.length; navchild++) {
+            if (thenav.childNodes[navchild].nodeName
+             && thenav.childNodes[navchild].nodeName.toUpperCase() === 'ol'.toUpperCase()
+             && thenav.childNodes[navchild].hasAttributes()
+             && thenav.childNodes[navchild].getAttribute('start')
+             && thenav.childNodes[navchild].getAttribute('type')) {
+                topol = thenav.childNodes[navchild];
+                break;
             }
-            // logger.info('found nav');
-
-            var topol;
-            for (let navchild = 0; navchild < thenav.childNodes.length; navchild++) {
-                if (thenav.childNodes[navchild].nodeName
-                 && thenav.childNodes[navchild].nodeName.toUpperCase() === 'ol'.toUpperCase()
-                 && thenav.childNodes[navchild].hasAttributes()
-                 && thenav.childNodes[navchild].getAttribute('start')
-                 && thenav.childNodes[navchild].getAttribute('type')) {
-                    topol = thenav.childNodes[navchild];
-                    break;
-                }
-            }
-            if (!topol) {
-                return reject(new Error('no <nav><ol type= start=></ol></nav>'));
-            }
-            // logger.info('found topol');
+        }
+        if (!topol) {
+            throw new Error('no <nav><ol type= start=></ol></nav>');
+        }
+        // logger.info('found topol');
 
 
-            // cover image/file manifest and opfspine entries
+        // cover image/file manifest and opfspine entries
 
-            if (bookYaml.cover && bookYaml.cover.idImage) {
-                manifest.push({
-                    id: bookYaml.cover.idImage,
-                    properties: "cover-image",
-                    href: rewriteURL({ rendered_url: bookYaml.opf }, bookYaml.cover.src, false),
-                    type: bookYaml.cover.type
-                });
-            }
-
-            if (bookYaml.cover && bookYaml.cover.coverHtml) {
-                manifest.push({
-                    id: bookYaml.cover.coverHtml.id,
-                    href: rewriteURL({ rendered_url: bookYaml.opf }, bookYaml.cover.coverHtml.href, false),
-                    type: "application/xhtml+xml"
-                });
-                opfspine.push({
-                    idref: bookYaml.cover.coverHtml.id,
-                    linear: "yes"
-                });
-            }
-
-            // Add specific manifest and opfspine entries for TOC and NCX files
-
+        if (bookYaml.cover && bookYaml.cover.idImage) {
             manifest.push({
-                id: tocId,
-                properties: "nav",
-                type: "application/xhtml+xml",
-                href: tocHref
+                id: bookYaml.cover.idImage,
+                properties: "cover-image",
+                href: rewriteURL({ rendered_url: bookYaml.opf }, bookYaml.cover.src, false),
+                type: bookYaml.cover.type
+            });
+        }
+
+        if (bookYaml.cover && bookYaml.cover.coverHtml) {
+            manifest.push({
+                id: bookYaml.cover.coverHtml.id,
+                href: rewriteURL({ rendered_url: bookYaml.opf }, bookYaml.cover.coverHtml.href, false),
+                type: "application/xhtml+xml"
             });
             opfspine.push({
-                idref: tocId,
+                idref: bookYaml.cover.coverHtml.id,
                 linear: "yes"
             });
-            // logger.trace('_scanForBookMetadata '+ util.inspect(config.akashacmsEPUB.manifest));
-            if (ncx) {
-                manifest.push({
-                    id: ncx.id,
-                    type: "application/x-dtbncx+xml",
-                    href: ncx.href
-                });
-            }
+        }
 
-            // Scan the nested tree of ol's to capture data for .manifest .opfspine and .chapters
-            var spineorder = 0;
-            var scanOL = function(ol) {
-                // logger.info('scanOL ol.length='+ ol.childNodes.length);
-                var chaps = [];
-                for (let olchild of nodeListIterator(ol.childNodes)) {
-                    // logger.info('olchild.nodeName '+ olchild.nodeName);
-                    if (olchild.nodeName && olchild.nodeName.toUpperCase() === 'li'.toUpperCase()) {
-                        var section; // section refers to chapters or subchapters
-                        var subchapters;
-                        section = undefined;
-                        subchapters = undefined;
-                        for (let childno = 0; childno < olchild.childNodes.length; childno++) {
-                            // logger.info('olchild.childNodes[childno].nodeName '+ olchild.childNodes[childno].nodeName);
-                            if (olchild.childNodes[childno].nodeName
-                             && olchild.childNodes[childno].nodeName.toUpperCase() === 'ol'.toUpperCase()) {
-                                subchapters = scanOL(olchild.childNodes[childno]);
-                            } else if (olchild.childNodes[childno].nodeName
-                                    && olchild.childNodes[childno].nodeName.toUpperCase() === 'a'.toUpperCase()) {
-                                let anchor = olchild.childNodes[childno];
+        // Add specific manifest and opfspine entries for TOC and NCX files
 
-                                let href = anchor.getAttribute('href');
-                                let hrefP = url.parse(href);
+        manifest.push({
+            id: tocId,
+            properties: "nav",
+            type: "application/xhtml+xml",
+            href: tocHref
+        });
+        opfspine.push({
+            idref: tocId,
+            linear: "yes"
+        });
+        // logger.trace('_scanForBookMetadata '+ util.inspect(config.akashacmsEPUB.manifest));
+        if (ncx) {
+            manifest.push({
+                id: ncx.id,
+                type: "application/x-dtbncx+xml",
+                href: ncx.href
+            });
+        }
 
-                                // Detect any files that are already in manifest
-                                // Only add to manifest stuff which isn't already there
-                                let inManifest = false;
-                                for (let mi = 0; mi < manifest.length; mi++) {
-                                    let item = manifest[mi];
-                                    if (item.href === hrefP.pathname) {
-                                        inManifest = true;
-                                    }
+        // Scan the nested tree of ol's to capture data for .manifest .opfspine and .chapters
+        var spineorder = 0;
+        var scanOL = function(ol) {
+            // logger.info('scanOL ol.length='+ ol.childNodes.length);
+            var chaps = [];
+            for (let olchild of nodeListIterator(ol.childNodes)) {
+                // logger.info('olchild.nodeName '+ olchild.nodeName);
+                if (olchild.nodeName && olchild.nodeName.toUpperCase() === 'li'.toUpperCase()) {
+                    var section; // section refers to chapters or subchapters
+                    var subchapters;
+                    section = undefined;
+                    subchapters = undefined;
+                    for (let childno = 0; childno < olchild.childNodes.length; childno++) {
+                        // logger.info('olchild.childNodes[childno].nodeName '+ olchild.childNodes[childno].nodeName);
+                        if (olchild.childNodes[childno].nodeName
+                         && olchild.childNodes[childno].nodeName.toUpperCase() === 'ol'.toUpperCase()) {
+                            subchapters = scanOL(olchild.childNodes[childno]);
+                        } else if (olchild.childNodes[childno].nodeName
+                                && olchild.childNodes[childno].nodeName.toUpperCase() === 'a'.toUpperCase()) {
+                            let anchor = olchild.childNodes[childno];
+
+                            let href = anchor.getAttribute('href');
+                            let hrefP = url.parse(href);
+
+                            // Detect any files that are already in manifest
+                            // Only add to manifest stuff which isn't already there
+                            let inManifest = false;
+                            for (let mi = 0; mi < manifest.length; mi++) {
+                                let item = manifest[mi];
+                                if (item.href === hrefP.pathname) {
+                                    inManifest = true;
                                 }
-
-                                if (!inManifest) manifest.push({
-                                    id: anchor.getAttribute('id'),
-                                    type: "application/xhtml+xml",
-                                    href: anchor.getAttribute('href')
-                                });
-
-                                opfspine.push({
-                                    idref: anchor.getAttribute('id'),
-                                    linear: "yes"
-                                });
-
-                                section = {
-                                    id: anchor.getAttribute('id'),
-                                    title: anchor.textContent,
-                                    href: anchor.getAttribute('href'),
-                                    type: "application/xhtml+xml",
-                                    navclass: "book",
-                                    spineorder: ++spineorder
-                                };
                             }
-                        }
-                        if (!section) {
-                            console.error('<li> has no <a> children in TOC='+ tocHref);
-                        } else {
-                            if (subchapters) section.subchapters = subchapters;
-                            chaps.push(section);
+
+                            if (!inManifest) manifest.push({
+                                id: anchor.getAttribute('id'),
+                                type: "application/xhtml+xml",
+                                href: anchor.getAttribute('href')
+                            });
+
+                            opfspine.push({
+                                idref: anchor.getAttribute('id'),
+                                linear: "yes"
+                            });
+
+                            section = {
+                                id: anchor.getAttribute('id'),
+                                title: anchor.textContent,
+                                href: anchor.getAttribute('href'),
+                                type: "application/xhtml+xml",
+                                navclass: "book",
+                                spineorder: ++spineorder
+                            };
                         }
                     }
+                    if (!section) {
+                        console.error('<li> has no <a> children in TOC='+ tocHref);
+                    } else {
+                        if (subchapters) section.subchapters = subchapters;
+                        chaps.push(section);
+                    }
                 }
-                // logger.info(util.inspect(chaps));
-                return chaps;
             }
-            var chapters = scanOL(topol);
+            // logger.info(util.inspect(chaps));
+            return chaps;
+        }
+        var chapters = scanOL(topol);
 
-            // logger.info(util.inspect(config.akashacmsEPUB.chapters));
+        // logger.info(util.inspect(config.akashacmsEPUB.chapters));
 
-            resolve({
-                manifest: manifest,
-                opfspine: opfspine,
-                chapters: chapters
-            });
-        } catch(err) { reject(err); }
+        return {
+            manifest: manifest,
+            opfspine: opfspine,
+            chapters: chapters
+        };
     });
 }
 
@@ -888,13 +801,13 @@ function makeOpfXml(bookYaml, manifest, opfspine) {
 
         var OPFXML = new xmldom.DOMParser().parseFromString('<?xml version="1.0" encoding="utf-8" standalone="no"?> \
             <package xmlns="http://www.idpf.org/2007/opf" xmlns:dc="http://purl.org/dc/elements/1.1/" \
-        	xmlns:dcterms="http://purl.org/dc/terms/" version="3.0" \
-        	unique-identifier="epub-unique-identifier"> \
-        	<metadata> </metadata> \
-        	<manifest> </manifest> \
-        	<spine>    </spine> \
-        	</package> \
-        	', 'text/xml');
+            xmlns:dcterms="http://purl.org/dc/terms/" version="3.0" \
+            unique-identifier="epub-unique-identifier"> \
+            <metadata> </metadata> \
+            <manifest> </manifest> \
+            <spine>    </spine> \
+            </package> \
+            ', 'text/xml');
 
         var metadata;
         var manifestElem;
