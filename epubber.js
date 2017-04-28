@@ -831,14 +831,16 @@ function makeOpfXml(bookYaml, manifest, opfspine) {
 
         // Check for required parameters
         if (typeof bookYaml.title === 'undefined' || bookYaml.title === null) {
-            reject(new Error('no title'));
+            return reject(new Error('no title'));
         }
         if (typeof bookYaml.languages === 'undefined' || bookYaml.languages === null) {
-            reject(new Error('no languages'));
+            return reject(new Error('no languages'));
         }
         if (typeof bookYaml.published.date == 'undefined' || bookYaml.published.date === null) {
-            reject(new Error('no dates'));
+            return reject(new Error('no dates'));
         }
+
+        let addedIdentifier = false;
 
         if (typeof bookYaml.identifiers !== 'undefined' && bookYaml.identifiers !== null) {
             bookYaml.identifiers.forEach((identifier) => {
@@ -849,12 +851,17 @@ function makeOpfXml(bookYaml, manifest, opfspine) {
                 if (typeof identifier.urn && identifier.urn != null) {
                     elem.appendChild(OPFXML.createTextNode(identifier.urn));
                     metadata.appendChild(elem);
+                    addedIdentifier = true;
                 } else if (typeof identifier.uuid && identifier.uuid != null) {
                     elem.appendChild(OPFXML.createTextNode("urn:uuid:"+identifier.uuid));
                     metadata.appendChild(elem);
+                    addedIdentifier = true;
                 }
                 // TODO Format for other ID formats like ISBN
             });
+        }
+        if (!addedIdentifier) {
+            return reject(new Error(`Failed to add identifier with ${util.inspect(bookYaml.identifiers)}`));
         }
 
 		// <dc:title id="pub-title"><%= title %></dc:title>
