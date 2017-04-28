@@ -678,16 +678,18 @@ function scanTocHtml(tocHtml, tocId, tocHref, ncx, manifest, opfspine, bookYaml)
                                 }
                             }
 
-                            if (!inManifest) manifest.push({
-                                id: anchor.getAttribute('id'),
-                                type: "application/xhtml+xml",
-                                href: anchor.getAttribute('href')
-                            });
+                            if (!inManifest) {
+                                manifest.push({
+                                    id: anchor.getAttribute('id'),
+                                    type: "application/xhtml+xml",
+                                    href: anchor.getAttribute('href')
+                                });
 
-                            opfspine.push({
-                                idref: anchor.getAttribute('id'),
-                                linear: "yes"
-                            });
+                                opfspine.push({
+                                    idref: anchor.getAttribute('id'),
+                                    linear: "yes"
+                                });
+                            }
 
                             section = {
                                 id: anchor.getAttribute('id'),
