@@ -5,7 +5,7 @@
     "email": "david@davidherron.com",
     "url": "http://davidherron.com"
   },
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Generate EPUB3 documents and assets",
   "homepage": "https://github.com/epubtools/epubtools",
   "repository": {
