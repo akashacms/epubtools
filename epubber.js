@@ -20,23 +20,23 @@
 
 'use strict';
 
-var archiver  = require('archiver');
-var unzip     = require('node-unzip-2');
-var async     = require('async');
-var co        = require('co');
-var path      = require('path');
-var util      = require('util');
-var fs        = require('fs-extra-promise');
-var url       = require('url');
-var xmldom    = require('xmldom');
-var jsdom     = require('jsdom');
-var globfs    = require('globfs');
-var mime      = require('mime');
-var uuid      = require('uuid');
-var sprintf   = require("sprintf-js").sprintf,
-    vsprintf  = require("sprintf-js").vsprintf;
-var yaml      = require('js-yaml');
-var textStatistics = require('text-statistics');
+const archiver  = require('archiver');
+const unzip     = require('node-unzip-2');
+const async     = require('async');
+const co        = require('co');
+const path      = require('path');
+const util      = require('util');
+const fs        = require('fs-extra-promise');
+const url       = require('url');
+const xmldom    = require('xmldom');
+const jsdom     = require('jsdom');
+const globfs    = require('globfs');
+const mime      = require('mime');
+const uuid      = require('uuid');
+const sprintf   = require("sprintf-js").sprintf;
+const vsprintf  = require("sprintf-js").vsprintf;
+const yaml      = require('js-yaml');
+const textStatistics = require('text-statistics');
 
 const log   = require('debug')('epubtools:epubber');
 const error = require('debug')('epubtools:error');
