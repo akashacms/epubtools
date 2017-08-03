@@ -28,7 +28,7 @@ const fs        = require('fs-extra');
 'use strict';
 
 process.title = 'epubtools';
-program.version('0.3.2');
+program.version('0.4.0');
 
 program
     .command('package <rendered> <bookYaml>')
