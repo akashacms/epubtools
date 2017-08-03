@@ -59,7 +59,7 @@ const error = require('debug')('epubtools:error');
 
 exports.readYaml = co.wrap(function* (bookYaml) {
     log('readYaml '+ bookYaml);
-    var yamlText = yield fs.readFileAsync(bookYaml, 'utf8');
+    var yamlText = yield fs.readFile(bookYaml, 'utf8');
     return yaml.safeLoad(yamlText);
 });
 
@@ -267,24 +267,68 @@ exports.convert2html = function(fnyaml) {
 };
 
 exports.convertHtmlToXhtml = co.wrap(function* (rendered) {
+    // First, find all .html files and rename to .xhtml
     var htmls = yield globfs.findAsync(rendered, [ "**/*.html" ]);
     for (let html of htmls) {
         let fpath = html.fullpath;
         let fdirr = path.dirname(fpath);
         let fbase = path.basename(fpath, '.html');
         let fmvto = path.join(fdirr, fbase + '.xhtml');
-        console.log(`moving ${fpath} to ${fmvto}`);
-        yield fs.move(fpath, fmvto);
-        console.log(`moved ${fpath} to ${fmvto}`);
+        yield fs.move(fpath, fmvto, { overwrite: true });
     }
+    // Second, operate on every OPF, NCX and XHTML file processing links
+    //  For any local link to a .html file, change the link to point to .xhtml
     var filez = yield globfs.findAsync(rendered, [ "**/*.opf", "**/*.ncx", "**/*.xhtml" ]);
     for (let file of filez) {
-        console.log(`should process ${util.inspect(file)}`);
+
+        // XML Parse the file contents
+        let xmlText = yield fs.readFile(file.fullpath, 'utf8');
+        let xmlDom = new xmldom.DOMParser().parseFromString(xmlText, 'text/xml');
+
+        // For OPF we look for 'item' elements
+        // For NCX we look for 'content' elements
+        // For XHTML we look for 'a' elements
+        // In each case the URL is either in the href= or src= attribute
+        let elemz = [];
+        let items = xmlDom.getElementsByTagName("item");
+        for (let anum = 0; anum < items.length; anum++) {
+            elemz.push(items.item(anum));
+        }
+        let contents = xmlDom.getElementsByTagName("content");
+        for (let anum = 0; anum < contents.length; anum++) {
+            elemz.push(contents.item(anum));
+        }
+        let anchors = xmlDom.getElementsByTagName("a");
+        for (let anum = 0; anum < anchors.length; anum++) {
+            elemz.push(anchors.item(anum));
+        }
+        for (let anchor of elemz) {
+            let href = anchor.getAttribute('href');
+            let src  = anchor.getAttribute('src');
+            let urlP = url.parse(href ? href : src, true, true);
+            // Make sure it's a local URL for .html files
+            if (urlP.host === null) {
+                if (path.extname(urlP.pathname) === '.html') {
+                    // Modify the URL
+                    let fdirr = path.dirname(urlP.pathname);
+                    let fbase = path.basename(urlP.pathname, '.html');
+                    urlP.pathname = path.join(fdirr, fbase + '.xhtml');
+                    // Then write the URL back to the element
+                    anchor.setAttribute(
+                        href ? 'href' : 'src',
+                        url.format(urlP));
+                }
+            }
+        }
+        yield fs.writeFile(
+            file.fullpath,
+            new xmldom.XMLSerializer().serializeToString(xmlDom),
+            "utf8");
     }
 });
 
 exports.createMimetypeFile = function(rendered) {
-    return fs.writeFileAsync(
+    return fs.writeFile(
         path.join(rendered, "mimetype"),
         "application/epub+zip",
         "utf8");
@@ -321,8 +365,8 @@ exports.createContainerXmlFile = co.wrap(function* (rendered, bookYaml) {
     elem.setAttribute('media-type', 'application/oebps-package+xml');
     rfs.appendChild(elem);
 
-    yield fs.mkdirsAsync(path.join(rendered, "META-INF"));
-    yield fs.writeFileAsync(
+    yield fs.mkdirs(path.join(rendered, "META-INF"));
+    yield fs.writeFile(
         path.join(rendered, "META-INF", "container.xml"),
         new xmldom.XMLSerializer().serializeToString(containerXml),
         "utf8");
@@ -332,7 +376,7 @@ exports.unpack = co.wrap(function* (epubFileName, unpackTo) {
     // unzip the EPUB into the directory
     // util.log('unpack '+ epubFileName +' '+ unpackTo);
 
-    yield fs.mkdirsAsync(unpackTo);
+    yield fs.mkdirs(unpackTo);
     yield new Promise((resolve, reject) => {
         var unzipExtractor = unzip.Extract({ path: unpackTo });
         unzipExtractor.on('error', err => { reject(err); });
@@ -350,7 +394,7 @@ exports.makeOPFNCX = co.wrap(function* (rendered, bookYaml) {
     var manifest = [];
     var opfspine = [];
 
-    var tocHtml = yield fs.readFileAsync(path.join(rendered, bookYaml.toc.href), 'utf8');
+    var tocHtml = yield fs.readFile(path.join(rendered, bookYaml.toc.href), 'utf8');
     var tocData = yield scanTocHtml(tocHtml,
                                     bookYaml.toc.id,
                                     bookYaml.toc.href,
@@ -361,12 +405,12 @@ exports.makeOPFNCX = co.wrap(function* (rendered, bookYaml) {
     var chapters = tocData.chapters;
     yield assetsManifest(rendered, bookYaml, manifest);
     var OPFXML = yield makeOpfXml(bookYaml, manifest, opfspine);
-    yield fs.writeFileAsync(
+    yield fs.writeFile(
         path.join(rendered, bookYaml.opf),
         new xmldom.XMLSerializer().serializeToString(OPFXML),
         'utf8');
     var NCXXML = yield makeNCXXML(rendered, bookYaml, chapters);
-    yield fs.writeFileAsync(
+    yield fs.writeFile(
         path.join(rendered, bookYaml.ncx.href),
         new xmldom.XMLSerializer().serializeToString(NCXXML),
         'utf8');
@@ -406,7 +450,7 @@ exports.bundleEPUB = co.wrap(function* (rendered, epubFileName) {
 });
 
 var readContainerXml = co.wrap(function* (rendered) {
-    var data = yield fs.readFileAsync(path.join(rendered, "META-INF", "container.xml"), 'utf8');
+    var data = yield fs.readFile(path.join(rendered, "META-INF", "container.xml"), 'utf8');
     return {
         containerXmlText: data,
         containerXml: new xmldom.DOMParser().parseFromString(data, 'text/xml')
@@ -426,7 +470,7 @@ function findOpfFileName(containerXml) {
 }
 
 var readOPF = co.wrap(function* (rendered, opfName) {
-    var data = yield fs.readFileAsync(path.join(rendered, opfName), 'utf8');
+    var data = yield fs.readFile(path.join(rendered, opfName), 'utf8');
     return {
         opfXmlText: data,
         opfXml: new xmldom.DOMParser().parseFromString(data, 'text/xml')
