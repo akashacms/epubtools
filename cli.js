@@ -20,11 +20,11 @@
  *  limitations under the License.
  */
 
-var program   = require('commander');
-var epubber   = require('./epubber');
-var util      = require('util');
-var fs        = require('fs');
-            
+const program   = require('commander');
+const epubber   = require('./epubber');
+const util      = require('util');
+const fs        = require('fs-extra');
+
 'use strict';
 
 process.title = 'epubtools';
@@ -56,7 +56,7 @@ program
         epubber.copyStuff(srcdir, destdir)
         .catch(err => { console.error(err.stack); });
     }); */
-    
+
 /* DOESN't BELONG program
     .command('rendermarkdown <docsdir> <renderTo>')
     .description('Render Markdown files in one directory to another')
@@ -122,6 +122,14 @@ program
     .description('Convert EPUB to HTML')
     .action(convertYaml => {
         epubber.convert2html(convertYaml)
+        .catch(err => { console.error(err.stack); });
+    });
+
+program
+    .command('xhtml <rendered>')
+    .description('Convert .html files in directory to .xhtml, fixing links')
+    .action(rendered => {
+        epubber.convertHtmlToXhtml(rendered)
         .catch(err => { console.error(err.stack); });
     });
 

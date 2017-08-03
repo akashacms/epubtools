@@ -1,7 +1,7 @@
 /**
  * epubber
  *
- * Copyright 2015 David Herron
+ * Copyright 2015-2017 David Herron
  *
  * This file is part of epubtools (http://akashacms.com/).
  *
@@ -26,7 +26,7 @@ const async     = require('async');
 const co        = require('co');
 const path      = require('path');
 const util      = require('util');
-const fs        = require('fs-extra-promise');
+const fs        = require('fs-extra');
 const url       = require('url');
 const xmldom    = require('xmldom');
 const jsdom     = require('jsdom');
@@ -265,6 +265,23 @@ exports.convert2html = function(fnyaml) {
         });
     });
 };
+
+exports.convertHtmlToXhtml = co.wrap(function* (rendered) {
+    var htmls = yield globfs.findAsync(rendered, [ "**/*.html" ]);
+    for (let html of htmls) {
+        let fpath = html.fullpath;
+        let fdirr = path.dirname(fpath);
+        let fbase = path.basename(fpath, '.html');
+        let fmvto = path.join(fdirr, fbase + '.xhtml');
+        console.log(`moving ${fpath} to ${fmvto}`);
+        yield fs.move(fpath, fmvto);
+        console.log(`moved ${fpath} to ${fmvto}`);
+    }
+    var filez = yield globfs.findAsync(rendered, [ "**/*.opf", "**/*.ncx", "**/*.xhtml" ]);
+    for (let file of filez) {
+        console.log(`should process ${util.inspect(file)}`);
+    }
+});
 
 exports.createMimetypeFile = function(rendered) {
     return fs.writeFileAsync(
