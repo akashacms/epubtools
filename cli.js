@@ -28,7 +28,7 @@ const fs        = require('fs-extra');
 'use strict';
 
 process.title = 'epubtools';
-program.version('0.0.1');
+program.version('0.3.2');
 
 program
     .command('package <rendered> <bookYaml>')
@@ -47,23 +47,6 @@ program
         epubber.unpack(epubFileName, dirName)
         .catch(err => { console.error(err.stack); });
     });
-
-/* program
-    .command('copy <srcdir> <destdir> [exts..]')
-    .description('Copy stuff from one directory to another')
-    .action((srcdir, destdir) => {
-        // TODO Need to get extensions from command line
-        epubber.copyStuff(srcdir, destdir)
-        .catch(err => { console.error(err.stack); });
-    }); */
-
-/* DOESN't BELONG program
-    .command('rendermarkdown <docsdir> <renderTo>')
-    .description('Render Markdown files in one directory to another')
-    .action((docsdir, renderTo) => {
-        epubber.renderMarkdown(docsdir, renderTo)
-        .catch(err => { console.error(err.stack); });
-    }); */
 
 program
     .command('stats <rendered>')
