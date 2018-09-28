@@ -1,128 +1,105 @@
-#!/usr/bin/env node
 
-/**
- * cli
- *
- * Copyright 2015 David Herron
- *
- * This file is part of epubtools (http://akashacms.com/).
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 
-var program   = require('commander');
-var epubber   = require('./epubber');
-var util      = require('util');
-var fs        = require('fs');
-            
-'use strict';
+const program   = require('commander');
+const epubtools = require('./index');
+const configurator = require('./Configuration');
+const bundleEPUB = require('./bundleEPUB');
+const util = require('util');
+const fs = require('fs-extra');
+const manifest = require('./manifest');
 
-process.title = 'epubtools';
-program.version('0.0.1');
+process.title = 'epubuilder';
+program.version('0.4.0');
 
 program
-    .command('package <rendered> <bookYaml>')
+    .command('package <configFN>')
     .description('Package an EPUB3 file from a directory')
-    .action((rendered, bookYamlFN) => {
-        epubber.readYaml(bookYamlFN)
-        .then(bookYaml => { return epubber.yamlCheck(bookYaml); })
-        .then(bookYaml => { return epubber.bundleEPUB(rendered, bookYaml.epub); })
-        .catch(err => { console.error(err.stack); });
+    .action(async (configFN) => {
+
+        try {
+            const bookConfig = await configurator.readConfig(configFN);
+            await bundleEPUB.bundleEPUB(bookConfig);
+        } catch (e) {
+            console.error(`package command ERRORED ${e.stack}`);
+        }
+
+/*
+        PLAN:
+
+        Find the example EPUB3 files from the EPUB3 team 
+        Use those to validate the package command 
+        Duplicate over code from epubtools
+
+        Q: Is "rendered" required?  It is the directory containing the rendered files.  Shouldn't this be in the configuration?
+*/
+    });
+
+// program
+//     .command('mimetype <bookYaml>')
+//     .description('Create the mimetype file')
+//     .action(async (bookYamlFN) => {
+//         try {
+//             const bookConfig = await configurator.readConfig(bookYamlFN);
+//             await bookConfig.mimetype();
+//         } catch (e) {
+//             console.error(`package mimetype ERRORED ${e.stack}`);
+//         }
+//     });
+
+program
+    .command('unpack <epubFN>')
+    .description('Unpack an EPUB file into destination directory')
+    .action(async (epubFN) => {
+        try {
+            throw new Error(`unpack does not recognize EPUB FILE NAME, and instead uses a directory "unpackTo"`);
+            await fs.mkdirs(unpackTo); 
+            await new Promise((resolve, reject) => {
+                let didresolve = false;
+                const doresolve = () => { 
+                    if (!didresolve) {
+                        didresolve = true;
+                        resolve();
+                    }
+                };
+                var unzipExtractor = unzip.Extract({ path: unpackTo });
+                unzipExtractor.on('error', err => { reject(err); });
+                unzipExtractor.on('close', doresolve);
+                unzipExtractor.on('end', doresolve);
+                fs.createReadStream(epubFileName).pipe(unzipExtractor);
+            });
+        } catch (e) {
+            console.error(`package mimetype ERRORED ${e.stack}`);
+        }
     });
 
 program
-    .command('extract <epubFileName> <dirName>')
-    .description('Extract an EPUB3 file to a directory')
-    .action((epubFileName, dirName) => {
-        epubber.unpack(epubFileName, dirName)
-        .catch(err => { console.error(err.stack); });
-    });
-
-/* program
-    .command('copy <srcdir> <destdir> [exts..]')
-    .description('Copy stuff from one directory to another')
-    .action((srcdir, destdir) => {
-        // TODO Need to get extensions from command line
-        epubber.copyStuff(srcdir, destdir)
-        .catch(err => { console.error(err.stack); });
-    }); */
-    
-/* DOESN't BELONG program
-    .command('rendermarkdown <docsdir> <renderTo>')
-    .description('Render Markdown files in one directory to another')
-    .action((docsdir, renderTo) => {
-        epubber.renderMarkdown(docsdir, renderTo)
-        .catch(err => { console.error(err.stack); });
-    }); */
-
-program
-    .command('stats <rendered>')
-    .description('Print text statistics for rendered HTML file in a directory')
-    .action(rendered => {
-        epubber.printTextStats(rendered)
-        .catch(err => { console.error(err.stack); });
+    .command('import <epubDir> <projectFN>')
+    .description('Generate an ".epubtools" configuration file from an EPUB')
+    .action(async (epubDir, projectFN) => {
+        try {
+            // 1. Detect if it is a directory, error if not
+            // 2. Find and read the OPF, generating a Config file
+            // 3. Scan the directory to fill in the manifest
+            await epubtools.createProjectFromEPUBDir(epubDir, projectFN);
+        } catch (e) {
+            console.error(`import ${epubDir} ERRORED ${e.stack}`);
+        }
     });
 
 program
-    .command('words <rendered>')
-    .description('Print word count statistics for rendered HTML file in a directory')
-    .action(rendered => {
-        epubber.printWordCountStats(rendered)
-        .catch(err => { console.error(err.stack); });
+    .command('scanfiles <configFN>')
+    .description('Scan files in bookroot directory specified in config')
+    .action(async (configFN) => {
+        try {
+            const config = await configurator.readConfig(configFN);
+            await manifest.scan(config);
+            await config.save();
+        } catch (e) {
+            console.error(`package mimetype ERRORED ${e.stack}`);
+        }
     });
 
-program
-    .command('mimetype <rendered>')
-    .description('Create an EPUB3 mimetype file in a directory')
-    .action(rendered => {
-        epubber.createMimetypeFile(rendered)
-        .catch(err => { console.error(err.stack); });
-    });
 
-program
-    .command('containerxml <rendered> <bookYaml>')
-    .description('Create an EPUB3 container.xml file in a directory')
-    .action((rendered, bookYamlFN) => {
-        epubber.readYaml(bookYamlFN)
-        .then(bookYaml => { return epubber.yamlCheck(bookYaml); })
-        .then(bookYaml => { return epubber.createContainerXmlFile(rendered, bookYaml); })
-        .catch(err => { console.error(err.stack); });
-    });
 
-program
-    .command('makemeta <rendered> <bookYaml>')
-    .description('Create OPF and NCX files in a directory')
-    .action((rendered, bookYamlFN) => {
-        epubber.readYaml(bookYamlFN)
-        .then(bookYaml => { return epubber.yamlCheck(bookYaml); })
-        .then(bookYaml => { return epubber.makeOPFNCX(rendered, bookYaml); })
-        .catch(err => { console.error(err.stack); });
-    });
-
-program
-    .command('check <rendered>')
-    .description('Check an EPUB directory for valid HTML')
-    .action(rendered => {
-        epubber.checkEPUBfiles(rendered)
-        .catch(err => { console.error(err.stack); });
-    });
-
-program
-    .command('tohtml <convertYaml>')
-    .description('Convert EPUB to HTML')
-    .action(convertYaml => {
-        epubber.convert2html(convertYaml)
-        .catch(err => { console.error(err.stack); });
-    });
 
 program.parse(process.argv);
