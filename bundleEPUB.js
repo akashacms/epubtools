@@ -41,15 +41,16 @@ exports.bundleEPUB = async function(config) {
 
 async function archiveFiles(config) {
 
+    console.log(`archiveFiles`);
     const rendered = path.join(config.configDirPath, config.sourceBookroot);
     const epubFileName = path.join(config.configDirPath, config.epubFileName);
-    const opfFileName = config.epubPathOPF;
-    // console.log(`archiveFiles reading OPF config.sourceBookFullPath ${config.sourceBookFullPath} opfFileName ${opfFileName}`);
+    const opfFileName = config.sourceBookOPF;
+    console.log(`archiveFiles reading OPF config.sourceBookFullPath ${config.sourceBookFullPath} opfFileName ${opfFileName}`);
     const { 
         opfXmlText, opfXml 
     } = await metadata.readOPF(config.sourceBookFullPath, opfFileName); 
     
-    // console.log(`archiveFiles rendered ${rendered} epubFileName ${epubFileName} opfFileName ${opfFileName}`);
+    console.log(`archiveFiles rendered ${rendered} epubFileName ${epubFileName} opfFileName ${opfFileName}`);
 
     const opfDirName = path.dirname(opfFileName);
 
@@ -164,7 +165,7 @@ exports.mkContainerXmlFile = async function(config) {
     }
     
     elem = containerXml.createElement('rootfile');
-    elem.setAttribute('full-path', config.epubPathOPF);
+    elem.setAttribute('full-path', config.sourceBookOPF);
     elem.setAttribute('media-type', 'application/oebps-package+xml');
     rfs.appendChild(elem);
     

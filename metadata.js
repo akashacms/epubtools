@@ -27,7 +27,9 @@ exports.findOpfFileName = function(containerXml) {
 }
 
 exports.readOPF = async function(epubDir, opfName) {
-    const data = await fs.readFile(path.join(epubDir, opfName), 'utf8');
+    const file2read = path.join(epubDir, opfName);
+    console.log(`readOPF ${file2read}`);
+    const data = await fs.readFile(file2read, 'utf8');
     return {
         opfXmlText: data,
         opfXml: new xmldom.DOMParser().parseFromString(data, 'text/xml')

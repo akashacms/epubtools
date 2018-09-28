@@ -38,8 +38,8 @@ for dirnm in accessible_epub_3 cc-shared-culture \
 (
     cd epub3-samples/30
 
-    echo node ${epubuilder}/cli.js import ${dirnm} ${dirnm}.epubtools
-    node ${epubuilder}/cli.js import ${dirnm} ${dirnm}.epubtools
+    echo node ${epubuilder}/cli.js package ${dirnm}.epubtools
+    node ${epubuilder}/cli.js package ${dirnm}.epubtools
 )
 
 done
