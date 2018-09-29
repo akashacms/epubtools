@@ -28,4 +28,12 @@ module.exports.nodeListIterator = function nodeListIterator(nodeList) {
         };
     };
     return nodeList;
-}
+};
+
+module.exports.nodeList2Array = function(nodeList) {
+    var ret = [];
+    for (let item of module.exports.nodeListIterator(nodeList)) {
+        ret.push(item);
+    }
+    return ret;
+};

@@ -7,22 +7,26 @@ const manifest  = require('./manifest');
 const Manifest  = manifest.Manifest;
 
 exports.findMetadataInOPF = function(OPFXML) {
-    var metadata;
-    for (let elem of utils.nodeListIterator(
+    for (let elem of utils.nodeList2Array(
         OPFXML.getElementsByTagName("metadata")
+    ).concat(
+        utils.nodeList2Array(OPFXML.getElementsByTagName("opf:metadata"))
     )) {
-        if (elem.nodeName.toUpperCase() === 'metadata'.toUpperCase()) {
+        if (elem.nodeName.toUpperCase() === 'metadata'.toUpperCase()
+         || elem.nodeName.toUpperCase() === 'opf:metadata'.toUpperCase()) {
             return elem;
         }
     }
 };
 
 exports.findManifestInOPF = function(OPFXML) {
-    var manifestElem;
-    for (let elem of utils.nodeListIterator(
+    for (let elem of utils.nodeList2Array(
         OPFXML.getElementsByTagName("manifest")
+    ).concat(
+        utils.nodeList2Array(OPFXML.getElementsByTagName("opf:manifest"))
     )) {
-        if (elem.nodeName.toUpperCase() === 'manifest'.toUpperCase()) {
+        if (elem.nodeName.toUpperCase() === 'manifest'.toUpperCase()
+        || elem.nodeName.toUpperCase() === 'opf:manifest'.toUpperCase()) {
             return elem;
         }
     }
@@ -30,10 +34,13 @@ exports.findManifestInOPF = function(OPFXML) {
 
 exports.findSpineInOPF = function(OPFXML) {
     var spine;
-    for (let elem of utils.nodeListIterator(
+    for (let elem of utils.nodeList2Array(
         OPFXML.getElementsByTagName("spine")
+    ).concat(
+        utils.nodeList2Array(OPFXML.getElementsByTagName("opf:spine"))
     )) {
-        if (elem.nodeName.toUpperCase() === 'spine'.toUpperCase()) {
+        if (elem.nodeName.toUpperCase() === 'spine'.toUpperCase()
+        || elem.nodeName.toUpperCase() === 'opf:spine'.toUpperCase()) {
             return elem;
         }
     }
@@ -251,8 +258,10 @@ exports.rights = function(OPFXML) {
 exports.manifest = function(config, OPFXML) {
     const manifest = exports.findManifestInOPF(OPFXML);
     const ret = new Manifest();
-    for (let item of utils.nodeListIterator(
-        manifest.getElementsByTagName('item')
+    for (let item of utils.nodeList2Array(
+        OPFXML.getElementsByTagName("item")
+    ).concat(
+        utils.nodeList2Array(OPFXML.getElementsByTagName("opf:item"))
     )) {
         let datum = {
             id: item.getAttribute('id'),
