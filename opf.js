@@ -7,11 +7,7 @@ const manifest  = require('./manifest');
 const Manifest  = manifest.Manifest;
 
 exports.findMetadataInOPF = function(OPFXML) {
-    for (let elem of utils.nodeList2Array(
-        OPFXML.getElementsByTagName("metadata")
-    ).concat(
-        utils.nodeList2Array(OPFXML.getElementsByTagName("opf:metadata"))
-    )) {
+    for (let elem of utils.nodeList2Array(OPFXML.getElementsByTagName("metadata")).concat(utils.nodeList2Array(OPFXML.getElementsByTagName("opf:metadata")))) {
         if (elem.nodeName.toUpperCase() === 'metadata'.toUpperCase()
          || elem.nodeName.toUpperCase() === 'opf:metadata'.toUpperCase()) {
             return elem;
@@ -20,11 +16,7 @@ exports.findMetadataInOPF = function(OPFXML) {
 };
 
 exports.findManifestInOPF = function(OPFXML) {
-    for (let elem of utils.nodeList2Array(
-        OPFXML.getElementsByTagName("manifest")
-    ).concat(
-        utils.nodeList2Array(OPFXML.getElementsByTagName("opf:manifest"))
-    )) {
+    for (let elem of utils.nodeList2Array(OPFXML.getElementsByTagName("manifest")).concat(utils.nodeList2Array(OPFXML.getElementsByTagName("opf:manifest")))) {
         if (elem.nodeName.toUpperCase() === 'manifest'.toUpperCase()
         || elem.nodeName.toUpperCase() === 'opf:manifest'.toUpperCase()) {
             return elem;
@@ -34,11 +26,7 @@ exports.findManifestInOPF = function(OPFXML) {
 
 exports.findSpineInOPF = function(OPFXML) {
     var spine;
-    for (let elem of utils.nodeList2Array(
-        OPFXML.getElementsByTagName("spine")
-    ).concat(
-        utils.nodeList2Array(OPFXML.getElementsByTagName("opf:spine"))
-    )) {
+    for (let elem of utils.nodeList2Array(OPFXML.getElementsByTagName("spine")).concat(utils.nodeList2Array(OPFXML.getElementsByTagName("opf:spine")))) {
         if (elem.nodeName.toUpperCase() === 'spine'.toUpperCase()
         || elem.nodeName.toUpperCase() === 'opf:spine'.toUpperCase()) {
             return elem;
@@ -48,9 +36,7 @@ exports.findSpineInOPF = function(OPFXML) {
 
 exports.refines = function(metadata, id) {
     const ret = [];
-    for (let meta of utils.nodeListIterator(
-        metadata.getElementsByTagName('meta')
-    )) {
+    for (let meta of utils.nodeList2Array(metadata.getElementsByTagName("meta")).concat(utils.nodeList2Array(metadata.getElementsByTagName("opf:meta")))) {
         let refines = meta.getAttribute('refines');
         if (refines && refines === `#${id}`) {
             ret.push(meta);
@@ -173,9 +159,8 @@ exports.publicationDate = function(OPFXML) {
 
 exports.modifiedDate = function(OPFXML) {
     const metadata = exports.findMetadataInOPF(OPFXML);
-    for (let meta of utils.nodeListIterator(
-        metadata.getElementsByTagName('meta')
-    )) {
+    for (let meta of utils.nodeList2Array(OPFXML.getElementsByTagName("meta"))
+        .concat(utils.nodeList2Array(OPFXML.getElementsByTagName("opf:meta")))) {
         const property = meta.getAttribute('property');
         if (property && property === 'dcterms:modified') {
             return meta.textContent;
@@ -258,11 +243,8 @@ exports.rights = function(OPFXML) {
 exports.manifest = function(config, OPFXML) {
     const manifest = exports.findManifestInOPF(OPFXML);
     const ret = new Manifest();
-    for (let item of utils.nodeList2Array(
-        OPFXML.getElementsByTagName("item")
-    ).concat(
-        utils.nodeList2Array(OPFXML.getElementsByTagName("opf:item"))
-    )) {
+    for (let item of utils.nodeList2Array(OPFXML.getElementsByTagName("item"))
+        .concat(utils.nodeList2Array(OPFXML.getElementsByTagName("opf:item")))) {
         let datum = {
             id: item.getAttribute('id'),
             mime: item.getAttribute('media-type'),
@@ -276,13 +258,18 @@ exports.manifest = function(config, OPFXML) {
             spine_order: false
         };
         let properties = item.getAttribute('properties');
+        if (properties) datum.properties = properties;
         if (properties && properties.indexOf('nav') >= 0) {
             datum.is_nav = true;
+            config.sourceBookTOCID = datum.id;
+            config.sourceBookTOCHREF = datum.path;
         } else {
             datum.is_nav = false;
         }
         if (properties && properties.indexOf('cover-image') >= 0) {
             datum.is_cover_image = true;
+            config.sourceBookCoverID = datum.id;
+            config.sourceBookCoverHREF = datum.path;
         } else {
             datum.is_cover_image = false;
         }
@@ -316,10 +303,8 @@ exports.manifest = function(config, OPFXML) {
     // NOTE: This ignores the possibility of 'toc="NCX"'
     const spine = exports.findSpineInOPF(OPFXML);
     let spine_order = 0;
-    for (let itemref of utils.nodeListIterator(
-        spine.getElementsByTagName('itemref')
-    )) {
-        let idref = spine.getAttribute('idref');
+    for (let itemref of utils.nodeListIterator(spine.getElementsByTagName('itemref'))) {
+        let idref = itemref.getAttribute('idref');
         for (let datum of ret) {
             if (datum.id === idref) {
                 datum.in_spine = true;

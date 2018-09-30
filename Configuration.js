@@ -26,13 +26,9 @@ module.exports.Configuration = class Configuration {
                     titles: [],
                     languages: [],
                     identifiers: [],
-                    published: {},
                     creators: [],
                     subjects: []
                 },
-                cover: {
-                    coverHtml: {}
-                }, 
                 destination: {
                     ncx: {}
                 }
@@ -230,6 +226,40 @@ module.exports.Configuration = class Configuration {
             this[_config_yamlParsed].source.toc = {};
         }
         this[_config_yamlParsed].source.toc.href = newTOCHREF;
+    }
+
+    get sourceBookCoverID() { 
+        return this[_config_yamlParsed]
+             && this[_config_yamlParsed].source
+             && this[_config_yamlParsed].source.cover
+                ? this[_config_yamlParsed].source.cover.id
+                : undefined; 
+    }
+    set sourceBookCoverID(newCoverID) {
+        if (!this[_config_yamlParsed].source) {
+            this[_config_yamlParsed].source = {};
+        }
+        if (!this[_config_yamlParsed].source.cover) {
+            this[_config_yamlParsed].source.cover = {};
+        }
+        this[_config_yamlParsed].source.cover.id = newCoverID;
+    }
+
+    get sourceBookCoverHREF() { 
+        return this[_config_yamlParsed]
+             && this[_config_yamlParsed].source
+             && this[_config_yamlParsed].source.cover
+                ? this[_config_yamlParsed].source.cover.href
+                : undefined; 
+    }
+    set sourceBookCoverHREF(newCoverHREF) {
+        if (!this[_config_yamlParsed].source) {
+            this[_config_yamlParsed].source = {};
+        }
+        if (!this[_config_yamlParsed].source.cover) {
+            this[_config_yamlParsed].source.cover = {};
+        }
+        this[_config_yamlParsed].source.cover.href = newCoverHREF;
     }
 
     get bookMetaTitles() {

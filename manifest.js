@@ -78,12 +78,40 @@ exports.Manifest = class Manifest extends Array {
 
 exports.ManifestItem = class ManifestItem {
     constructor(item) {
-        this.basedir
-            = typeof item.basedir !== 'undefined' ? item.basedir : "";
-        this.path
-            = typeof item.path !== 'undefined' ? item.path : "";
-        this.id 
-            = typeof item.id !== 'undefined' ? item.id : "";
+        this.id = typeof item.id !== 'undefined' ? item.id : "";
+        this.basedir = typeof item.basedir !== 'undefined' ? item.basedir : "";
+        this.path = typeof item.path !== 'undefined' ? item.path : "";
+        this.dirname = typeof item.dirname !== 'undefined' ? item.dirname : "";
+        this.filename = typeof item.filename !== 'undefined' ? item.filename : "";
+        this.mime = typeof item.mime !== 'undefined' ? item.mime : "";
+        this.mimeoverride = typeof item.mimeoverride !== 'undefined' ? item.mimeoverride : "";
+        if (typeof item.is_nav !== 'undefined' && item.is_nav) {
+            this.nav_id = typeof item.id !== 'undefined' ? item.id : "";
+            this.nav_path = typeof item.path !== 'undefined' ? item.path : "";
+            this.is_nav = item.is_nav;
+        } else {
+            this.is_nav = false;
+        }
+        if (item.properties) this.properties = item.properties;
+        if (typeof item.is_cover_image !== 'undefined' && item.is_cover_image) {
+            this.cover_id = typeof item.id !== 'undefined' ? item.id : "";
+            this.cover_path = typeof item.path !== 'undefined' ? item.path : "";
+            this.is_cover_image = item.is_cover_image;
+        } else {
+            this.is_cover_image = false;
+        }
+        this.is_mathml 
+            = typeof item.is_mathml !== 'undefined' ? item.is_mathml : "";
+        this.is_scripted 
+            = typeof item.is_scripted !== 'undefined' ? item.is_scripted : "";
+        this.is_svg 
+            = typeof item.is_svg !== 'undefined' ? item.is_svg : "";
+        this.is_remote_resources 
+            = typeof item.is_remote_resources !== 'undefined' ? item.is_remote_resources : "";
+        this.is_switch 
+            = typeof item.is_switch !== 'undefined' ? item.is_switch : "";
+        this.suppressOPF 
+            = typeof item.suppressOPF !== 'undefined' ? item.suppressOPF : false;
         this.suppress 
             = typeof item.suppress !== 'undefined' ? item.suppress : false;
         this.in_spine
