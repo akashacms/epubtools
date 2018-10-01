@@ -40,8 +40,8 @@ for dirnm in accessible_epub_3 cc-shared-culture \
 (
     cd epub3-samples/30
 
-    echo java -jar ${EPUBCHECK} ${dirnm}.epub
-    java -jar ${EPUBCHECK} ${dirnm}.epub
+    echo java -jar ${EPUBCHECK} ${dirnm} --mode exp # opf -v 3.0
+    java -jar ${EPUBCHECK} ${dirnm} --mode exp # opf -v 3.0
 
 )
 
