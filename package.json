@@ -1,5 +1,5 @@
 {
-  "name": "eputools",
+  "name": "epubtools",
   "version": "0.1.7",
   "description": "Generate EPUB3 documents and assets",
   "main": "index.js",
