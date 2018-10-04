@@ -376,7 +376,7 @@ exports.makeOpfXml = async function(config) {
      && config.bookMetaIdentifiers !== null) {
         for (let identifier of config.bookMetaIdentifiers) {
 
-            console.log(`bookMetaIdentifiers identifier ${util.inspect(identifier)}`);
+            // console.log(`bookMetaIdentifiers identifier ${util.inspect(identifier)}`);
             
             elem = OPFXML.createElementNS(
                     'http://purl.org/dc/elements/1.1/', 
@@ -679,7 +679,7 @@ exports.makeOpfXml = async function(config) {
         else return 1;
     });
     for (let itemref of spineitems) {
-        console.log(`spine item ${util.inspect(itemref)}`);
+        // console.log(`spine item ${util.inspect(itemref)}`);
         let elem = OPFXML.createElement('itemref');
         elem.setAttribute('idref', itemref.id);
         if (itemref.linear) { elem.setAttribute('linear', itemref.linear); }
