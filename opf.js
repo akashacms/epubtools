@@ -25,7 +25,6 @@ exports.findManifestInOPF = function(OPFXML) {
 };
 
 exports.findSpineInOPF = function(OPFXML) {
-    var spine;
     for (let elem of utils.nodeList2Array(OPFXML.getElementsByTagName("spine")).concat(utils.nodeList2Array(OPFXML.getElementsByTagName("opf:spine")))) {
         if (elem.nodeName.toUpperCase() === 'spine'.toUpperCase()
         || elem.nodeName.toUpperCase() === 'opf:spine'.toUpperCase()) {
@@ -88,6 +87,17 @@ exports.identifiers = function(OPFXML) {
             id: idIdentifier,
             string: identifier.textContent
         };
+
+        // remove prefixes from identifier for identified types 
+        if (newIdentifier.string.indexOf('urn:isbn:') === 0) {
+            newIdentifier.type = 'isbn';
+            newIdentifier.string = newIdentifier.string.slice('urn:isbn:'.length);
+        } else if (newIdentifier.string.indexOf('urn:uuid:') === 0) {
+            newIdentifier.type = 'uuid';
+            newIdentifier.string = newIdentifier.string.slice('urn:uuid:'.length);
+        } else if (newIdentifier.string.indexOf('urn:') === 0) {
+            newIdentifier.type = 'urn';
+        }
 
         if (idIdentifier) {
             let refines = exports.refines(metadata, idIdentifier);
@@ -312,6 +322,8 @@ exports.manifest = function(config, OPFXML) {
                 let linear = spine.getAttribute('linear');
                 if (linear && linear === 'no') {
                     datum.linear = 'no';
+                } else if (linear && linear === 'yes') {
+                    datum.linear = 'yes';
                 }
             }
         }
@@ -345,16 +357,17 @@ exports.makeOpfXml = async function(config) {
     var elem;
         
     // Check for required parameters
-    if (typeof config.bookMetaTitle === 'undefined'
-     || config.bookMetaTitle === null) {
+    if (typeof config.bookMetaTitles === 'undefined'
+     || config.bookMetaTitles === null
+     || config.bookMetaTitles.length <= 0) {
         throw new Error('no title');
     }
     if (typeof config.bookMetaPubLanguage === 'undefined'
      || config.bookMetaPubLanguage === null) {
         throw new Error('no pubLanguage');
     }
-    if (typeof config.published.date == 'undefined' // TODO
-     || config.published.date === null) {
+    if (typeof config.bookMetaPublicationDate == 'undefined' // TODO
+     || config.bookMetaPublicationDate === null) {
         throw new Error('no dates');
     }
 
@@ -362,6 +375,8 @@ exports.makeOpfXml = async function(config) {
     if (typeof config.bookMetaIdentifiers !== 'undefined'
      && config.bookMetaIdentifiers !== null) {
         for (let identifier of config.bookMetaIdentifiers) {
+
+            console.log(`bookMetaIdentifiers identifier ${util.inspect(identifier)}`);
             
             elem = OPFXML.createElementNS(
                     'http://purl.org/dc/elements/1.1/', 
@@ -566,7 +581,7 @@ exports.makeOpfXml = async function(config) {
         elem.setAttribute('property', "dcterms:modified");
         let mdate = new Date(config.bookMetaModifiedDate);
         if (mdate) {
-            let date = w3cdate(mdate);
+            let date = utils.w3cdate(mdate);
             elem.appendChild(OPFXML.createTextNode(date));
             metadata.appendChild(elem);
         }
@@ -626,28 +641,30 @@ exports.makeOpfXml = async function(config) {
     //    if (item.properties) { %> properties="<%= item.properties %>" <% }
     //   %>href="<%= item.href %>" media-type="<%= item.type %>"/>
 
-    const set_property = function(item, value) {
-        let properties = item.getAttribute('properties');
-        if (!properties) properties = "";
-        if (properties === "") properties = value;
-        else properties += ' ' + value;
-        item.setAttribute('properties', properties);
-    }
-
-    var spine = [];
+    var spineitems = [];
     for (let item of config.manifest) {
-        if (item.in_spine) spine.push(item);
-        elem = OPFXML.createElement('item');
+
+        let properties = '';
+
+        const set_property = (value) => {
+            if (!properties) properties = "";
+            if (properties === "") properties = value;
+            else properties += ' ' + value;
+        }
+
+        if (item.in_spine) spineitems.push(item);
+        let elem = OPFXML.createElement('item');
         elem.setAttribute('id', item.id);
-        if (item.is_nav) set_property(item, 'nav');
-        if (item.is_cover_image) set_property(item, 'cover-image');
-        if (item.is_mathml) set_property(item, 'mathml');
-        if (item.is_scripted) set_property(item, 'scripted');
-        if (item.is_svg) set_property(item, 'svg');
-        if (item.is_remote_resources) set_property(item, 'remote-resources');
-        if (item.is_switch) set_property(item, 'switch');
-        elem.setAttribute('href', item.href);
-        elem.setAttribute('media-type', item.type);
+        if (item.is_nav) set_property('nav');
+        if (item.is_cover_image) set_property('cover-image');
+        if (item.is_mathml) set_property('mathml');
+        if (item.is_scripted) set_property('scripted');
+        if (item.is_svg) set_property('svg');
+        if (item.is_remote_resources) set_property('remote-resources');
+        if (item.is_switch) set_property('switch');
+        elem.setAttribute('properties', properties);
+        elem.setAttribute('href', item.path);
+        elem.setAttribute('media-type', item.mime);
         manifestElem.appendChild(elem);
     }
     
@@ -656,14 +673,15 @@ exports.makeOpfXml = async function(config) {
     // <itemref idref="<%= item.idref %>" <%
     //    if (item.linear) { %>linear="<%= item.linear %>" <% }
     //    %> /> <%
-    spine = spine.sort((a, b) => {
+    spineitems = spineitems.sort((a, b) => {
         if (a.spine_order < b.spine_order) return -1;
         else if (a.spine_order === b.spine_order) return 0;
         else return 1;
     });
-    for (let itemref of spine) {
-        elem = OPFXML.createElement('itemref');
-        elem.setAttribute('idref', itemref.idref);
+    for (let itemref of spineitems) {
+        console.log(`spine item ${util.inspect(itemref)}`);
+        let elem = OPFXML.createElement('itemref');
+        elem.setAttribute('idref', itemref.id);
         if (itemref.linear) { elem.setAttribute('linear', itemref.linear); }
         spine.appendChild(elem);
     }

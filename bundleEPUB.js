@@ -6,6 +6,7 @@ const fs        = require('fs-extra');
 const path      = require('path');
 const globfs    = require('globfs');
 const metadata  = require('./metadata');
+const opf       = require('./opf');
 
 exports.renderEPUB = async function(config) {
     let rootDir = path.join(path.dirname(config.configFileName),
@@ -35,6 +36,7 @@ exports.bundleEPUB = async function(config) {
     await exports.mkMimeType(config);
     await exports.mkMetaInfDir(config);
     await exports.mkContainerXmlFile(config);
+    await exports.mkPackageOPF(config);
     
     await archiveFiles(config);
 };
@@ -129,6 +131,17 @@ exports.mkMetaInfDir = async function(config) {
     console.log(`mkMetaInfDir ${path.join(config.sourceBookFullPath, "META-INF")}`);
     await fs.mkdirs(path.join(
                     config.sourceBookFullPath, "META-INF"));
+};
+
+exports.mkPackageOPF = async function(config) {
+    console.log(`mkPackageOPF ${path.join(config.sourceBookFullPath, config.sourceBookOPF)}`);
+    const OPFXML = await opf.makeOpfXml(config);
+
+    await fs.writeFile(
+        path.join(config.sourceBookFullPath, config.sourceBookOPF),
+        new xmldom.XMLSerializer().serializeToString(OPFXML), 
+        "utf8");
+
 };
 
 exports.mkContainerXmlFile = async function(config) {
