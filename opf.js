@@ -75,18 +75,23 @@ exports.titles = function(OPFXML) {
 
 exports.identifiers = function(OPFXML) {
     const metadata = exports.findMetadataInOPF(OPFXML);
+    // Get the ID indicating Unique Identifier
+    const uniqueIDname = OPFXML.documentElement.getAttribute('unique-identifier');
     const ret = [];
     for (let identifier of utils.nodeListIterator(
         metadata.getElementsByTagName('dc:identifier')
     )) {
         let idIdentifier = identifier.getAttribute('id');
-        let isUnique = idIdentifier && idIdentifier === 'epub-unique-identifier'
+        // Properly match that this is the Unique Identifier
+        let isUnique = idIdentifier && idIdentifier === uniqueIDname
                 ? true : false;
         let newIdentifier = {
             unique: isUnique,
-            id: idIdentifier,
             string: identifier.textContent
         };
+        if (idIdentifier && idIdentifier !== '') {
+            newIdentifier.id = idIdentifier;
+        }
 
         // remove prefixes from identifier for identified types 
         if (newIdentifier.string.indexOf('urn:isbn:') === 0) {
@@ -112,6 +117,7 @@ exports.identifiers = function(OPFXML) {
 
         ret.push(newIdentifier);
     }
+    // console.log(`identifiers ${util.inspect(ret)}`);
     return ret;
 };
 
@@ -135,10 +141,14 @@ exports.creators = function(OPFXML, tag) {
     for (let creator of utils.nodeListIterator(
         metadata.getElementsByTagName(tag)
     )) {
+        let theID = creator.getAttribute('id');
+        if (!theID || theID === '') {
+            theID = undefined;
+        }
         let item = {
-            id: creator.getAttribute('id'),
             name: creator.textContent
         };
+        if (theID) item.id = theID;
         if (item.id) {
             let refines = exports.refines(metadata, item.id);
             for (let refine of refines) {
@@ -337,6 +347,7 @@ exports.makeOpfXml = async function(config) {
     
     // TODO this will require different templates for EPUB versions
 
+    const uniqueIDname = "epub-unique-identifier";
     var OPFXML = new xmldom.DOMParser().parseFromString(
         `<?xml version="1.0" encoding="utf-8" standalone="no"?>
         <package
@@ -344,7 +355,7 @@ exports.makeOpfXml = async function(config) {
                 xmlns:dc="http://purl.org/dc/elements/1.1/"
                 xmlns:dcterms="http://purl.org/dc/terms/" 
                 version="3.0"
-                unique-identifier="epub-unique-identifier">
+                unique-identifier="${uniqueIDname}">
             <metadata> </metadata>
             <manifest> </manifest>
             <spine>    </spine>
@@ -383,7 +394,7 @@ exports.makeOpfXml = async function(config) {
                     'dc:identifier');
             if (typeof identifier.unique !== 'undefined'
              && identifier.unique !== null) {
-                elem.setAttribute('id', 'epub-unique-identifier');
+                elem.setAttribute('id', uniqueIDname);
             }
             if (typeof identifier.type && identifier.type === "urn") {
                 elem.appendChild(OPFXML.createTextNode(identifier.string));
@@ -505,7 +516,7 @@ exports.makeOpfXml = async function(config) {
 
     const mkCreatorContributor = function(OPFXML, tag, obj) {
         const elem = OPFXML.createElementNS("http://purl.org/dc/elements/1.1/", tag);
-        elem.setAttribute('id', obj.id);
+        if (obj.id) elem.setAttribute('id', obj.id);
         elem.appendChild(OPFXML.createTextNode(obj.name));
         // <meta refines="#<%= creator.id %>" property="role" scheme="marc:relators"><%= creator.role %></meta>
         if (obj.role) {
@@ -662,7 +673,7 @@ exports.makeOpfXml = async function(config) {
         if (item.is_svg) set_property('svg');
         if (item.is_remote_resources) set_property('remote-resources');
         if (item.is_switch) set_property('switch');
-        elem.setAttribute('properties', properties);
+        if (properties !== '') elem.setAttribute('properties', properties);
         elem.setAttribute('href', item.path);
         elem.setAttribute('media-type', item.mime);
         manifestElem.appendChild(elem);
