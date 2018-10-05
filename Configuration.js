@@ -509,6 +509,19 @@ module.exports.Configuration = class Configuration {
 
     async save() {
         if (!this.configFileName) throw new Error("No file name has been set for project");
+
+        /*  Useful debugging of the generated configuration
+        
+        console.log(`Configuration SAVE ${util.inspect(this[_config_yamlParsed])}`);
+        console.log(this[_config_yamlParsed]);
+        console.log(this[_config_yamlParsed].bookmeta.titles);
+        console.log(this[_config_yamlParsed].bookmeta.languages);
+        console.log(this[_config_yamlParsed].bookmeta.identifiers);
+        console.log(this[_config_yamlParsed].bookmeta.creators);
+        console.log(this[_config_yamlParsed].bookmeta.contributors);
+        console.log(this[_config_yamlParsed].source.manifest);
+        */
+
         await fs.writeFile(this.configFileName, 
             yaml.safeDump(this[_config_yamlParsed], {
                 indent: 4
