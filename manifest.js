@@ -118,8 +118,9 @@ exports.ManifestItem = class ManifestItem {
             = typeof item.in_spine !== 'undefined' ? item.in_spine : false;
         this.spine_order
             = typeof item.spine_order !== 'undefined' ? item.spine_order : -1;
-        this.linear
-            = typeof item.linear !== 'undefined' ? item.linear : undefined;
+        if (typeof item.linear !== 'undefined') {
+            this.linear = item.linear;
+        }
         // console.log(util.inspect(this));
     }
 
