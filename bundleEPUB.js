@@ -10,7 +10,7 @@ const opf       = require('./opf');
 
 exports.renderEPUB = async function(config) {
     let rootDir = path.join(path.dirname(config.configFileName),
-                        config.sourceBookroot);
+                        config.bookroot);
     let destDir = path.join(path.dirname(config.configFileName),
                         config.destRenderRoot)
     return await globfs.copyAsync(rootDir,
@@ -29,8 +29,7 @@ exports.bundleEPUB = async function(config) {
 
     // console.log(`bundleEPUB configFileName = ${config.configFileName}`); 
     // console.log(`bundleEPUB configDir = ${path.dirname(config.configFileName)}`);
-    let destDir = path.join(config.configDirPath, 
-                        config.sourceBookroot);
+    let destDir = path.join(config.configDirPath, config.bookroot);
     // console.log(`bundleEPUB destDir = ${destDir}`);
 
     await exports.mkMimeType(config);
@@ -44,9 +43,9 @@ exports.bundleEPUB = async function(config) {
 async function archiveFiles(config) {
 
     console.log(`archiveFiles`);
-    const rendered = path.join(config.configDirPath, config.sourceBookroot);
+    const rendered = path.join(config.configDirPath, config.bookroot);
     const epubFileName = path.join(config.configDirPath, config.epubFileName);
-    const opfFileName = config.sourceBookOPF;
+    const opfFileName = config.bookOPF;
     console.log(`archiveFiles reading OPF config.sourceBookFullPath ${config.sourceBookFullPath} opfFileName ${opfFileName}`);
     const { 
         opfXmlText, opfXml 
@@ -134,11 +133,11 @@ exports.mkMetaInfDir = async function(config) {
 };
 
 exports.mkPackageOPF = async function(config) {
-    console.log(`mkPackageOPF ${path.join(config.sourceBookFullPath, config.sourceBookOPF)}`);
+    console.log(`mkPackageOPF ${path.join(config.sourceBookFullPath, config.bookOPF)}`);
     const OPFXML = await opf.makeOpfXml(config);
 
     await fs.writeFile(
-        path.join(config.sourceBookFullPath, config.sourceBookOPF),
+        path.join(config.sourceBookFullPath, config.bookOPF),
         new xmldom.XMLSerializer().serializeToString(OPFXML), 
         "utf8");
 
@@ -170,17 +169,21 @@ exports.mkContainerXmlFile = async function(config) {
     	
     var rootfiles = containerXml.getElementsByTagName("rootfiles");
     var rfs;
-    var elem;
     // util.log(util.inspect(rootfile));
     for (var rfnum = 0; rfnum < rootfiles.length; rfnum++) {
-        elem = rootfiles.item(rfnum);
+        let elem = rootfiles.item(rfnum);
         if (elem.nodeName.toUpperCase() === 'rootfiles'.toUpperCase()) rfs = elem;
     }
+
+    if (rfs) {
+        for (let rootfile of config.containerRootfiles) {
+            let elem = containerXml.createElement('rootfile');
+            elem.setAttribute('full-path', config.bookroot);
+            elem.setAttribute('media-type', 'application/oebps-package+xml');
+            rfs.appendChild(elem);
+        }
+    }
     
-    elem = containerXml.createElement('rootfile');
-    elem.setAttribute('full-path', config.sourceBookOPF);
-    elem.setAttribute('media-type', 'application/oebps-package+xml');
-    rfs.appendChild(elem);
     
     await exports.mkMetaInfDir(config);
     console.log(`mkContainerXmlFile ${path.join(config.sourceBookFullPath, "META-INF", "container.xml")}`);

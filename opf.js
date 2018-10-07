@@ -263,13 +263,13 @@ exports.rights = function(OPFXML) {
 exports.manifest = function(config, OPFXML) {
     const manifest = exports.findManifestInOPF(OPFXML);
     const ret = new Manifest();
-    for (let item of utils.nodeList2Array(OPFXML.getElementsByTagName("item"))
-        .concat(utils.nodeList2Array(OPFXML.getElementsByTagName("opf:item")))) {
+    for (let item of utils.nodeList2Array(manifest.getElementsByTagName("item"))
+        .concat(utils.nodeList2Array(manifest.getElementsByTagName("opf:item")))) {
         let datum = {
             id: item.getAttribute('id'),
             mime: item.getAttribute('media-type'),
             mimeoverride: "",
-            basedir: config.sourceBookroot,
+            basedir: config.bookroot,
             path: item.getAttribute('href'),
             dirname: path.dirname(item.getAttribute('href')),
             filename: path.basename(item.getAttribute('href')),
@@ -368,26 +368,26 @@ exports.makeOpfXml = async function(config) {
     var elem;
         
     // Check for required parameters
-    if (typeof config.bookMetaTitles === 'undefined'
-     || config.bookMetaTitles === null
-     || config.bookMetaTitles.length <= 0) {
+    if (typeof config.opfTitles === 'undefined'
+     || config.opfTitles === null
+     || config.opfTitles.length <= 0) {
         throw new Error('no title');
     }
-    if (typeof config.bookMetaPubLanguage === 'undefined'
-     || config.bookMetaPubLanguage === null) {
+    if (typeof config.opfLanguages === 'undefined'
+     || config.opfLanguages === null) {
         throw new Error('no pubLanguage');
     }
-    if (typeof config.bookMetaPublicationDate == 'undefined' // TODO
-     || config.bookMetaPublicationDate === null) {
+    if (typeof config.opfPublicationDate == 'undefined' // TODO
+     || config.opfPublicationDate === null) {
         throw new Error('no dates');
     }
 
     // Identifiers
-    if (typeof config.bookMetaIdentifiers !== 'undefined'
-     && config.bookMetaIdentifiers !== null) {
-        for (let identifier of config.bookMetaIdentifiers) {
+    if (typeof config.opfIdentifiers !== 'undefined'
+     && config.opfIdentifiers !== null) {
+        for (let identifier of config.opfIdentifiers) {
 
-            // console.log(`bookMetaIdentifiers identifier ${util.inspect(identifier)}`);
+            // console.log(`opfIdentifiers identifier ${util.inspect(identifier)}`);
             
             elem = OPFXML.createElementNS(
                     'http://purl.org/dc/elements/1.1/', 
@@ -448,9 +448,9 @@ exports.makeOpfXml = async function(config) {
     // <dc:title id="pub-title"><%= title %></dc:title>
 
 
-    if (typeof config.bookMetaTitles !== undefined
-     && config.bookMetaTitles) {
-        for (let title of config.bookMetaTitles) {
+    if (typeof config.opfTitles !== undefined
+     && config.opfTitles) {
+        for (let title of config.opfTitles) {
             elem = OPFXML.createElementNS(
                     'http://purl.org/dc/elements/1.1/',
                     'dc:title');
@@ -489,14 +489,10 @@ exports.makeOpfXml = async function(config) {
 
     // Book languages
     // <dc:language><%= language %></dc:language>
-    // 
-    // In this design there will be a primary language, 
-    // called bookMetaPubLanguage, and then an array of additional
-    // languages, called bookMetaOtherLanguages
     //
-    if (typeof config.bookMetaPubLanguage !== undefined
-     && config.bookMetaPubLanguage) {
-        for (let language of config.bookMetaPubLanguage) {
+    if (typeof config.opfLanguages !== undefined
+     && config.opfLanguages) {
+        for (let language of config.opfLanguages) {
             elem = OPFXML.createElementNS(
                 'http://purl.org/dc/elements/1.1/', 
                 'dc:language');
@@ -537,8 +533,8 @@ exports.makeOpfXml = async function(config) {
         return elem;
     };
 
-    if (config.bookMetaCreators) {
-        for (let creator of config.bookMetaCreators) {
+    if (config.opfCreators) {
+        for (let creator of config.opfCreators) {
             elem = mkCreatorContributor(OPFXML, 'dc:creator', creator);
             metadata.appendChild(elem);
         }
@@ -548,26 +544,26 @@ exports.makeOpfXml = async function(config) {
     //        if (contributor.fileAs) { %> opf:file-as="<%= contributor.fileAs %>"<% }
     //        if (contributor.role) { %> opf:role="<%= contributor.role %>"<% }
     //        %> ><%= contributor.name %></dc:contributor>
-    if (config.bookMetaContributors) {
-        for (let contributor of config.bookMetaContributors) {
+    if (config.opfContributors) {
+        for (let contributor of config.opfContributors) {
             elem = mkCreatorContributor(OPFXML, 'dc:contributor', contributor);
             metadata.appendChild(elem);
         }
     }
     
     // <dc:date><%= date %></dc:date>
-    if (typeof config.bookMetaPublicationDate !== 'undefined'
-     && config.bookMetaPublicationDate) {
+    if (typeof config.opfPublicationDate !== 'undefined'
+     && config.opfPublicationDate) {
         elem = OPFXML.createElementNS(
                 'http://purl.org/dc/elements/1.1/',
                 'dc:date');
-        let date = utils.w3cdate(new Date(config.bookMetaPublicationDate));
+        let date = utils.w3cdate(new Date(config.opfPublicationDate));
         elem.appendChild(OPFXML.createTextNode(date));
         metadata.appendChild(elem);
     }
     
     // <dc:subject><%= subject %></dc:subject>
-    for (let subject of config.bookMetaSubjects) {
+    for (let subject of config.opfSubjects) {
         elem = OPFXML.createElementNS(
                 'http://purl.org/dc/elements/1.1/',
                 'dc:subject');
@@ -576,8 +572,8 @@ exports.makeOpfXml = async function(config) {
     }
     
     // <dc:description><%= description %></dc:description>
-    if (typeof config.bookMetaDescription !== 'undefined' 
-     && config.bookMetaDescription) {
+    if (typeof config.opfDescription !== 'undefined' 
+     && config.opfDescription) {
         elem = OPFXML.createElementNS(
                 'http://purl.org/dc/elements/1.1/',
                 'description');
@@ -586,11 +582,11 @@ exports.makeOpfXml = async function(config) {
     }
     
     // <meta property="dcterms:modified"><%= modified %>
-    if (typeof config.bookMetaModifiedDate !== 'undefined'
-     && config.bookMetaModifiedDate) {
+    if (typeof config.opfModifiedDate !== 'undefined'
+     && config.opfModifiedDate) {
         elem = OPFXML.createElement('meta');
         elem.setAttribute('property', "dcterms:modified");
-        let mdate = new Date(config.bookMetaModifiedDate);
+        let mdate = new Date(config.opfModifiedDate);
         if (mdate) {
             let date = utils.w3cdate(mdate);
             elem.appendChild(OPFXML.createTextNode(date));
@@ -599,52 +595,52 @@ exports.makeOpfXml = async function(config) {
     }
     
     // <dc:format><%= format %></dc:format>
-    if (typeof config.bookMetaFormat !== 'undefined'
-     && config.bookMetaFormat) {
+    if (typeof config.opfFormat !== 'undefined'
+     && config.opfFormat) {
         elem = OPFXML.createElementNS(
                 'http://purl.org/dc/elements/1.1/',
                 'dc:format');
-        elem.appendChild(OPFXML.createTextNode(config.bookMetaFormat));
+        elem.appendChild(OPFXML.createTextNode(config.opfFormat));
         metadata.appendChild(elem);
     }
     
     // <dc:publisher><%= publisher %></dc:publisher>
-    if (typeof config.bookMetaPublisher !== 'undefined'
-     && config.bookMetaPublisher) {
+    if (typeof config.opfPublisher !== 'undefined'
+     && config.opfPublisher) {
         elem = OPFXML.createElementNS(
                 'http://purl.org/dc/elements/1.1/', 
                 'dc:publisher');
-        elem.appendChild(OPFXML.createTextNode(config.bookMetaPublisher));
+        elem.appendChild(OPFXML.createTextNode(config.opfPublisher));
         metadata.appendChild(elem);
     }
     
     // <dc:relation><%= relation %></dc:relation>
-    if (typeof config.bookMetaRelation !== 'undefined'
-     && config.bookMetaRelation) {
+    if (typeof config.opfRelation !== 'undefined'
+     && config.opfRelation) {
         elem = OPFXML.createElementNS(
                 'http://purl.org/dc/elements/1.1/', 
                 'dc:relation');
-        elem.appendChild(OPFXML.createTextNode(config.bookMetaRelation));
+        elem.appendChild(OPFXML.createTextNode(config.opfRelation));
         metadata.appendChild(elem);
     }
     
     // <dc:coverage><%= coverage %></dc:coverage>
-    if (typeof config.bookMetaCoverage !== 'undefined'
-     && config.bookMetaCoverage) {
+    if (typeof config.opfCoverage !== 'undefined'
+     && config.opfCoverage) {
         elem = OPFXML.createElementNS(
                 'http://purl.org/dc/elements/1.1/', 
                 'dc:coverage');
-        elem.appendChild(OPFXML.createTextNode(config.bookMetaCoverage));
+        elem.appendChild(OPFXML.createTextNode(config.opfCoverage));
         metadata.appendChild(elem);
     }
     
     // <dc:rights><%= rights %></dc:rights>
-    if (typeof config.bookMetaRights !== 'undefined'
-     && config.bookMetaRights) {
+    if (typeof config.opfRights !== 'undefined'
+     && config.opfRights) {
         elem = OPFXML.createElementNS(
                 'http://purl.org/dc/elements/1.1/', 
                 'dc:rights');
-        elem.appendChild(OPFXML.createTextNode(config.bookMetaRights));
+        elem.appendChild(OPFXML.createTextNode(config.opfRights));
         metadata.appendChild(elem);
     }
     
@@ -653,7 +649,7 @@ exports.makeOpfXml = async function(config) {
     //   %>href="<%= item.href %>" media-type="<%= item.type %>"/>
 
     var spineitems = [];
-    for (let item of config.manifest) {
+    for (let item of config.opfManifest) {
 
         let properties = '';
 

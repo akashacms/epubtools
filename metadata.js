@@ -2,18 +2,40 @@
 const xmldom    = require('xmldom');
 const fs        = require('fs-extra');
 const path      = require('path');
+const utils     = require('./utils');
 
 exports.readContainerXml = async function(epubDir) {
-    const data = await fs.readFile(
-                    path.join(epubDir, "META-INF", "container.xml"), 
-                    'utf8');
-    return {
-        containerXmlText: data,
-        containerXml: new xmldom.DOMParser().parseFromString(data, 'text/xml')
-    };
-    
-}
+    try {
+        const data = await fs.readFile(
+            path.join(epubDir, "META-INF", "container.xml"), 
+            'utf8');
+        return {
+            containerXmlText: data,
+            containerXml: new xmldom.DOMParser().parseFromString(data, 'text/xml')
+        };
+    } catch (e) {
+        console.error(`readContainerXml WARNING ${e.stack}`);
+        return undefined;
+    }
+};
 
+exports.findRootfiles = function(containerXml) {
+    var rootfiles = [];
+
+    for (let rootfile of utils.nodeListIterator(
+        containerXml.getElementsByTagName("rootfile")
+    )) {
+        rootfiles.push({
+            fullpath: rootfile.getAttribute('full-path'),
+            mime: rootfile.getAttribute('media-type')
+        });
+    }
+    // console.log(util.inspect(rootfiles));
+    return rootfiles;
+
+};
+
+// MOOT - finds a single OPF file name
 exports.findOpfFileName = function(containerXml) {
     var rootfiles = containerXml.getElementsByTagName("rootfile");
     // console.log(util.inspect(rootfile));
@@ -24,14 +46,32 @@ exports.findOpfFileName = function(containerXml) {
     }
     if (!rootfile) throw new Error('No rootfile element in container.xml');
     return rootfile.getAttribute('full-path');
-}
+};
 
 exports.readOPF = async function(epubDir, opfName) {
-    const file2read = path.join(epubDir, opfName);
-    console.log(`readOPF ${file2read}`);
-    const data = await fs.readFile(file2read, 'utf8');
-    return {
-        opfXmlText: data,
-        opfXml: new xmldom.DOMParser().parseFromString(data, 'text/xml')
-    };
-}
+    try {
+        const file2read = path.join(epubDir, opfName);
+        console.log(`readOPF ${file2read}`);
+        const data = await fs.readFile(file2read, 'utf8');
+        return {
+            opfXmlText: data,
+            opfXml: new xmldom.DOMParser().parseFromString(data, 'text/xml')
+        };
+    } catch (e) {
+        return undefined;
+    }
+};
+
+exports.readXHTML = async function(epubDir, opfName) {
+    try {
+        const file2read = path.join(epubDir, opfName);
+        console.log(`readXHTML ${file2read}`);
+        const data = await fs.readFile(file2read, 'utf8');
+        return {
+            xhtmlText: data,
+            xhtmlDOM: new xmldom.DOMParser().parseFromString(data, 'application/xhtml+xml')
+        };
+    } catch (e) {
+        return undefined;
+    }
+};
