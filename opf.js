@@ -651,6 +651,11 @@ exports.makeOpfXml = async function(config) {
     var spineitems = [];
     for (let item of config.opfManifest) {
 
+        let fullRoot = config.sourceBookFullPath;
+        let fullOpfPath  = path.dirname(path.join(fullRoot, config.bookOPF));
+        let fullItemPath = path.join(fullRoot, item.path);
+        let relativeItemPath = path.relative(fullOpfPath, fullItemPath);
+
         let properties = '';
 
         const set_property = (value) => {
@@ -670,7 +675,7 @@ exports.makeOpfXml = async function(config) {
         if (item.is_remote_resources) set_property('remote-resources');
         if (item.is_switch) set_property('switch');
         if (properties !== '') elem.setAttribute('properties', properties);
-        elem.setAttribute('href', item.path);
+        elem.setAttribute('href', relativeItemPath);
         elem.setAttribute('media-type', item.mime);
         manifestElem.appendChild(elem);
     }

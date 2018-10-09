@@ -7,6 +7,7 @@ const path      = require('path');
 const globfs    = require('globfs');
 const metadata  = require('./metadata');
 const opf       = require('./opf');
+const checkEPUB = require('./checkEPUB');
 
 exports.renderEPUB = async function(config) {
     let rootDir = path.join(path.dirname(config.configFileName),
@@ -36,6 +37,8 @@ exports.bundleEPUB = async function(config) {
     await exports.mkMetaInfDir(config);
     await exports.mkContainerXmlFile(config);
     await exports.mkPackageOPF(config);
+
+    await checkEPUB.checkEPUBConfig(config);
     
     await archiveFiles(config);
 };
@@ -120,26 +123,29 @@ async function archiveFiles(config) {
 }
 
 exports.mkMimeType = async function(config) {
-    console.log(`writing ${path.join(config.sourceBookFullPath, "mimetype")}`);
-    await fs.writeFile(
-        path.join(config.sourceBookFullPath, "mimetype"),
-        "application/epub+zip", "utf8");
+    let mimetype = path.join(config.sourceBookFullPath, "mimetype");
+    console.log(`writing ${mimetype}`);
+    await fs.writeFile(mimetype, "application/epub+zip", "utf8");
 };
 
 exports.mkMetaInfDir = async function(config) {
-    console.log(`mkMetaInfDir ${path.join(config.sourceBookFullPath, "META-INF")}`);
-    await fs.mkdirs(path.join(
-                    config.sourceBookFullPath, "META-INF"));
+    let metaInfDir = path.join(config.sourceBookFullPath, "META-INF");
+    console.log(`mkMetaInfDir ${metaInfDir}`);
+    await fs.mkdirs(metaInfDir);
 };
 
 exports.mkPackageOPF = async function(config) {
-    console.log(`mkPackageOPF ${path.join(config.sourceBookFullPath, config.bookOPF)}`);
+    let write2 = path.join(config.sourceBookFullPath, config.bookOPF);
+    console.log(`mkPackageOPF ${write2}`);
     const OPFXML = await opf.makeOpfXml(config);
 
-    await fs.writeFile(
-        path.join(config.sourceBookFullPath, config.bookOPF),
-        new xmldom.XMLSerializer().serializeToString(OPFXML), 
-        "utf8");
+    await fs.mkdirs(path.dirname(write2));
+    console.log(`mkPackageOPF ... writing ${write2}`);
+    await fs.writeFile(write2, new xmldom.XMLSerializer().serializeToString(OPFXML), 
+        {
+            encoding: "utf8",
+            flag: "w"
+        });
 
 };
 
@@ -178,7 +184,7 @@ exports.mkContainerXmlFile = async function(config) {
     if (rfs) {
         for (let rootfile of config.containerRootfiles) {
             let elem = containerXml.createElement('rootfile');
-            elem.setAttribute('full-path', config.bookroot);
+            elem.setAttribute('full-path', rootfile.fullpath);
             elem.setAttribute('media-type', 'application/oebps-package+xml');
             rfs.appendChild(elem);
         }

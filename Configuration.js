@@ -127,6 +127,12 @@ module.exports.Configuration = class Configuration {
             this[_config_yamlParsed].opf = {};
         }
         this[_config_yamlParsed].opf.fileName = newBookOPF;
+        this.containerRootfiles = [
+            {
+                fullpath: newBookOPF,
+                mime: "application/oebps-package+xml"
+            }
+        ];
     }
 
     /**
