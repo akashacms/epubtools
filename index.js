@@ -38,6 +38,8 @@ module.exports.createProjectFromEPUBDir = async function(epubDir, projectFN) {
             opfFN = roots[0].fullpath;
             let opfData = await metadata.readOPF(epubDir, opfFN);
             opfXml = opfData ? opfData.opfXml : undefined;
+        } else {
+            config.containerRootfiles = [];
         }
     }
 
