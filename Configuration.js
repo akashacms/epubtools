@@ -77,7 +77,7 @@ module.exports.Configuration = class Configuration {
      * to the config file.  But some callers require the full path.
      */
     get sourceBookFullPath() {
-        return path.join(this.configDirPath, this.bookroot);
+        return path.normalize(path.join(this.configDirPath, this.bookroot));
     }
 
     // Is this useful?
@@ -142,7 +142,7 @@ module.exports.Configuration = class Configuration {
      * the full pathname.
      */
     get bookOPFFullPath() {
-        return path.join(this.configDirPath, this.bookOPF);
+        return path.join(this.sourceBookFullPath, this.bookOPF);
     }
 
     /**
@@ -229,37 +229,79 @@ module.exports.Configuration = class Configuration {
     }
 
     get sourceBookCoverID() { 
-        return this[_config_yamlParsed]
+        if (this[_config_yamlParsed]
+         && this[_config_yamlParsed].opf
+         && this[_config_yamlParsed].opf.data
+         && this[_config_yamlParsed].opf.data.manifest) {
+            for (let item of this[_config_yamlParsed].opf.data.manifest) {
+                if (item.is_cover_image) {
+                    return item.id;
+                }
+            }
+        }
+        return undefined;
+        /* return this[_config_yamlParsed]
              && this[_config_yamlParsed].source
              && this[_config_yamlParsed].source.cover
                 ? this[_config_yamlParsed].source.cover.id
-                : undefined; 
+                : undefined;  */
     }
     set sourceBookCoverID(newCoverID) {
-        if (!this[_config_yamlParsed].source) {
+        if (this[_config_yamlParsed]
+            && this[_config_yamlParsed].opf
+            && this[_config_yamlParsed].opf.data
+            && this[_config_yamlParsed].opf.data.manifest) {
+            for (let item of this[_config_yamlParsed].opf.data.manifest) {
+                if (item.is_cover_image) {
+                    item.id = newCoverID;
+                }
+            }
+        }
+        /* if (!this[_config_yamlParsed].source) {
             this[_config_yamlParsed].source = {};
         }
         if (!this[_config_yamlParsed].source.cover) {
             this[_config_yamlParsed].source.cover = {};
         }
-        this[_config_yamlParsed].source.cover.id = newCoverID;
+        this[_config_yamlParsed].source.cover.id = newCoverID; */
     }
 
     get sourceBookCoverHREF() { 
-        return this[_config_yamlParsed]
+        if (this[_config_yamlParsed]
+         && this[_config_yamlParsed].opf
+         && this[_config_yamlParsed].opf.data
+         && this[_config_yamlParsed].opf.data.manifest) {
+            for (let item of this[_config_yamlParsed].opf.data.manifest) {
+                if (item.is_cover_image) {
+                    return item.path;
+                }
+            }
+        }
+        return undefined;
+        /* return this[_config_yamlParsed]
              && this[_config_yamlParsed].source
              && this[_config_yamlParsed].source.cover
                 ? this[_config_yamlParsed].source.cover.href
-                : undefined; 
+                : undefined; */
     }
     set sourceBookCoverHREF(newCoverHREF) {
-        if (!this[_config_yamlParsed].source) {
+        if (this[_config_yamlParsed]
+            && this[_config_yamlParsed].opf
+            && this[_config_yamlParsed].opf.data
+            && this[_config_yamlParsed].opf.data.manifest) {
+            for (let item of this[_config_yamlParsed].opf.data.manifest) {
+                if (item.is_cover_image) {
+                    item.id = newCoverHREF;
+                }
+            }
+        }
+        /* if (!this[_config_yamlParsed].source) {
             this[_config_yamlParsed].source = {};
         }
         if (!this[_config_yamlParsed].source.cover) {
             this[_config_yamlParsed].source.cover = {};
         }
-        this[_config_yamlParsed].source.cover.href = newCoverHREF;
+        this[_config_yamlParsed].source.cover.href = newCoverHREF; */
     }
 
     get opfTitles() {
@@ -659,5 +701,6 @@ module.exports.readConfig = async function(fn) {
     const yamlText = await fs.readFile(fn, 'utf8');
     let config = new exports.Configuration(yamlText);
     config.configFileName = fn;
+    await manifest.spineTitles(config);
     return config;
-}
+};

@@ -40,6 +40,11 @@ exports.Manifest = class Manifest extends Array {
             if (item.in_spine) spine.push(item);
         });
         // spine.sort ...
+        spine.sort((a, b) => {
+            if (a.spine_order < b.spine_order) return -1;
+            if (a.spine_order > b.spine_order) return 1;
+            return 0;
+        });
         return spine;
     }
 
@@ -111,6 +116,13 @@ exports.Manifest = class Manifest extends Array {
 
     }
 
+    replaceItems(newItems) {
+        while (this.length > 0) {
+            this.pop();
+        }
+        this.addItems(newItems);
+    }
+
     remove(path2remove) {
         for (let item of this) {
             if (item.path === path2remove) {
@@ -180,6 +192,39 @@ exports.ManifestItem = class ManifestItem {
     }
 
 };
+
+exports.spineItems = function(epubConfig) {
+    if (!epubConfig) return [];
+    const spine = epubConfig.opfManifest.filter(item => {
+        if (item.in_spine) return true;
+        else return false;
+    });
+    // spine.sort ...
+    spine.sort((a, b) => {
+        if (a.spine_order < b.spine_order) return -1;
+        if (a.spine_order > b.spine_order) return 1;
+        return 0;
+    });
+    return spine;
+}
+
+exports.spineTitles = async function(epubConfig) {
+    let epubdir = epubConfig.sourceBookFullPath;
+    // let _spine = exports.spineItems(epubConfig);
+    // console.log(`spineTitles epubdir ${epubdir} ${typeof epubConfig.opfManifest} opfManifest opfManifest.spine ${typeof epubConfig.opfManifest.spine} _spine ${util.inspect(_spine)} opfManifest ${epubConfig.opfManifest}`);
+    for (let item of epubConfig.opfManifest) {
+        if (!item.in_spine) continue;
+        let docpath = path.join(epubdir, item.path);
+        let doctxt = await fs.readFile(docpath, 'utf8');
+        const $ = cheerio.load(doctxt, {
+            xmlMode: true,
+            decodeEntities: true
+        });
+        let title = $('head title').text();
+        // console.log(`spineTitles title ${title}`);
+        item.title = title;
+    }
+}
 
 exports.from_fs = async function(epubdir) {
     // console.log(`scanfiles bookroot ${epubdir}`);
