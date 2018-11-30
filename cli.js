@@ -34,6 +34,12 @@ program
 */
     });
 
+// TODO COMMAND: merge config1 config2 config3 mergedDir
+//    The idea is each config represents one volume
+//    The merged result would have container.xml with multiple rootfile entries
+//    Each rootfile is the OPF corresponding to the config
+//    ??? 
+
 // program
 //     .command('mimetype <bookYaml>')
 //     .description('Create the mimetype file')
@@ -47,9 +53,9 @@ program
 //     });
 
 program
-    .command('unpack <epubFN>')
+    .command('unpack <epubFN> <unpackTo>')
     .description('Unpack an EPUB file into destination directory')
-    .action(async (epubFN) => {
+    .action(async (epubFN, unpackTo) => {
         try {
             throw new Error(`unpack does not recognize EPUB FILE NAME, and instead uses a directory "unpackTo"`);
             await fs.mkdirs(unpackTo); 
@@ -65,7 +71,7 @@ program
                 unzipExtractor.on('error', err => { reject(err); });
                 unzipExtractor.on('close', doresolve);
                 unzipExtractor.on('end', doresolve);
-                fs.createReadStream(epubFileName).pipe(unzipExtractor);
+                fs.createReadStream(epubFN).pipe(unzipExtractor);
             });
         } catch (e) {
             console.error(`package mimetype ERRORED ${e.stack}`);
