@@ -228,6 +228,12 @@ module.exports.Configuration = class Configuration {
         this[_config_yamlParsed].source.toc.href = newTOCHREF;
     }
 
+    get TOCpath() {
+        let tochref = this.sourceBookTOCHREF;
+        let epubdir = this.sourceBookFullPath;
+        return path.join(epubdir, tochref);
+    }
+
     get sourceBookCoverID() { 
         if (this[_config_yamlParsed]
          && this[_config_yamlParsed].opf
@@ -702,5 +708,6 @@ module.exports.readConfig = async function(fn) {
     let config = new exports.Configuration(yamlText);
     config.configFileName = fn;
     await manifest.spineTitles(config);
+    config.tocdata = await manifest.tocData(config);
     return config;
 };

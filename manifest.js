@@ -206,7 +206,7 @@ exports.spineItems = function(epubConfig) {
         return 0;
     });
     return spine;
-}
+};
 
 exports.spineTitles = async function(epubConfig) {
     let epubdir = epubConfig.sourceBookFullPath;
@@ -224,7 +224,42 @@ exports.spineTitles = async function(epubConfig) {
         // console.log(`spineTitles title ${title}`);
         item.title = title;
     }
-}
+};
+
+function getNavOLChildren($, ol, tocdir) {
+    let ret = [];
+    let children = $(ol).children('li').get();
+    for (let child of children) {
+        let anchor = $(child).children('a');
+        let href = $(anchor).attr('href');
+
+        let item = {
+            text: $(anchor).text(),
+            href: path.normalize(path.join(tocdir, href)),
+            id: $(anchor).attr('id'),
+            children: []
+        };
+        let childol = $(child).children('ol');
+        if (ol.length > 0) {
+            item.children = getNavOLChildren($, childol, tocdir);
+        }
+        ret.push(item);
+    }
+    return ret;
+};
+
+exports.tocData = async function(epubConfig) {
+    let tochtml = await fs.readFile(epubConfig.TOCpath);
+    let tocid   = epubConfig.sourceBookTOCID;
+    let tocdir  = path.dirname(epubConfig.sourceBookTOCHREF);
+    const $ = cheerio.load(tochtml, {
+        xmlMode: true,
+        decodeEntities: true
+    });
+    let nav = $(`nav#${tocid} ol`); // Find the ol for the nav
+    let tocdata = getNavOLChildren($, nav, tocdir);
+    return tocdata;
+};
 
 exports.from_fs = async function(epubdir) {
     // console.log(`scanfiles bookroot ${epubdir}`);
@@ -378,4 +413,4 @@ exports.scan = async function(config) {
     // If it is in manifest, update the entry
     // Else add a new entry
     config.manifest.addItems(filez);
-}
+};
