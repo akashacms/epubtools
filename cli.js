@@ -101,7 +101,19 @@ program
             await manifest.scan(config);
             await config.save();
         } catch (e) {
-            console.error(`package mimetype ERRORED ${e.stack}`);
+            console.error(`scanfiles ERRORED ${e.stack}`);
+        }
+    });
+
+program
+    .command('toc <configFN>')
+    .description('Read the Table Of Contents for the book described in the config')
+    .action(async (configFN) => {
+        try {
+            const config = await configurator.readConfig(configFN);
+            console.log(util.inspect(await manifest.tocData(config)));
+        } catch (e) {
+            console.error(`toc ERRORED ${e.stack}`);
         }
     });
 

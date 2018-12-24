@@ -65,7 +65,7 @@ exports.readOPF = async function(epubDir, opfName) {
 exports.readXHTML = async function(epubDir, opfName) {
     try {
         const file2read = path.join(epubDir, opfName);
-        console.log(`readXHTML ${file2read}`);
+        // console.log(`readXHTML ${file2read}`);
         const data = await fs.readFile(file2read, 'utf8');
         return {
             xhtmlText: data,

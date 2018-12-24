@@ -7,6 +7,7 @@ const path = require('path');
 const globfs = require('globfs');
 const mime = require('mime');
 const cheerio = require('cheerio');
+const xmldom   = require('xmldom');
 const metadata = require('./metadata');
 const utils = require('./utils');
 
@@ -226,38 +227,67 @@ exports.spineTitles = async function(epubConfig) {
     }
 };
 
-function getNavOLChildren($, ol, tocdir) {
+function getNavOLChildrenXML(DOM, navol, tocdir) {
     let ret = [];
-    let children = $(ol).children('li').get();
-    for (let child of children) {
-        let anchor = $(child).children('a');
-        let href = $(anchor).attr('href');
-
-        let item = {
-            text: $(anchor).text(),
-            href: path.normalize(path.join(tocdir, href)),
-            id: $(anchor).attr('id'),
-            children: []
-        };
-        let childol = $(child).children('ol');
-        if (ol.length > 0) {
-            item.children = getNavOLChildren($, childol, tocdir);
+    let children = navol.childNodes;
+    for (let child of utils.nodeListIterator(children)) {
+        if (child.nodeType === 1 && child.tagName && child.tagName === 'li') { // ELEMENT_NODE
+            let lichildren = child.childNodes;
+            let item;
+            let itemchildren;
+            for (let lichild of utils.nodeListIterator(lichildren)) {
+                if (lichild.nodeType === 1 && lichild.tagName && lichild.tagName === 'a') { // ELEMENT_NODE
+                    let href = lichild.getAttribute('href');
+                    item = {
+                        text: lichild.textContent,
+                        href: path.normalize(path.join(tocdir, href)),
+                        id: lichild.getAttribute('id'),
+                        children: []
+                    };
+                }
+                if (lichild.nodeType === 1 && lichild.tagName && lichild.tagName === 'ol') { // ELEMENT_NODE
+                    itemchildren = getNavOLChildrenXML(DOM, lichild, tocdir);
+                }
+            }
+            if (itemchildren) item.children = itemchildren;
+            // console.log(`getNavOLChildrenXML item ${util.inspect(item)}`);
+            if (item) ret.push(item);
         }
-        ret.push(item);
     }
     return ret;
-};
+}
 
 exports.tocData = async function(epubConfig) {
-    let tochtml = await fs.readFile(epubConfig.TOCpath);
+    let epubdir = epubConfig.sourceBookFullPath;
+    let tocxhtml = await metadata.readXHTML(epubdir, epubConfig.sourceBookTOCHREF);
+    let tochtml = tocxhtml.xhtmlText;
+    let tocdom = tocxhtml.xhtmlDOM;
     let tocid   = epubConfig.sourceBookTOCID;
     let tocdir  = path.dirname(epubConfig.sourceBookTOCHREF);
-    const $ = cheerio.load(tochtml, {
-        xmlMode: true,
-        decodeEntities: true
-    });
-    let nav = $(`nav#${tocid} ol`); // Find the ol for the nav
-    let tocdata = getNavOLChildren($, nav, tocdir);
+    let tocnav;
+    for (let nav of utils.nodeListIterator(
+        tocdom.getElementsByTagName('nav')
+    )) {
+        if (nav.getAttribute('epub:type') === 'toc' && nav.getAttribute('id') === tocid) {
+            tocnav = nav;
+            break;
+        }
+    }
+    if (!tocnav) {
+        throw new Error(`No nav epub:type===toc id===${tocid} in ${epubConfig.TOCpath}`);
+    }
+    let tocnavchildren = tocnav.childNodes;
+    let tocnavrootol;
+    for (let child of utils.nodeListIterator(tocnavchildren)) {
+        if (child.nodeType === 1 && child.tagName && child.tagName === 'ol') { // ELEMENT_NODE
+            tocnavrootol = child;
+            break;
+        }
+    }
+    if (!tocnavrootol) {
+        throw new Error(`No root 'ol' node in nav epub:type===toc id===${tocid} in ${epubConfig.TOCpath}`);
+    }
+    let tocdata = getNavOLChildrenXML(tocdom, tocnavrootol, tocdir);
     return tocdata;
 };
 
