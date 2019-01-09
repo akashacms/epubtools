@@ -77,7 +77,7 @@ module.exports.Configuration = class Configuration {
      * to the config file.  But some callers require the full path.
      */
     get sourceBookFullPath() {
-        return path.normalize(path.join(this.configDirPath, this.bookroot));
+        return path.normalize(path.join(this.configDirPath, this.bookroot ? this.bookroot : ""));
     }
 
     get partialsDir() { 

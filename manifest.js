@@ -195,7 +195,7 @@ exports.ManifestItem = class ManifestItem {
 };
 
 exports.spineItems = function(epubConfig) {
-    if (!epubConfig) return [];
+    if (!epubConfig || !epubConfig.opfManifest) return [];
     const spine = epubConfig.opfManifest.filter(item => {
         if (item.in_spine) return true;
         else return false;
