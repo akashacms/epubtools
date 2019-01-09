@@ -80,6 +80,26 @@ module.exports.Configuration = class Configuration {
         return path.normalize(path.join(this.configDirPath, this.bookroot));
     }
 
+    get partialsDir() { 
+        return this[_config_yamlParsed]
+             && this[_config_yamlParsed].partialsDir
+                ? this[_config_yamlParsed].partialsDir
+                : undefined; 
+    }
+    set partialsDir(newPartialsDir) {
+        this[_config_yamlParsed].partialsDir = newPartialsDir;
+    }
+
+    get layoutsDir() { 
+        return this[_config_yamlParsed]
+             && this[_config_yamlParsed].layoutsDir
+                ? this[_config_yamlParsed].layoutsDir
+                : undefined; 
+    }
+    set layoutsDir(newLayoutsDir) {
+        this[_config_yamlParsed].layoutsDir = newLayoutsDir;
+    }
+
     // Is this useful?
     get destRenderRoot() {
         return this[_config_yamlParsed]
