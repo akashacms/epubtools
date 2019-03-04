@@ -13,6 +13,7 @@ module.exports.unsetconfig = function() { akconfig = undefined; };
 module.exports.setconfig = function(config) {
     const epubdir = config.sourceBookFullPath;
     const renderTo = config.bookRenderDestFullPath;
+    // console.log(`setconfig dirpath ${config.configDirPath} epubdir ${epubdir} renderTo ${renderTo}`);
     if (akconfig) module.exports.unsetconfig();
     akconfig = new akasha.Configuration();
     akconfig

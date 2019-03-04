@@ -27,6 +27,42 @@ module.exports.Configuration = class Configuration {
     }
 
     /**
+     * Check if the configuration is minimally usable.
+     */
+    async check() {
+        if (!this.bookroot || this.bookroot === '') {
+            throw new Error(`No bookroot set in ${this.projectName}`);
+        }
+
+        try {
+            await fs.access(this.sourceBookFullPath, fs.constants.R_OK);
+        } catch (e) {
+            throw new Error(`Book source directory is not readable or does not exist ${this.sourceBookFullPath}`);
+        }
+        if (this.assetsDir && this.assetsDir !== '') {
+            try {
+                await fs.access(this.assetsDirFullPath, fs.constants.R_OK);
+            } catch (e) {
+                throw new Error(`Assets directory is not readable or does not exist ${this.assetsDirFullPath}`);
+            }
+        }
+        if (this.partialsDir && this.partialsDir !== '') {
+            try {
+                await fs.access(this.partialsDirFullPath, fs.constants.R_OK);
+            } catch (e) {
+                throw new Error(`Partials directory is not readable or does not exist ${this.partialsDirFullPath}`);
+            }
+        }
+        if (this.layoutsDir && this.layoutsDir !== '') {
+            try {
+                await fs.access(this.layoutsDirFullPath, fs.constants.R_OK);
+            } catch (e) {
+                throw new Error(`Layouts directory is not readable or does not exist ${this.layoutsDirFullPath}`);
+            }
+        }
+    }
+
+    /**
      * File name for configuration file.  Appears this is to be
      * the full path name?
      */
@@ -103,12 +139,15 @@ module.exports.Configuration = class Configuration {
      */
     get assetsDir() { 
         return this[_config_yamlParsed]
-             && this[_config_yamlParsed].assets
-                ? this[_config_yamlParsed].assets
+             && this[_config_yamlParsed].assetsDir
+                ? this[_config_yamlParsed].assetsDir
                 : undefined; 
     }
     set assetsDir(newAssetsDir) {
-        this[_config_yamlParsed].assets = newAssetsDir;
+        this[_config_yamlParsed].assetsDir = newAssetsDir;
+    }
+    get assetsDirFullPath() {
+        return path.normalize(path.join(this.configDirPath, this.assetsDir ? this.assetsDir : ""));
     }
 
     /**
@@ -123,6 +162,9 @@ module.exports.Configuration = class Configuration {
     set partialsDir(newPartialsDir) {
         this[_config_yamlParsed].partialsDir = newPartialsDir;
     }
+    get partialsDirFullPath() {
+        return path.normalize(path.join(this.configDirPath, this.partialsDir ? this.partialsDir : ""));
+    }
 
     /**
      * Directory where layoout templates are stored
@@ -135,6 +177,9 @@ module.exports.Configuration = class Configuration {
     }
     set layoutsDir(newLayoutsDir) {
         this[_config_yamlParsed].layoutsDir = newLayoutsDir;
+    }
+    get layoutsDirFullPath() {
+        return path.normalize(path.join(this.configDirPath, this.layoutsDir ? this.layoutsDir : ""));
     }
 
     /**
@@ -813,11 +858,13 @@ module.exports.readConfig = async function(fn) {
     const yamlText = await fs.readFile(fn, 'utf8');
     let config = new exports.Configuration(yamlText);
     config.configFileName = fn;
+    await config.check();
     try {
         await manifest.spineTitles(config);
         config.tocdata = await manifest.tocData(config);
     } catch (e) {
         console.error(`epubtools caught error while building Configuration: ${e.stack}`);
+        throw new Error(`epubtools caught error while building Configuration: ${e.stack}`);
     }
     return config;
 };

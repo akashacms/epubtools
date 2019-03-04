@@ -6,14 +6,21 @@ const fs        = require('fs-extra');
 const path      = require('path');
 const globfs    = require('globfs');
 const metadata  = require('./metadata');
+const manifest  = require('./manifest');
 const opf       = require('./opf');
 const checkEPUB = require('./checkEPUB');
+const akrender  = require('./renderEPUB');
 
-exports.renderEPUB = async function(config) {
-    let rootDir = path.join(path.dirname(config.configFileName),
-                        config.bookroot);
-    let destDir = path.join(path.dirname(config.configFileName),
-                        config.destRenderRoot)
+async function ensureBookRenderDir(config) {
+    return await fs.mkdirs(config.bookRenderDestFullPath);
+}
+
+exports.copyEPUBassets = async function(config) {
+    // Any assets to copy?
+    if (!config.assetsDir) return;
+    let rootDir = path.join(config.configDirPath, config.assetsDir);
+    let destDir = config.bookRenderDestFullPath;
+    await ensureBookRenderDir(config);
     return await globfs.copyAsync(rootDir,
         [ "**/*", '**/.*/*', '**/.*' ],
         destDir);
@@ -33,6 +40,10 @@ exports.bundleEPUB = async function(config) {
     let destDir = path.join(config.configDirPath, config.bookroot);
     // console.log(`bundleEPUB destDir = ${destDir}`);
 
+    await ensureBookRenderDir(config);
+    akrender.setconfig(config);
+    await akrender.renderProject();
+    config.opfManifest = await manifest.from_fs(config);
     await exports.mkMimeType(config);
     await exports.mkMetaInfDir(config);
     await exports.mkContainerXmlFile(config);
@@ -46,13 +57,13 @@ exports.bundleEPUB = async function(config) {
 async function archiveFiles(config) {
 
     console.log(`archiveFiles`);
-    const rendered = path.join(config.configDirPath, config.bookroot);
+    const rendered = config.bookRenderDestFullPath;
     const epubFileName = path.join(config.configDirPath, config.epubFileName);
     const opfFileName = config.bookOPF;
-    console.log(`archiveFiles reading OPF config.sourceBookFullPath ${config.sourceBookFullPath} opfFileName ${opfFileName}`);
+    console.log(`archiveFiles reading OPF config.bookRenderDestFullPath ${config.bookRenderDestFullPath} opfFileName ${opfFileName}`);
     const { 
         opfXmlText, opfXml 
-    } = await metadata.readOPF(config.sourceBookFullPath, opfFileName); 
+    } = await metadata.readOPF(config.bookRenderDestFullPath, opfFileName); 
     
     console.log(`archiveFiles rendered ${rendered} epubFileName ${epubFileName} opfFileName ${opfFileName}`);
 
@@ -123,19 +134,22 @@ async function archiveFiles(config) {
 }
 
 exports.mkMimeType = async function(config) {
-    let mimetype = path.join(config.sourceBookFullPath, "mimetype");
+    let mimetype = path.join(config.bookRenderDestFullPath, "mimetype");
     console.log(`writing ${mimetype}`);
     await fs.writeFile(mimetype, "application/epub+zip", "utf8");
 };
 
 exports.mkMetaInfDir = async function(config) {
-    let metaInfDir = path.join(config.sourceBookFullPath, "META-INF");
+    let metaInfDir = path.join(config.bookRenderDestFullPath, "META-INF");
     console.log(`mkMetaInfDir ${metaInfDir}`);
     await fs.mkdirs(metaInfDir);
 };
 
 exports.mkPackageOPF = async function(config) {
-    let write2 = path.join(config.sourceBookFullPath, config.bookOPF);
+    if (!config.bookOPF || config.bookOPF === '') {
+        throw new Error(`No OPF filename given in ${config.projectName}`);
+    }
+    let write2 = path.join(config.bookRenderDestFullPath, config.bookOPF);
     console.log(`mkPackageOPF ${write2}`);
     const OPFXML = await opf.makeOpfXml(config);
 
@@ -190,11 +204,12 @@ exports.mkContainerXmlFile = async function(config) {
         }
     }
     
+    const writeTo = path.join(config.bookRenderDestFullPath, "META-INF", "container.xml");
     
     await exports.mkMetaInfDir(config);
-    console.log(`mkContainerXmlFile ${path.join(config.sourceBookFullPath, "META-INF", "container.xml")}`);
+    console.log(`mkContainerXmlFile ${writeTo}`);
     await fs.writeFile(
-            path.join(config.sourceBookFullPath, "META-INF", "container.xml"),
+            writeTo,
             new xmldom.XMLSerializer().serializeToString(containerXml), 
             "utf8");
 };
