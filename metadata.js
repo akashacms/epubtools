@@ -49,8 +49,8 @@ exports.findOpfFileName = function(containerXml) {
 };
 
 exports.readOPF = async function(epubDir, opfName) {
+    const file2read = path.join(epubDir, opfName);
     try {
-        const file2read = path.join(epubDir, opfName);
         console.log(`readOPF ${file2read}`);
         const data = await fs.readFile(file2read, 'utf8');
         return {
@@ -58,6 +58,7 @@ exports.readOPF = async function(epubDir, opfName) {
             opfXml: new xmldom.DOMParser().parseFromString(data, 'text/xml')
         };
     } catch (e) {
+        console.log(`readOPF ${file2read} FAIL because ${e.stack}`);
         return undefined;
     }
 };

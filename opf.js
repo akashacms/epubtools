@@ -450,11 +450,13 @@ exports.makeOpfXml = async function(config) {
 
     if (typeof config.opfTitles !== undefined
      && config.opfTitles) {
+        let titleNum = 0;
         for (let title of config.opfTitles) {
             elem = OPFXML.createElementNS(
                     'http://purl.org/dc/elements/1.1/',
                     'dc:title');
-            elem.setAttribute('id', title.id);
+            if (title.id && title.id !== '') elem.setAttribute('id', title.id);
+            else elem.setAttribute('id', `title${titleNum++}`);
             elem.appendChild(OPFXML.createTextNode(title.title));
             metadata.appendChild(elem);
             if (title.titleType) {
@@ -510,9 +512,12 @@ exports.makeOpfXml = async function(config) {
     //            <meta refines="#<%= creator.id %>" property="role" scheme="marc:relators"><%= creator.role %></meta>
     //        <% }
 
+    let creatorNum = 0;
+
     const mkCreatorContributor = function(OPFXML, tag, obj) {
         const elem = OPFXML.createElementNS("http://purl.org/dc/elements/1.1/", tag);
-        if (obj.id) elem.setAttribute('id', obj.id);
+        if (!obj.id || obj.id === '') obj.id = `creator${creatorNum++}`;
+        elem.setAttribute('id', obj.id);
         elem.appendChild(OPFXML.createTextNode(obj.name));
         // <meta refines="#<%= creator.id %>" property="role" scheme="marc:relators"><%= creator.role %></meta>
         if (obj.role) {
@@ -647,6 +652,9 @@ exports.makeOpfXml = async function(config) {
     // <item id="<%= item.id %>" <%
     //    if (item.properties) { %> properties="<%= item.properties %>" <% }
     //   %>href="<%= item.href %>" media-type="<%= item.type %>"/>
+
+
+    console.log(config);
 
     var spineitems = [];
     for (let item of config.opfManifest) {

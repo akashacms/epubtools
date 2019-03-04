@@ -26,6 +26,10 @@ module.exports.Configuration = class Configuration {
         this[_config_configFN] = undefined;
     }
 
+    /**
+     * File name for configuration file.  Appears this is to be
+     * the full path name?
+     */
     get configFileName()   { return this[_config_configFN]; }
     set configFileName(FN) { return this[_config_configFN] = FN; }
 
@@ -36,9 +40,17 @@ module.exports.Configuration = class Configuration {
         return path.dirname(this.configFileName);
     }
 
+    /**
+     * Pathname where the packaged EPUB will land, relative to the location
+     * of the configuration file.
+     */
     get epubFileName() { return this[_config_yamlParsed].epub; }
     set epubFileName(newEPUBFN) { this[_config_yamlParsed].epub = newEPUBFN; }
 
+    /**
+     * Human-friendly text string describing this project.  It is not used
+     * anywhere else, e.g. it is not the book title.
+     */
     get projectName() {
         return this[_config_yamlParsed]
              && this[_config_yamlParsed].name
@@ -47,6 +59,9 @@ module.exports.Configuration = class Configuration {
     }
     set projectName(newName) { this[_config_yamlParsed].name = newName; }
 
+    /**
+     * Contains data for the META-INF directory
+     */
     get containerRootfiles() { 
         return this[_config_yamlParsed]
              && this[_config_yamlParsed].container
@@ -61,6 +76,9 @@ module.exports.Configuration = class Configuration {
         this[_config_yamlParsed].container.rootfiles = newOPFs;
     }
 
+    /**
+     * Directory containing the document files used in this book.
+     */
     get bookroot() { 
         return this[_config_yamlParsed]
              && this[_config_yamlParsed].bookroot
@@ -80,6 +98,22 @@ module.exports.Configuration = class Configuration {
         return path.normalize(path.join(this.configDirPath, this.bookroot ? this.bookroot : ""));
     }
 
+    /**
+     * Directory where asset files are stored
+     */
+    get assetsDir() { 
+        return this[_config_yamlParsed]
+             && this[_config_yamlParsed].assets
+                ? this[_config_yamlParsed].assets
+                : undefined; 
+    }
+    set assetsDir(newAssetsDir) {
+        this[_config_yamlParsed].assets = newAssetsDir;
+    }
+
+    /**
+     * Directory where partial templates are stored
+     */
     get partialsDir() { 
         return this[_config_yamlParsed]
              && this[_config_yamlParsed].partialsDir
@@ -90,6 +124,9 @@ module.exports.Configuration = class Configuration {
         this[_config_yamlParsed].partialsDir = newPartialsDir;
     }
 
+    /**
+     * Directory where layoout templates are stored
+     */
     get layoutsDir() { 
         return this[_config_yamlParsed]
              && this[_config_yamlParsed].layoutsDir
@@ -100,19 +137,34 @@ module.exports.Configuration = class Configuration {
         this[_config_yamlParsed].layoutsDir = newLayoutsDir;
     }
 
-    // Is this useful?
-    get destRenderRoot() {
+    /**
+     * Directory where the raw files for the EPUB will be rendered.
+     */
+    get bookRenderDest() {
         return this[_config_yamlParsed]
-             && this[_config_yamlParsed].source
-             && this[_config_yamlParsed].source.renderRoot
-                ? this[_config_yamlParsed].source.renderRoot
+             && this[_config_yamlParsed].bookdest
+                ? this[_config_yamlParsed].bookdest
                 : undefined;
     }
+    set bookRenderDest(newRenderRoot) {
+        this[_config_yamlParsed].bookdest = newRenderRoot;
+    }
+
+    get bookRenderDestFullPath() {
+        if (!this.bookRenderDest) throw new Error('No bookRenderDest set');
+        return path.normalize(
+            path.join(
+                this.configDirPath, this.bookRenderDest ? this.bookRenderDest : ""
+            )
+        );
+    }
+
+
+    get destRenderRoot() {
+        throw new Error('DEPRECATED use get bookRenderDest instead');
+    }
     set destRenderRoot(newRenderRoot) {
-        if (!this[_config_yamlParsed].source) {
-            this[_config_yamlParsed].source = {};
-        }
-        this[_config_yamlParsed].source.renderRoot = newRenderRoot;
+        throw new Error('DEPRECATED use set bookRenderDest instead');
     }
 
     get opfManifest() {
@@ -255,7 +307,7 @@ module.exports.Configuration = class Configuration {
     }
 
     get sourceBookCoverID() { 
-        if (this[_config_yamlParsed]
+        /* if (this[_config_yamlParsed]
          && this[_config_yamlParsed].opf
          && this[_config_yamlParsed].opf.data
          && this[_config_yamlParsed].opf.data.manifest) {
@@ -265,15 +317,15 @@ module.exports.Configuration = class Configuration {
                 }
             }
         }
-        return undefined;
-        /* return this[_config_yamlParsed]
+        return undefined; */
+        return this[_config_yamlParsed]
              && this[_config_yamlParsed].source
              && this[_config_yamlParsed].source.cover
                 ? this[_config_yamlParsed].source.cover.id
-                : undefined;  */
+                : undefined;
     }
     set sourceBookCoverID(newCoverID) {
-        if (this[_config_yamlParsed]
+        /* if (this[_config_yamlParsed]
             && this[_config_yamlParsed].opf
             && this[_config_yamlParsed].opf.data
             && this[_config_yamlParsed].opf.data.manifest) {
@@ -282,18 +334,18 @@ module.exports.Configuration = class Configuration {
                     item.id = newCoverID;
                 }
             }
-        }
-        /* if (!this[_config_yamlParsed].source) {
+        } */
+        if (!this[_config_yamlParsed].source) {
             this[_config_yamlParsed].source = {};
         }
         if (!this[_config_yamlParsed].source.cover) {
             this[_config_yamlParsed].source.cover = {};
         }
-        this[_config_yamlParsed].source.cover.id = newCoverID; */
+        this[_config_yamlParsed].source.cover.id = newCoverID;
     }
 
     get sourceBookCoverHREF() { 
-        if (this[_config_yamlParsed]
+        /* if (this[_config_yamlParsed]
          && this[_config_yamlParsed].opf
          && this[_config_yamlParsed].opf.data
          && this[_config_yamlParsed].opf.data.manifest) {
@@ -303,15 +355,15 @@ module.exports.Configuration = class Configuration {
                 }
             }
         }
-        return undefined;
-        /* return this[_config_yamlParsed]
+        return undefined; */
+        return this[_config_yamlParsed]
              && this[_config_yamlParsed].source
              && this[_config_yamlParsed].source.cover
                 ? this[_config_yamlParsed].source.cover.href
-                : undefined; */
+                : undefined;
     }
     set sourceBookCoverHREF(newCoverHREF) {
-        if (this[_config_yamlParsed]
+        /* if (this[_config_yamlParsed]
             && this[_config_yamlParsed].opf
             && this[_config_yamlParsed].opf.data
             && this[_config_yamlParsed].opf.data.manifest) {
@@ -320,14 +372,48 @@ module.exports.Configuration = class Configuration {
                     item.id = newCoverHREF;
                 }
             }
-        }
-        /* if (!this[_config_yamlParsed].source) {
+        } */
+        if (!this[_config_yamlParsed].source) {
             this[_config_yamlParsed].source = {};
         }
         if (!this[_config_yamlParsed].source.cover) {
             this[_config_yamlParsed].source.cover = {};
         }
-        this[_config_yamlParsed].source.cover.href = newCoverHREF; */
+        this[_config_yamlParsed].source.cover.href = newCoverHREF;
+    }
+
+    get sourceBookCoverHTMLID() { 
+        return this[_config_yamlParsed]
+             && this[_config_yamlParsed].source
+             && this[_config_yamlParsed].source.coverhtml
+                ? this[_config_yamlParsed].source.coverhtml.id
+                : undefined;
+    }
+    set sourceBookCoverHTMLID(newCoverID) {
+        if (!this[_config_yamlParsed].source) {
+            this[_config_yamlParsed].source = {};
+        }
+        if (!this[_config_yamlParsed].source.coverhtml) {
+            this[_config_yamlParsed].source.coverhtml = {};
+        }
+        this[_config_yamlParsed].source.coverhtml.id = newCoverID;
+    }
+
+    get sourceBookCoverHTMLHREF() { 
+        return this[_config_yamlParsed]
+             && this[_config_yamlParsed].source
+             && this[_config_yamlParsed].source.coverhtml
+                ? this[_config_yamlParsed].source.coverhtml.href
+                : undefined;
+    }
+    set sourceBookCoverHTMLHREF(newCoverHREF) {
+        if (!this[_config_yamlParsed].source) {
+            this[_config_yamlParsed].source = {};
+        }
+        if (!this[_config_yamlParsed].source.coverhtml) {
+            this[_config_yamlParsed].source.coverhtml = {};
+        }
+        this[_config_yamlParsed].source.cover.hrefhtml = newCoverHREF;
     }
 
     get opfTitles() {
@@ -727,7 +813,11 @@ module.exports.readConfig = async function(fn) {
     const yamlText = await fs.readFile(fn, 'utf8');
     let config = new exports.Configuration(yamlText);
     config.configFileName = fn;
-    await manifest.spineTitles(config);
-    config.tocdata = await manifest.tocData(config);
+    try {
+        await manifest.spineTitles(config);
+        config.tocdata = await manifest.tocData(config);
+    } catch (e) {
+        console.error(`epubtools caught error while building Configuration: ${e.stack}`);
+    }
     return config;
 };

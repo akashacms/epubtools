@@ -213,7 +213,7 @@ exports.spineTitles = async function(epubConfig) {
     let epubdir = epubConfig.sourceBookFullPath;
     // let _spine = exports.spineItems(epubConfig);
     // console.log(`spineTitles epubdir ${epubdir} ${typeof epubConfig.opfManifest} opfManifest opfManifest.spine ${typeof epubConfig.opfManifest.spine} _spine ${util.inspect(_spine)} opfManifest ${epubConfig.opfManifest}`);
-    for (let item of epubConfig.opfManifest) {
+    if (epubConfig.opfManifest) for (let item of epubConfig.opfManifest) {
         if (!item.in_spine) continue;
         let docpath = path.join(epubdir, item.path);
         let doctxt = await fs.readFile(docpath, 'utf8');
@@ -260,7 +260,10 @@ function getNavOLChildrenXML(DOM, navol, tocdir) {
 exports.tocData = async function(epubConfig) {
     let epubdir = epubConfig.sourceBookFullPath;
     let tocxhtml = await metadata.readXHTML(epubdir, epubConfig.sourceBookTOCHREF);
-    let tochtml = tocxhtml.xhtmlText;
+    if (!tocxhtml) {
+        throw new Error(`epubtools tocData FAIL to read ${epubdir} ${epubConfig.sourceBookTOCHREF}`);
+    }
+    // let tochtml = tocxhtml.xhtmlText;
     let tocdom = tocxhtml.xhtmlDOM;
     let tocid   = epubConfig.sourceBookTOCID;
     let tocdir  = path.dirname(epubConfig.sourceBookTOCHREF);
@@ -291,15 +294,22 @@ exports.tocData = async function(epubConfig) {
     return tocdata;
 };
 
-exports.from_fs = async function(epubdir) {
+exports.from_fs = async function(config) {
     // console.log(`scanfiles bookroot ${epubdir}`);
 
-    var filez = await globfs.findAsync(epubdir, '**');
+    // TODO Should this scan the source directory or the rendered directory?
+    let filez = await globfs.findAsync(config.bookRenderDestFullPath, '**');
 
     // Remove directories
-    var _filez = [];
+    let _filez = [];
     for (let item of filez) {
+        // Do not include admin files
+        if (item.path === 'mimetype') continue;
+        if (item.path === 'META-INF/container.xml') continue;
+        if (item.path === config.bookOPF) continue;
         let stats;
+        // Only include files which can be stat'd and are not directories
+        console.log(item);
         try {
             stats = await fs.stat(item.fullpath);
         } catch (e) { continue; }
@@ -311,7 +321,7 @@ exports.from_fs = async function(epubdir) {
     // Modify the basedir to be Bookroot
     // Fill in other base ManifestItem fields
     for (let item of filez) {
-        item.basedir = epubdir;
+        item.basedir = config.bookRenderDestFullPath;
         item.dirname = path.dirname(item.path);
         item.filename = path.basename(item.path);
         item.mime = mime.getType(item.path);
@@ -325,11 +335,12 @@ exports.from_fs = async function(epubdir) {
         item.seen_in_opf = false;
 
     }
+    let itemnum = 0;
     for (let item of filez) {
         // console.log(`from_fs scan ${item.dirname} ${item.path} ${item.in_spine}`);
         if (item.in_spine) {
             try {
-                const file2read = path.join(epubdir, item.path);
+                const file2read = path.join(config.bookRenderDestFullPath, item.path);
                 // console.log(`readXHTML ${file2read}`);
                 const data = await fs.readFile(file2read, 'utf8');
                 const $ = cheerio.load(data, {
@@ -386,6 +397,8 @@ exports.from_fs = async function(epubdir) {
                 $("link").each(checkRemote);
                 $("audio > source").each(checkRemote);
                 $("video > source").each(checkRemote);
+
+                if (!item.id) item.id = `item${itemnum++}`;
             } catch (e) {
                 // ignore
                 console.log(`Scanning files caught error ${e.stack}`);

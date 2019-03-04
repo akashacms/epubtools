@@ -9,7 +9,7 @@ exports.checkEPUBConfig = async function(config) {
         if (!mItem.id || typeof mItem.id !== 'string' || mItem.id === '') {
             throw new Error(`Manifest item does not have ID ${mItem.path}`);
         }
-        let pathItem = path.join(config.sourceBookFullPath, mItem.path);
+        let pathItem = path.join(config.bookRenderDestFullPath, mItem.path);
         try {
             await fs.access(pathItem, fs.constants.R_OK);
         } catch (e) {
