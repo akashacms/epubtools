@@ -63,15 +63,16 @@ exports.readOPF = async function(epubDir, opfName) {
 };
 
 exports.readXHTML = async function(epubDir, opfName) {
+    const file2read = path.join(epubDir, opfName);
+    // console.log(`readXHTML ${file2read}`);
     try {
-        const file2read = path.join(epubDir, opfName);
-        // console.log(`readXHTML ${file2read}`);
         const data = await fs.readFile(file2read, 'utf8');
         return {
             xhtmlText: data,
             xhtmlDOM: new xmldom.DOMParser().parseFromString(data, 'application/xhtml+xml')
         };
     } catch (e) {
+        console.error(`epubtools metadata readXHTML ${file2read} FAIL because ${e.stack}`);
         return undefined;
     }
 };
