@@ -1,9 +1,10 @@
-
+#!/usr/bin/env node
 
 const program   = require('commander');
 const epubtools = require('./index');
 const configurator = require('./Configuration');
 const bundleEPUB = require('./bundleEPUB');
+const renderEPUB = require('./renderEPUB');
 const util = require('util');
 const fs = require('fs-extra');
 const manifest = require('./manifest');
@@ -32,6 +33,21 @@ program
 
         Q: Is "rendered" required?  It is the directory containing the rendered files.  Shouldn't this be in the configuration?
 */
+    });
+
+program
+    .command('render <configFN>')
+    .description('Render document files in the input directory to render directory')
+    .action(async (configFN) => {
+        try {
+            const bookConfig = await configurator.readConfig(configFN);
+            renderEPUB.setconfig(bookConfig);
+            await fs.mkdirs(bookConfig.bookRenderDestFullPath);
+            await renderEPUB.copyAssets(bookConfig);
+            await renderEPUB.renderProject();
+        } catch (e) {
+            console.error(`package command ERRORED ${e.stack}`);
+        }
     });
 
 // TODO COMMAND: merge config1 config2 config3 mergedDir
