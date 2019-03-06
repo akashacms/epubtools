@@ -10,6 +10,7 @@ const manifest  = require('./manifest');
 const _config_yamlText = Symbol('yamlText');
 const _config_yamlParsed = Symbol('yamlParsed');
 const _config_configFN = Symbol('configFN');
+const _config_akasha = Symbol('akConfig');
 
 module.exports.Configuration = class Configuration {
 
@@ -60,7 +61,16 @@ module.exports.Configuration = class Configuration {
                 throw new Error(`Layouts directory is not readable or does not exist ${this.layoutsDirFullPath}`);
             }
         }
+        if (!this.opfPublicationDate || this.opfPublicationDate === '') {
+            throw new Error(`No publication date`);
+        }
     }
+
+    /**
+     * Handle the corresponding AkashaCMS config
+     */
+    get akConfig()       { return this[_config_akasha]; }
+    set akConfig(config) { return this[_config_akasha] = config; }
 
     /**
      * File name for configuration file.  Appears this is to be
@@ -215,22 +225,18 @@ module.exports.Configuration = class Configuration {
     get opfManifest() {
         return this[_config_yamlParsed]
              && this[_config_yamlParsed].opf
-             && this[_config_yamlParsed].opf.data
-             && this[_config_yamlParsed].opf.data.manifest
-                ? this[_config_yamlParsed].opf.data.manifest
+             && this[_config_yamlParsed].opf.manifest
+                ? this[_config_yamlParsed].opf.manifest
                 : undefined;
     }
     set opfManifest(newManifest) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
         if (!(newManifest instanceof manifest.Manifest)) {
             throw new Error(`New manifest must be of type Manifest ${util.inspect(newManifest)}`);
         }
-        this[_config_yamlParsed].opf.data.manifest = newManifest;
+        this[_config_yamlParsed].opf.manifest = newManifest;
     }
 
     get bookOPF() {
@@ -278,71 +284,55 @@ module.exports.Configuration = class Configuration {
     // Is this useful?
     get sourceBookNCXID() { 
         return this[_config_yamlParsed]
-             && this[_config_yamlParsed].source
-             && this[_config_yamlParsed].source.ncx
-                ? this[_config_yamlParsed].source.ncx.id
+             && this[_config_yamlParsed].ncx
+                ? this[_config_yamlParsed].ncx.id
                 : undefined; 
     }
     set sourceBookNCXID(newNCXID) {
-        if (!this[_config_yamlParsed].source) {
-            this[_config_yamlParsed].source = {};
+        if (!this[_config_yamlParsed].ncx) {
+            this[_config_yamlParsed].ncx = {};
         }
-        if (!this[_config_yamlParsed].source.ncx) {
-            this[_config_yamlParsed].source.ncx = {};
-        }
-        this[_config_yamlParsed].source.ncx.id = newNCXID;
+        this[_config_yamlParsed].ncx.id = newNCXID;
     }
 
     // Is this useful?
     get sourceBookNCXHREF() { 
         return this[_config_yamlParsed]
-             && this[_config_yamlParsed].source
-             && this[_config_yamlParsed].source.ncx
-                ? this[_config_yamlParsed].source.ncx.href
+             && this[_config_yamlParsed].ncx
+                ? this[_config_yamlParsed].ncx.href
                 : undefined; 
     }
     set sourceBookNCXHREF(newNCXHREF) {
-        if (!this[_config_yamlParsed].source) {
-            this[_config_yamlParsed].source = {};
+        if (!this[_config_yamlParsed].ncx) {
+            this[_config_yamlParsed].ncx = {};
         }
-        if (!this[_config_yamlParsed].source.ncx) {
-            this[_config_yamlParsed].source.ncx = {};
-        }
-        this[_config_yamlParsed].source.ncx.href = newNCXHREF;
+        this[_config_yamlParsed].ncx.href = newNCXHREF;
     }
 
     get sourceBookTOCID() { 
         return this[_config_yamlParsed]
-             && this[_config_yamlParsed].source
-             && this[_config_yamlParsed].source.toc
-                ? this[_config_yamlParsed].source.toc.id
+             && this[_config_yamlParsed].toc
+                ? this[_config_yamlParsed].toc.id
                 : undefined; 
     }
     set sourceBookTOCID(newTOCID) {
-        if (!this[_config_yamlParsed].source) {
-            this[_config_yamlParsed].source = {};
+        if (!this[_config_yamlParsed].toc) {
+            this[_config_yamlParsed].toc = {};
         }
-        if (!this[_config_yamlParsed].source.toc) {
-            this[_config_yamlParsed].source.toc = {};
-        }
-        this[_config_yamlParsed].source.toc.id = newTOCID;
+        this[_config_yamlParsed].toc.id = newTOCID;
     }
 
     get sourceBookTOCHREF() { 
         return this[_config_yamlParsed]
-             && this[_config_yamlParsed].source
-             && this[_config_yamlParsed].source.toc
-                ? this[_config_yamlParsed].source.toc.href
+             && this[_config_yamlParsed].toc
+                ? this[_config_yamlParsed].toc.href
                 : undefined; 
     }
     set sourceBookTOCHREF(newTOCHREF) {
-        if (!this[_config_yamlParsed].source) {
-            this[_config_yamlParsed].source = {};
+        if (!this[_config_yamlParsed].toc) {
+            this[_config_yamlParsed].toc = {};
         }
-        if (!this[_config_yamlParsed].source.toc) {
-            this[_config_yamlParsed].source.toc = {};
-        }
-        this[_config_yamlParsed].source.toc.href = newTOCHREF;
+        this[_config_yamlParsed].toc.href = newTOCHREF;
     }
 
     get TOCpath() {
@@ -364,9 +354,8 @@ module.exports.Configuration = class Configuration {
         }
         return undefined; */
         return this[_config_yamlParsed]
-             && this[_config_yamlParsed].source
-             && this[_config_yamlParsed].source.cover
-                ? this[_config_yamlParsed].source.cover.id
+             && this[_config_yamlParsed].cover
+                ? this[_config_yamlParsed].cover.id
                 : undefined;
     }
     set sourceBookCoverID(newCoverID) {
@@ -380,13 +369,10 @@ module.exports.Configuration = class Configuration {
                 }
             }
         } */
-        if (!this[_config_yamlParsed].source) {
-            this[_config_yamlParsed].source = {};
+        if (!this[_config_yamlParsed].cover) {
+            this[_config_yamlParsed].cover = {};
         }
-        if (!this[_config_yamlParsed].source.cover) {
-            this[_config_yamlParsed].source.cover = {};
-        }
-        this[_config_yamlParsed].source.cover.id = newCoverID;
+        this[_config_yamlParsed].cover.id = newCoverID;
     }
 
     get sourceBookCoverHREF() { 
@@ -402,9 +388,8 @@ module.exports.Configuration = class Configuration {
         }
         return undefined; */
         return this[_config_yamlParsed]
-             && this[_config_yamlParsed].source
-             && this[_config_yamlParsed].source.cover
-                ? this[_config_yamlParsed].source.cover.href
+             && this[_config_yamlParsed].cover
+                ? this[_config_yamlParsed].cover.href
                 : undefined;
     }
     set sourceBookCoverHREF(newCoverHREF) {
@@ -418,69 +403,50 @@ module.exports.Configuration = class Configuration {
                 }
             }
         } */
-        if (!this[_config_yamlParsed].source) {
-            this[_config_yamlParsed].source = {};
+        if (!this[_config_yamlParsed].cover) {
+            this[_config_yamlParsed].cover = {};
         }
-        if (!this[_config_yamlParsed].source.cover) {
-            this[_config_yamlParsed].source.cover = {};
-        }
-        this[_config_yamlParsed].source.cover.href = newCoverHREF;
+        this[_config_yamlParsed].cover.href = newCoverHREF;
     }
 
     get sourceBookCoverHTMLID() { 
         return this[_config_yamlParsed]
-             && this[_config_yamlParsed].source
-             && this[_config_yamlParsed].source.coverhtml
-                ? this[_config_yamlParsed].source.coverhtml.id
+             && this[_config_yamlParsed].coverhtml
+                ? this[_config_yamlParsed].coverhtml.id
                 : undefined;
     }
     set sourceBookCoverHTMLID(newCoverID) {
-        if (!this[_config_yamlParsed].source) {
-            this[_config_yamlParsed].source = {};
+        if (!this[_config_yamlParsed].coverhtml) {
+            this[_config_yamlParsed].coverhtml = {};
         }
-        if (!this[_config_yamlParsed].source.coverhtml) {
-            this[_config_yamlParsed].source.coverhtml = {};
-        }
-        this[_config_yamlParsed].source.coverhtml.id = newCoverID;
+        this[_config_yamlParsed].coverhtml.id = newCoverID;
     }
 
     get sourceBookCoverHTMLHREF() { 
         return this[_config_yamlParsed]
-             && this[_config_yamlParsed].source
-             && this[_config_yamlParsed].source.coverhtml
-                ? this[_config_yamlParsed].source.coverhtml.href
+             && this[_config_yamlParsed].coverhtml
+                ? this[_config_yamlParsed].coverhtml.href
                 : undefined;
     }
     set sourceBookCoverHTMLHREF(newCoverHREF) {
-        if (!this[_config_yamlParsed].source) {
-            this[_config_yamlParsed].source = {};
+        if (!this[_config_yamlParsed].coverhtml) {
+            this[_config_yamlParsed].coverhtml = {};
         }
-        if (!this[_config_yamlParsed].source.coverhtml) {
-            this[_config_yamlParsed].source.coverhtml = {};
-        }
-        this[_config_yamlParsed].source.cover.hrefhtml = newCoverHREF;
+        this[_config_yamlParsed].coverhtml.href = newCoverHREF;
     }
 
     get opfTitles() {
         return this[_config_yamlParsed]
              && this[_config_yamlParsed].opf
-             && this[_config_yamlParsed].opf.data
-             && this[_config_yamlParsed].opf.data.metadata
-             && this[_config_yamlParsed].opf.data.metadata.titles
-                ? this[_config_yamlParsed].opf.data.metadata.titles
+             && this[_config_yamlParsed].opf.titles
+                ? this[_config_yamlParsed].opf.titles
                 : "";
     }
     set opfTitles(newBookTitles) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
-        this[_config_yamlParsed].opf.data.metadata.titles = newBookTitles;
+        this[_config_yamlParsed].opf.titles = newBookTitles;
     }
 
     /**
@@ -489,10 +455,8 @@ module.exports.Configuration = class Configuration {
     get opfLanguages() {
         return this[_config_yamlParsed]
              && this[_config_yamlParsed].opf
-             && this[_config_yamlParsed].opf.data
-             && this[_config_yamlParsed].opf.data.metadata
-             && this[_config_yamlParsed].opf.data.metadata.languages
-                ? this[_config_yamlParsed].opf.data.metadata.languages
+             && this[_config_yamlParsed].opf.languages
+                ? this[_config_yamlParsed].opf.languages
                 : "";
     }
     /**
@@ -502,333 +466,215 @@ module.exports.Configuration = class Configuration {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
-        this[_config_yamlParsed].opf.data.metadata.languages = newBookPubLanguage;
+        this[_config_yamlParsed].opf.languages = newBookPubLanguage;
     }
 
     get opfCreators() {
         return this[_config_yamlParsed]
                 && this[_config_yamlParsed].opf
-                && this[_config_yamlParsed].opf.data
-                && this[_config_yamlParsed].opf.data.metadata
-                && this[_config_yamlParsed].opf.data.metadata.creators
-                ? this[_config_yamlParsed].opf.data.metadata.creators
+                && this[_config_yamlParsed].opf.creators
+                ? this[_config_yamlParsed].opf.creators
                 : "";
     }
     set opfCreators(newCreators) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
-        this[_config_yamlParsed].opf.data.metadata.creators = newCreators;
+        this[_config_yamlParsed].opf.creators = newCreators;
     }
 
     get opfContributors() {
         return this[_config_yamlParsed]
                 && this[_config_yamlParsed].opf
-                && this[_config_yamlParsed].opf.data
-                && this[_config_yamlParsed].opf.data.metadata
-                && this[_config_yamlParsed].opf.data.metadata.contributors
-                ? this[_config_yamlParsed].opf.data.metadata.contributors
+                && this[_config_yamlParsed].opf.contributors
+                ? this[_config_yamlParsed].opf.contributors
                 : "";
     }
     set opfContributors(newContributors) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
-        this[_config_yamlParsed].opf.data.metadata.contributors = newContributors;
+        this[_config_yamlParsed].opf.metadata.contributors = newContributors;
     }
 
     get opfSubjects() {
         return this[_config_yamlParsed]
                 && this[_config_yamlParsed].opf
-                && this[_config_yamlParsed].opf.data
-                && this[_config_yamlParsed].opf.data.metadata
-                && this[_config_yamlParsed].opf.data.metadata.subjects
-                ? this[_config_yamlParsed].opf.data.metadata.subjects
+                && this[_config_yamlParsed].opf.subjects
+                ? this[_config_yamlParsed].opf.subjects
                 : "";
     }
     set opfSubjects(newSubjects) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
-        this[_config_yamlParsed].opf.data.metadata.subjects = newSubjects;
+        this[_config_yamlParsed].opf.metadata.subjects = newSubjects;
     }
 
     get opfIdentifiers() {
         return this[_config_yamlParsed]
                 && this[_config_yamlParsed].opf
-                && this[_config_yamlParsed].opf.data
-                && this[_config_yamlParsed].opf.data.metadata
-                && this[_config_yamlParsed].opf.data.metadata.identifiers
-                ? this[_config_yamlParsed].opf.data.metadata.identifiers
+                && this[_config_yamlParsed].opf.identifiers
+                ? this[_config_yamlParsed].opf.identifiers
                 : "";
     }
     set opfIdentifiers(newIdentifiers) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
-        this[_config_yamlParsed].opf.data.metadata.identifiers = newIdentifiers;
+        this[_config_yamlParsed].opf.identifiers = newIdentifiers;
     }
 
     get bookMetaSourceType() {
         return this[_config_yamlParsed]
                 && this[_config_yamlParsed].opf
-                && this[_config_yamlParsed].opf.data
-                && this[_config_yamlParsed].opf.data.metadata
-                && this[_config_yamlParsed].opf.data.metadata.source
-                && this[_config_yamlParsed].opf.data.metadata.source.type
-                ? this[_config_yamlParsed].opf.data.metadata.source.type
+                && this[_config_yamlParsed].opf.source
+                && this[_config_yamlParsed].opf.source.type
+                ? this[_config_yamlParsed].opf.source.type
                 : "";
     }
     set bookMetaSourceType(newType) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
+        if (!this[_config_yamlParsed].opf.source) {
+            this[_config_yamlParsed].opf.source = {};
         }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata.source) {
-            this[_config_yamlParsed].opf.data.metadata.source = {};
-        }
-        this[_config_yamlParsed].opf.data.metadata.source.type = newType;
+        this[_config_yamlParsed].opf.source.type = newType;
     }
 
     get bookMetaSourceID() {
         return this[_config_yamlParsed]
                 && this[_config_yamlParsed].opf
-                && this[_config_yamlParsed].opf.data
-                && this[_config_yamlParsed].opf.data.metadata
-                && this[_config_yamlParsed].opf.data.metadata.source
-                && this[_config_yamlParsed].opf.data.metadata.source.id
-                ? this[_config_yamlParsed].opf.data.metadata.source.id
+                && this[_config_yamlParsed].opf.source
+                && this[_config_yamlParsed].opf.source.id
+                ? this[_config_yamlParsed].opf.source.id
                 : "";
     }
     set bookMetaSourceID(newID) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
+        if (!this[_config_yamlParsed].opf.source) {
+            this[_config_yamlParsed].opf.source = {};
         }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata.source) {
-            this[_config_yamlParsed].opf.data.metadata.source = {};
-        }
-        this[_config_yamlParsed].opf.data.metadata.source.id = newID;
+        this[_config_yamlParsed].opf.source.id = newID;
     }
 
     get opfPublisher() {
         return this[_config_yamlParsed]
                 && this[_config_yamlParsed].opf
-                && this[_config_yamlParsed].opf.data
-                && this[_config_yamlParsed].opf.data.metadata
-                && this[_config_yamlParsed].opf.data.metadata.publisher
-                ? this[_config_yamlParsed].opf.data.metadata.publisher
+                && this[_config_yamlParsed].opf.publisher
+                ? this[_config_yamlParsed].opf.publisher
                 : "";
     }
     set opfPublisher(newBookPublisher) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
-        this[_config_yamlParsed].opf.data.metadata.publisher = newBookPublisher;
+        this[_config_yamlParsed].opf.publisher = newBookPublisher;
     }
 
     get opfPublicationDate() {
         return this[_config_yamlParsed]
                 && this[_config_yamlParsed].opf
-                && this[_config_yamlParsed].opf.data
-                && this[_config_yamlParsed].opf.data.metadata
-                && this[_config_yamlParsed].opf.data.metadata.publicationDate
-                ? this[_config_yamlParsed].opf.data.metadata.publicationDate
+                && this[_config_yamlParsed].opf.publicationDate
+                ? this[_config_yamlParsed].opf.publicationDate
                 : "";
     }
     set opfPublicationDate(newBookPublicationDate) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
         // Do this solely to validate the format
         let ndate = new Date(newBookPublicationDate);
-        this[_config_yamlParsed].opf.data.metadata.publicationDate = newBookPublicationDate;
+        this[_config_yamlParsed].opf.publicationDate = newBookPublicationDate;
     }
 
     get opfModifiedDate() {
         return this[_config_yamlParsed]
                 && this[_config_yamlParsed].opf
-                && this[_config_yamlParsed].opf.data
-                && this[_config_yamlParsed].opf.data.metadata
-                && this[_config_yamlParsed].opf.data.metadata.modified
-                ? this[_config_yamlParsed].opf.data.metadata.modified
-                : "";
+                && this[_config_yamlParsed].opf.modifiedDate
+                ? this[_config_yamlParsed].opf.modifiedDate
+                : new Date().toISOString();
     }
     set opfModifiedDate(newBookModifiedDate) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
         // Do this solely to validate the format
         let ndate = new Date(newBookModifiedDate);
-        this[_config_yamlParsed].opf.data.metadata.modified = newBookModifiedDate;
+        this[_config_yamlParsed].opf.modifiedDate = newBookModifiedDate;
     }
 
     get opfDescription() {
         return this[_config_yamlParsed]
                 && this[_config_yamlParsed].opf
-                && this[_config_yamlParsed].opf.data
-                && this[_config_yamlParsed].opf.data.metadata
-                && this[_config_yamlParsed].opf.data.metadata.description
-                ? this[_config_yamlParsed].opf.data.metadata.description
+                && this[_config_yamlParsed].opf.description
+                ? this[_config_yamlParsed].opf.description
                 : "";
     }
     set opfDescription(newBookDescription) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
-        this[_config_yamlParsed].opf.data.metadata.description = newBookDescription;
+        this[_config_yamlParsed].opf.description = newBookDescription;
     }
 
     get opfFormat() {
         return this[_config_yamlParsed]
                 && this[_config_yamlParsed].opf
-                && this[_config_yamlParsed].opf.data
-                && this[_config_yamlParsed].opf.data.metadata
-                && this[_config_yamlParsed].opf.data.metadata.format
-                ? this[_config_yamlParsed].opf.data.metadata.format
+                && this[_config_yamlParsed].opf.format
+                ? this[_config_yamlParsed].opf.format
                 : "";
     }
     set opfFormat(newBookFormat) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
-        this[_config_yamlParsed].opf.data.metadata.format = newBookFormat;
+        this[_config_yamlParsed].opf.format = newBookFormat;
     }
 
     get opfRelation() {
         return this[_config_yamlParsed]
                 && this[_config_yamlParsed].opf
-                && this[_config_yamlParsed].opf.data
-                && this[_config_yamlParsed].opf.data.metadata
-                && this[_config_yamlParsed].opf.data.metadata.relation
-                ? this[_config_yamlParsed].opf.data.metadata.relation
+                && this[_config_yamlParsed].opf.relation
+                ? this[_config_yamlParsed].opf.relation
                 : "";
     }
     set opfRelation(newBookRelation) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
-        this[_config_yamlParsed].opf.data.metadata.relation = newBookRelation;
+        this[_config_yamlParsed].opf.relation = newBookRelation;
     }
 
     get opfCoverage() {
         return this[_config_yamlParsed]
                 && this[_config_yamlParsed].opf
-                && this[_config_yamlParsed].opf.data
-                && this[_config_yamlParsed].opf.data.metadata
-                && this[_config_yamlParsed].opf.data.metadata.coverage
-                ? this[_config_yamlParsed].opf.data.metadata.coverage
+                && this[_config_yamlParsed].opf.coverage
+                ? this[_config_yamlParsed].opf.coverage
                 : "";
     }
     set opfCoverage(newBookCoverage) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
-        this[_config_yamlParsed].opf.data.metadata.coverage = newBookCoverage;
+        this[_config_yamlParsed].opf.coverage = newBookCoverage;
     }
 
     get opfRights() {
         return this[_config_yamlParsed]
                 && this[_config_yamlParsed].opf
-                && this[_config_yamlParsed].opf.data
-                && this[_config_yamlParsed].opf.data.metadata
-                && this[_config_yamlParsed].opf.data.metadata.rights
-                ? this[_config_yamlParsed].opf.data.metadata.rights
+                && this[_config_yamlParsed].opf.rights
+                ? this[_config_yamlParsed].opf.rights
                 : "";
     }
     set opfRights(newBookRights) {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
-        if (!this[_config_yamlParsed].opf.data) {
-            this[_config_yamlParsed].opf.data = {};
-        }
-        if (!this[_config_yamlParsed].opf.data.metadata) {
-            this[_config_yamlParsed].opf.data.metadata = {};
-        }
-        this[_config_yamlParsed].opf.data.metadata.rights = newBookRights;
+        this[_config_yamlParsed].opf.rights = newBookRights;
     }
 
     async save() {
@@ -854,11 +700,14 @@ module.exports.Configuration = class Configuration {
 
 }
 
+const akrender  = require('./renderEPUB');
+
 module.exports.readConfig = async function(fn) {
     const yamlText = await fs.readFile(fn, 'utf8');
     let config = new exports.Configuration(yamlText);
     config.configFileName = fn;
     await config.check();
+    akrender.setconfig(config);
     try {
         await manifest.spineTitles(config);
         config.tocdata = await manifest.tocData(config);
