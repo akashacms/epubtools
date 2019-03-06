@@ -15,25 +15,26 @@ module.exports.setconfig = function(config) {
     const renderTo = config.bookRenderDestFullPath;
     // console.log(`setconfig dirpath ${config.configDirPath} epubdir ${epubdir} renderTo ${renderTo}`);
     if (akconfig) module.exports.unsetconfig();
-    akconfig = new akasha.Configuration();
-    akconfig
+    akconfig = config.akConfig = new akasha.Configuration();
+    config.akConfig
         .use(require('@akashacms/plugins-epub'))
         /* .use(require('akashacms-footnotes')) */
         /* .use(require('akashacms-embeddables')) */;
     
-    akconfig.addDocumentsDir(epubdir);
-    if (config.layoutsDir) akconfig.addLayoutsDir(config.layoutsDir);
-    if (config.partialsDir) akconfig.addPartialsDir(config.partialsDir);
+        config.akConfig.addDocumentsDir(epubdir);
+    if (config.assetsDir) config.akConfig.addAssetsDir(config.assetsDir);
+    if (config.layoutsDir) config.akConfig.addLayoutsDir(config.layoutsDir);
+    if (config.partialsDir) config.akConfig.addPartialsDir(config.partialsDir);
     
-    akconfig.setMahabhutaConfig({
+    config.akConfig.setMahabhutaConfig({
         recognizeSelfClosing: true,
         recognizeCDATA: true,
         xmlMode: true
     });
 
-    akconfig.setRenderDestination(renderTo);
+    config.akConfig.setRenderDestination(renderTo);
 
-    akconfig.prepare();
+    config.akConfig.prepare();
 
     console.log(`AkashaEPUB setconfig `, epubdir, renderTo, akconfig);
 };
@@ -61,6 +62,10 @@ module.exports.stylesheet = function(cssfn) {
         akconfig.addStylesheet({ href: cssfn });
     }
 };
+
+module.exports.copyAssets = async function() {
+    return await akconfig.copyAssets();
+}
 
 module.exports.renderProject = async function() {
     console.log(`AkashaEPUB-Config renderProject`);
