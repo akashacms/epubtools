@@ -10,6 +10,8 @@ const cheerio = require('cheerio');
 const xmldom   = require('xmldom');
 const metadata = require('./metadata');
 const utils = require('./utils');
+const akasha        = require('akasharender');
+const akfilez       = require('akasharender/filez');
 
 exports.Manifest = class Manifest extends Array {
 
@@ -259,12 +261,35 @@ function getNavOLChildrenXML(DOM, navol, tocdir) {
 
 exports.tocData = async function(epubConfig) {
     let epubdir = epubConfig.sourceBookFullPath;
-    let tocxhtml = await metadata.readXHTML(epubdir, epubConfig.sourceBookTOCHREF);
-    if (!tocxhtml) {
+    let found = await akfilez.findRendersTo(epubConfig.akConfig.documentDirs, 
+                                            epubConfig.sourceBookTOCHREF);
+    if (!found) throw new Error(`tocData did not find ${epubConfig.sourceBookTOCHREF} in ${util.inspect(config.akConfig.documentDirs)}`);
+    var renderer = akasha.findRendererPath(found.foundFullPath);
+    if (!renderer) throw new Error(`tocData did not find renderer for ${epubConfig.sourceBookTOCHREF} in ${util.inspect(config.akConfig.documentDirs)}`);
+
+    console.log(`tocData ${epubConfig.sourceBookTOCHREF} found ${util.inspect(found)}`);
+    console.log(`tocData ${epubConfig.sourceBookTOCHREF} renderer ${util.inspect(renderer)}`);
+
+    let content;
+    var text = await fs.readFile(
+                path.join(found.foundDir, found.foundPathWithinDir), 
+                'utf8');
+    if (renderer.frontmatter) {
+        let m = renderer.parseFrontmatter(text);
+        if (!m.content) throw new Error(`tocData failed to parse content from ${epubConfig.sourceBookTOCHREF}`);
+        content = m.content;
+    } else {
+        content = text;
+    }
+
+    console.log(`tocData ${epubConfig.sourceBookTOCHREF} content ${util.inspect(content)}`);
+
+    let tocdom = new xmldom.DOMParser().parseFromString(content, 'application/xhtml+xml');
+    if (!tocdom) {
         throw new Error(`epubtools tocData FAIL to read ${epubdir} ${epubConfig.sourceBookTOCHREF}`);
     }
     // let tochtml = tocxhtml.xhtmlText;
-    let tocdom = tocxhtml.xhtmlDOM;
+    // let tocdom = tocxhtml.xhtmlDOM;
     let tocid   = epubConfig.sourceBookTOCID;
     let tocdir  = path.dirname(epubConfig.sourceBookTOCHREF);
     let tocnav;
@@ -325,6 +350,9 @@ exports.from_fs = async function(config) {
         item.dirname = path.dirname(item.path);
         item.filename = path.basename(item.path);
         item.mime = mime.getType(item.path);
+        if (item.mime === 'text/html') {
+            item.mime = 'application/xhtml+xml';
+        }
         item.mimeoverride = false;
         // is_nav elsewhere
         item.suppressOPF  = false;
@@ -334,10 +362,30 @@ exports.from_fs = async function(config) {
 
         item.seen_in_opf = false;
 
+        let found = await akfilez.findRendersTo(config.akConfig.documentDirs, 
+                                                item.path);
+        if (found) {
+            if (config.sourceBookTOCHREF === found.foundFullPath) {
+                if (config.sourceBookTOCID) {
+                    item.id = config.sourceBookTOCID;
+                }
+            }
+            if (config.sourceBookCoverHTMLHREF === found.foundFullPath) {
+                if (config.sourceBookCoverHTMLID) {
+                    item.id = config.sourceBookCoverHTMLID;
+                }
+            }
+        }
+        if (config.sourceBookCoverHREF === item.path) {
+            if (config.sourceBookCoverID) {
+                item.id = config.sourceBookCoverID;
+            }
+        }
     }
     let itemnum = 0;
     for (let item of filez) {
         // console.log(`from_fs scan ${item.dirname} ${item.path} ${item.in_spine}`);
+        if (!item.id) item.id = `item${itemnum++}`;
         if (item.in_spine) {
             try {
                 const file2read = path.join(config.bookRenderDestFullPath, item.path);
@@ -352,7 +400,7 @@ exports.from_fs = async function(config) {
                     // console.log(`from_fs scan ${item.path} has nav ${navtype}`);
                     if (navtype === 'toc') {
                         item.is_nav = true;
-                        item.id = 'toc';
+                        // item.id = config.sourceBookTOCID;
                         item.nav_path = item.path;
                         item.nav_id = item.id;
                     }
@@ -398,7 +446,6 @@ exports.from_fs = async function(config) {
                 $("audio > source").each(checkRemote);
                 $("video > source").each(checkRemote);
 
-                if (!item.id) item.id = `item${itemnum++}`;
             } catch (e) {
                 // ignore
                 console.log(`Scanning files caught error ${e.stack}`);
@@ -406,7 +453,7 @@ exports.from_fs = async function(config) {
         }
     }
 
-
+    console.log(`from_fs `, filez);
 
     return new exports.Manifest(filez);
 };
