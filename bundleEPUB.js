@@ -15,17 +15,6 @@ async function ensureBookRenderDir(config) {
     return await fs.mkdirs(config.bookRenderDestFullPath);
 }
 
-exports.copyEPUBassets = async function(config) {
-    // Any assets to copy?
-    if (!config.assetsDir) return;
-    let rootDir = path.join(config.configDirPath, config.assetsDir);
-    let destDir = config.bookRenderDestFullPath;
-    await ensureBookRenderDir(config);
-    return await globfs.copyAsync(rootDir,
-        [ "**/*", '**/.*/*', '**/.*' ],
-        destDir);
-};
-
 exports.bundleEPUB = async function(config) {
     // read container.xml -- extract OPF file name
     // read OPF file
@@ -40,9 +29,6 @@ exports.bundleEPUB = async function(config) {
     let destDir = path.join(config.configDirPath, config.bookroot);
     // console.log(`bundleEPUB destDir = ${destDir}`);
 
-    await ensureBookRenderDir(config);
-    akrender.setconfig(config);
-    await akrender.renderProject();
     config.opfManifest = await manifest.from_fs(config);
     await exports.mkMimeType(config);
     await exports.mkMetaInfDir(config);
@@ -146,8 +132,8 @@ exports.mkMetaInfDir = async function(config) {
 };
 
 exports.mkPackageOPF = async function(config) {
-    if (!config.bookOPF || config.bookOPF === '') {
-        throw new Error(`No OPF filename given in ${config.projectName}`);
+    if (!config.bookOPF && config.bookOPF === '') {
+        throw new Error(`No OPF file specified in ${config.projectName}`);
     }
     let write2 = path.join(config.bookRenderDestFullPath, config.bookOPF);
     console.log(`mkPackageOPF ${write2}`);
@@ -167,6 +153,10 @@ exports.mkContainerXmlFile = async function(config) {
     
     // util.log('createContainerXmlFile '+ rendered +' '+ util.inspect(bookYaml));
     
+    if (!config.bookOPF && config.bookOPF === '' && !config.containerRootfiles) {
+        throw new Error(`No OPF file specified in ${config.projectName}`);
+    }
+
     var containerXml = new xmldom.DOMParser().parseFromString(
         `<?xml 
                 version="1.0" 
@@ -195,12 +185,27 @@ exports.mkContainerXmlFile = async function(config) {
         if (elem.nodeName.toUpperCase() === 'rootfiles'.toUpperCase()) rfs = elem;
     }
 
+    const addElem = (rfs, path, _mime) => {
+        let elem = containerXml.createElement('rootfile');
+        let mime = _mime ? _mime : 'application/oebps-package+xml';
+        if (mime === 'application/oebps-package+xml') addedOPF = true;
+        elem.setAttribute('full-path', path);
+        elem.setAttribute('media-type', mime);
+        rfs.appendChild(elem);
+    }
+
     if (rfs) {
-        for (let rootfile of config.containerRootfiles) {
-            let elem = containerXml.createElement('rootfile');
-            elem.setAttribute('full-path', rootfile.fullpath);
-            elem.setAttribute('media-type', 'application/oebps-package+xml');
-            rfs.appendChild(elem);
+        if (config.bookOPF && config.bookOPF !== '') {
+            addElem(rfs, config.bookOPF, undefined);
+        }
+        if (config.containerRootfiles) {
+            for (let rootfile of config.containerRootfiles) {
+                if (config.bookOPF 
+                && config.bookOPF !== '' 
+                && config.bookOPF !== rootfile.fullpath) {
+                    addElem(rfs, rootfile.fullpath, rootfile.mime);
+                }
+            }
         }
     }
     
