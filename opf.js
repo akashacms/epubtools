@@ -514,7 +514,7 @@ exports.makeOpfXml = async function(config) {
 
     let creatorNum = 0;
 
-    const mkCreatorContributor = function(OPFXML, tag, obj) {
+    const mkCreatorContributor = function(OPFXML, parent, tag, obj) {
         const elem = OPFXML.createElementNS("http://purl.org/dc/elements/1.1/", tag);
         if (!obj.id || obj.id === '') obj.id = `creator${creatorNum++}`;
         elem.setAttribute('id', obj.id);
@@ -524,23 +524,25 @@ exports.makeOpfXml = async function(config) {
             var metaelem = OPFXML.createElement('meta');
             metaelem.setAttribute('refines', "#"+ obj.id);
             metaelem.setAttribute('property', "role");
-            metaelem.setAttribute('schema', "marc:relators");
+            // This attribute is shown in Tools For Change, but
+            // EPUBCheck complains if it is present.
+            // metaelem.setAttribute('schema', "marc:relators");
             metaelem.appendChild(OPFXML.createTextNode(obj.role));
-            elem.appendChild(metaelem);
+            parent.appendChild(metaelem);
         }
         if (obj.fileAs) {
             var metaelem = OPFXML.createElement('meta');
             metaelem.setAttribute('refines', "#"+ obj.id);
             metaelem.setAttribute('property', "file-as");
             metaelem.appendChild(OPFXML.createTextNode(obj.fileAs));
-            elem.appendChild(metaelem);
+            parent.appendChild(metaelem);
         }
         return elem;
     };
 
     if (config.opfCreators) {
         for (let creator of config.opfCreators) {
-            elem = mkCreatorContributor(OPFXML, 'dc:creator', creator);
+            elem = mkCreatorContributor(OPFXML, metadata, 'dc:creator', creator);
             metadata.appendChild(elem);
         }
     }
@@ -551,7 +553,7 @@ exports.makeOpfXml = async function(config) {
     //        %> ><%= contributor.name %></dc:contributor>
     if (config.opfContributors) {
         for (let contributor of config.opfContributors) {
-            elem = mkCreatorContributor(OPFXML, 'dc:contributor', contributor);
+            elem = mkCreatorContributor(OPFXML, metadata, 'dc:contributor', contributor);
             metadata.appendChild(elem);
         }
     }
@@ -566,7 +568,7 @@ exports.makeOpfXml = async function(config) {
         elem.appendChild(OPFXML.createTextNode(date));
         metadata.appendChild(elem);
     }
-    
+
     // <dc:subject><%= subject %></dc:subject>
     for (let subject of config.opfSubjects) {
         elem = OPFXML.createElementNS(
