@@ -261,14 +261,14 @@ function getNavOLChildrenXML(DOM, navol, tocdir) {
 
 exports.tocData = async function(epubConfig) {
     let epubdir = epubConfig.sourceBookFullPath;
-    let found = await akfilez.findRendersTo(epubConfig.akConfig.documentDirs, 
+    let found = await akfilez.findRendersTo(epubConfig.akConfig, 
                                             epubConfig.sourceBookTOCHREF);
     if (!found) throw new Error(`tocData did not find ${epubConfig.sourceBookTOCHREF} in ${util.inspect(config.akConfig.documentDirs)}`);
-    var renderer = akasha.findRendererPath(found.foundFullPath);
+    var renderer = epubConfig.akConfig.findRendererPath(found.foundFullPath);
     if (!renderer) throw new Error(`tocData did not find renderer for ${epubConfig.sourceBookTOCHREF} in ${util.inspect(config.akConfig.documentDirs)}`);
 
-    console.log(`tocData ${epubConfig.sourceBookTOCHREF} found ${util.inspect(found)}`);
-    console.log(`tocData ${epubConfig.sourceBookTOCHREF} renderer ${util.inspect(renderer)}`);
+    // console.log(`tocData ${epubConfig.sourceBookTOCHREF} found ${util.inspect(found)}`);
+    // console.log(`tocData ${epubConfig.sourceBookTOCHREF} renderer ${util.inspect(renderer)}`);
 
     let content;
     var text = await fs.readFile(
@@ -282,7 +282,7 @@ exports.tocData = async function(epubConfig) {
         content = text;
     }
 
-    console.log(`tocData ${epubConfig.sourceBookTOCHREF} content ${util.inspect(content)}`);
+    // console.log(`tocData ${epubConfig.sourceBookTOCHREF} content ${util.inspect(content)}`);
 
     let tocdom = new xmldom.DOMParser().parseFromString(content, 'application/xhtml+xml');
     if (!tocdom) {
@@ -334,7 +334,7 @@ exports.from_fs = async function(config) {
         if (item.path === config.bookOPF) continue;
         let stats;
         // Only include files which can be stat'd and are not directories
-        console.log(item);
+        // console.log(item);
         try {
             stats = await fs.stat(item.fullpath);
         } catch (e) { continue; }
@@ -362,8 +362,7 @@ exports.from_fs = async function(config) {
 
         item.seen_in_opf = false;
 
-        let found = await akfilez.findRendersTo(config.akConfig.documentDirs, 
-                                                item.path);
+        let found = await akfilez.findRendersTo(config.akConfig, item.path);
         if (found) {
             if (config.sourceBookTOCHREF === found.foundFullPath) {
                 if (config.sourceBookTOCID) {
@@ -435,10 +434,13 @@ exports.from_fs = async function(config) {
                     if (href) theurl = url.parse(href);
                     else if (src) theurl = url.parse(src);
                     if (theurl && (theurl.hostname || theurl.port)) {
+                        console.log(`checkRemote found remote resource href ${href} src ${src} theurl ${util.inspect(theurl)}`);
                         item.is_remote_resources = true;
                     }
                 };
-                $("a").each(checkRemote);
+                // Apparently we don't need to check <a> tags 
+                // for a remote reference.
+                // $("a").each(checkRemote);
                 $("img").each(checkRemote);
                 $("style").each(checkRemote);
                 $("script").each(checkRemote);
@@ -453,13 +455,13 @@ exports.from_fs = async function(config) {
         }
     }
 
-    console.log(`from_fs `, filez);
+    // console.log(`from_fs `, filez);
 
     return new exports.Manifest(filez);
 };
 
 exports.scan = async function(config) {
-    console.log(`scanfiles bookroot ${config.sourceBookFullPath}`);
+    // console.log(`scanfiles bookroot ${config.sourceBookFullPath}`);
 
     var filez = await globfs.findAsync(config.sourceBookFullPath, '**');
 
