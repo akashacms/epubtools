@@ -42,16 +42,16 @@ exports.bundleEPUB = async function(config) {
 
 async function archiveFiles(config) {
 
-    console.log(`archiveFiles`);
+    // console.log(`archiveFiles`);
     const rendered = config.bookRenderDestFullPath;
     const epubFileName = path.join(config.configDirPath, config.epubFileName);
     const opfFileName = config.bookOPF;
-    console.log(`archiveFiles reading OPF config.bookRenderDestFullPath ${config.bookRenderDestFullPath} opfFileName ${opfFileName}`);
+    // console.log(`archiveFiles reading OPF config.bookRenderDestFullPath ${config.bookRenderDestFullPath} opfFileName ${opfFileName}`);
     const { 
         opfXmlText, opfXml 
     } = await metadata.readOPF(config.bookRenderDestFullPath, opfFileName); 
     
-    console.log(`archiveFiles rendered ${rendered} epubFileName ${epubFileName} opfFileName ${opfFileName}`);
+    // console.log(`archiveFiles rendered ${rendered} epubFileName ${epubFileName} opfFileName ${opfFileName}`);
 
     const opfDirName = path.dirname(opfFileName);
 
@@ -75,7 +75,7 @@ async function archiveFiles(config) {
             archive.pipe(output);
             
             // The mimetype file must be the first entry, and must not be compressed
-            console.log(`reading ${path.join(rendered, "mimetype")} into archive`);
+            // console.log(`reading ${path.join(rendered, "mimetype")} into archive`);
             archive.append(
                 fs.createReadStream(path.join(rendered, "mimetype")),
                 { name: "mimetype", store: true });
@@ -121,13 +121,13 @@ async function archiveFiles(config) {
 
 exports.mkMimeType = async function(config) {
     let mimetype = path.join(config.bookRenderDestFullPath, "mimetype");
-    console.log(`writing ${mimetype}`);
+    // console.log(`writing ${mimetype}`);
     await fs.writeFile(mimetype, "application/epub+zip", "utf8");
 };
 
 exports.mkMetaInfDir = async function(config) {
     let metaInfDir = path.join(config.bookRenderDestFullPath, "META-INF");
-    console.log(`mkMetaInfDir ${metaInfDir}`);
+    // console.log(`mkMetaInfDir ${metaInfDir}`);
     await fs.mkdirs(metaInfDir);
 };
 
@@ -136,11 +136,11 @@ exports.mkPackageOPF = async function(config) {
         throw new Error(`No OPF file specified in ${config.projectName}`);
     }
     let write2 = path.join(config.bookRenderDestFullPath, config.bookOPF);
-    console.log(`mkPackageOPF ${write2}`);
+    // console.log(`mkPackageOPF ${write2}`);
     const OPFXML = await opf.makeOpfXml(config);
 
     await fs.mkdirs(path.dirname(write2));
-    console.log(`mkPackageOPF ... writing ${write2}`);
+    // console.log(`mkPackageOPF ... writing ${write2}`);
     await fs.writeFile(write2, new xmldom.XMLSerializer().serializeToString(OPFXML), 
         {
             encoding: "utf8",
@@ -212,7 +212,7 @@ exports.mkContainerXmlFile = async function(config) {
     const writeTo = path.join(config.bookRenderDestFullPath, "META-INF", "container.xml");
     
     await exports.mkMetaInfDir(config);
-    console.log(`mkContainerXmlFile ${writeTo}`);
+    // console.log(`mkContainerXmlFile ${writeTo}`);
     await fs.writeFile(
             writeTo,
             new xmldom.XMLSerializer().serializeToString(containerXml), 

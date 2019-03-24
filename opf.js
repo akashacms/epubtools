@@ -656,7 +656,7 @@ exports.makeOpfXml = async function(config) {
     //   %>href="<%= item.href %>" media-type="<%= item.type %>"/>
 
 
-    console.log(config);
+    // console.log(config);
 
     var spineitems = [];
     for (let item of config.opfManifest) {
