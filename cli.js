@@ -41,7 +41,7 @@ program
     .action(async (configFN) => {
         try {
             const bookConfig = await configurator.readConfig(configFN);
-            renderEPUB.setconfig(bookConfig);
+            // MOOT, done in readConfig renderEPUB.setconfig(bookConfig);
             await fs.mkdirs(bookConfig.bookRenderDestFullPath);
             await renderEPUB.copyAssets(bookConfig);
             await renderEPUB.renderProject();
