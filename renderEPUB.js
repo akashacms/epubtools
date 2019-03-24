@@ -14,10 +14,23 @@ module.exports.setconfig = function(config) {
     const epubdir = config.sourceBookFullPath;
     const renderTo = config.bookRenderDestFullPath;
     // console.log(`setconfig dirpath ${config.configDirPath} epubdir ${epubdir} renderTo ${renderTo}`);
-    if (akconfig) module.exports.unsetconfig();
+    if (akconfig) {
+        console.log(`setconfig already saw akconfig - unsetconfig`);
+        module.exports.unsetconfig();
+    }
     akconfig = config.akConfig = new akasha.Configuration();
     config.akConfig
         .use(require('@akashacms/plugins-epub'))
+        .use(require('akashacms-dlassets'), {
+            // TODO support configuring this directory from book config
+            // NOTE that if this is left out then dlassets
+            //      defaults to not caching external images
+            // NOTE a book is unlikely to have many external images
+            // NOTE __dirname does not have the correct value for use
+            //      in this context.  The user should instead choose
+            //      the cache directory
+            // cachedir: path.join(__dirname, 'dlassets-cache')
+        })
         /* .use(require('akashacms-footnotes')) */
         /* .use(require('akashacms-embeddables')) */;
     
@@ -36,7 +49,7 @@ module.exports.setconfig = function(config) {
 
     config.akConfig.prepare();
 
-    console.log(`AkashaEPUB setconfig `, epubdir, renderTo, akconfig);
+    // console.log(`AkashaEPUB setconfig `, epubdir, renderTo, akconfig);
 };
 
 module.exports.renderTo = function(renderTo) {
@@ -68,7 +81,7 @@ module.exports.copyAssets = async function() {
 }
 
 module.exports.renderProject = async function() {
-    console.log(`AkashaEPUB-Config renderProject`);
+    // console.log(`AkashaEPUB-Config renderProject`);
     return await akasha.render(akconfig); 
 }
 
@@ -76,7 +89,7 @@ async function renderFile(documentPath) {
 
     let found = await akfilez.findRendersTo(akconfig.documentDirs, documentPath);
 
-    console.log(`Akasha renderFile looking for ${util.inspect(akconfig.documentDirs)} / ${documentPath} found `, found);
+    // console.log(`Akasha renderFile looking for ${util.inspect(akconfig.documentDirs)} / ${documentPath} found `, found);
 
     let result = await akasha.renderDocument(
                 akconfig,
