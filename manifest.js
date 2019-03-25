@@ -267,20 +267,14 @@ exports.tocData = async function(epubConfig) {
     var renderer = epubConfig.akConfig.findRendererPath(found.foundFullPath);
     if (!renderer) throw new Error(`tocData did not find renderer for ${epubConfig.sourceBookTOCHREF} in ${util.inspect(config.akConfig.documentDirs)}`);
 
+    let fp = renderer.filePath(epubConfig.sourceBookTOCHREF);
+
     // console.log(`tocData ${epubConfig.sourceBookTOCHREF} found ${util.inspect(found)}`);
     // console.log(`tocData ${epubConfig.sourceBookTOCHREF} renderer ${util.inspect(renderer)}`);
 
-    let content;
-    var text = await fs.readFile(
-                path.join(found.foundDir, found.foundPathWithinDir), 
+    var content = await fs.readFile(
+                path.join(epubConfig.bookRenderDestFullPath, fp), 
                 'utf8');
-    if (renderer.frontmatter) {
-        let m = renderer.parseFrontmatter(text);
-        if (!m.content) throw new Error(`tocData failed to parse content from ${epubConfig.sourceBookTOCHREF}`);
-        content = m.content;
-    } else {
-        content = text;
-    }
 
     // console.log(`tocData ${epubConfig.sourceBookTOCHREF} content ${util.inspect(content)}`);
 

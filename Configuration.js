@@ -281,7 +281,6 @@ module.exports.Configuration = class Configuration {
         return ret;
     }
 
-    // Is this useful?
     get sourceBookNCXID() { 
         return this[_config_yamlParsed]
              && this[_config_yamlParsed].ncx
@@ -295,7 +294,6 @@ module.exports.Configuration = class Configuration {
         this[_config_yamlParsed].ncx.id = newNCXID;
     }
 
-    // Is this useful?
     get sourceBookNCXHREF() { 
         return this[_config_yamlParsed]
              && this[_config_yamlParsed].ncx
@@ -307,6 +305,20 @@ module.exports.Configuration = class Configuration {
             this[_config_yamlParsed].ncx = {};
         }
         this[_config_yamlParsed].ncx.href = newNCXHREF;
+    }
+
+    get doGenerateNCX() {
+        if (!this.sourceBookNCXID && !this.sourceBookNCXHREF) {
+            return false;
+        }
+        if (!this.sourceBookNCXID && this.sourceBookTOCHREF) {
+            throw new Error(`doGenerateNCX Configuration must specify both sourceBookNCXID and sourceBookTOCHREF, only sourceBookTOCHREF ${this.sourceBookTOCHREF} specified`);
+        }
+        if (this.sourceBookNCXID && !this.sourceBookTOCHREF) {
+            throw new Error(`doGenerateNCX Configuration must specify both sourceBookNCXID and sourceBookTOCHREF, only sourceBookNCXID ${this.sourceBookNCXID} specified`);
+        }
+        // At this point we've determined both are set.
+        return true;
     }
 
     get sourceBookTOCID() { 
@@ -434,6 +446,50 @@ module.exports.Configuration = class Configuration {
         }
         this[_config_yamlParsed].coverhtml.href = newCoverHREF;
     }
+
+    /**
+     * This is an array of objects containing:
+     *      id:  ID value
+     *      title:  "The title to use"
+     *      type:  is a code which is one of the following
+     *              main
+     *              The title that reading systems should normally display, 
+     *              for example in a user’s library or bookshelf. If no 
+     *              values for the title-type property are provided, it 
+     *              is assumed that the first or only dc:title should be 
+     *              considered the “main title.”
+     * 
+     *              subtitle
+     *              A secondary title that augments the main title but 
+     *              is separate from it.
+     * 
+     *              short
+     *              A shortened version of the main title, often used when
+     *              referring to a book with a long title (for example, 
+     *              “Huck Finn” for The Adventures of Huckleberry Finn) or 
+     *              a brief expression by which a book is known (for example, 
+     *              “Strunk and White” for The Elements of Style or “Fowler” 
+     *              for A Dictionary of Modern English Usage).
+     * 
+     *              collection
+     *              A title given to a set (either finite or ongoing) to 
+     *              which the given publication is a member. This can be a 
+     *              “series title,” when the publications are in a specific 
+     *              sequence (e.g., The Lord of the Rings), or one in which 
+     *              the members are not necessarily in a particular order 
+     *              (e.g., “Columbia Studies in South Asian Art”).
+     * 
+     *              edition
+     *              A designation that indicates substantive changes from 
+     *              one to the next.
+     * 
+     *              extended
+     *              A fully expressed title that may be a combination of 
+     *              some of the other title types, for example: The Great
+     *              Cookbooks of the World: Mon premier guide de caisson, 
+     *              un Mémoire. The New French Cuisine Masters, Volume Two.
+     *              Special Anniversary Edition.
+     */
 
     get opfTitles() {
         return this[_config_yamlParsed]

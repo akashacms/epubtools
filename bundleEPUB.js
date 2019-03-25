@@ -34,6 +34,7 @@ exports.bundleEPUB = async function(config) {
     await exports.mkMetaInfDir(config);
     await exports.mkContainerXmlFile(config);
     await exports.mkPackageOPF(config);
+    await exports.mkPackageNCX(config);
 
     await checkEPUB.checkEPUBConfig(config);
     
@@ -148,6 +149,22 @@ exports.mkPackageOPF = async function(config) {
         });
 
 };
+
+exports.mkPackageNCX = async function(config) {
+    if (!config.doGenerateNCX) {
+        return;
+    }
+    let write2 = path.join(config.bookRenderDestFullPath, config.sourceBookNCXHREF);
+    // console.log(`mkPackageNCX ${write2}`);
+    const NCXXML = await opf.makeNCXXML(config);
+
+    await fs.mkdirs(path.dirname(write2));
+    await fs.writeFile(write2, new xmldom.XMLSerializer().serializeToString(NCXXML), 
+        {
+            encoding: "utf8",
+            flag: "w"
+        });
+}
 
 exports.mkContainerXmlFile = async function(config) {
     

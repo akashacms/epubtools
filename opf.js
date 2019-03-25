@@ -366,7 +366,7 @@ exports.makeOpfXml = async function(config) {
     const manifestElem = exports.findManifestInOPF(OPFXML);
     var spine = exports.findSpineInOPF(OPFXML);
     var elem;
-        
+    
     // Check for required parameters
     if (typeof config.opfTitles === 'undefined'
      || config.opfTitles === null
@@ -676,7 +676,11 @@ exports.makeOpfXml = async function(config) {
 
         if (item.in_spine) spineitems.push(item);
         let elem = OPFXML.createElement('item');
-        elem.setAttribute('id', item.id);
+        if (config.doGenerateNCX && relativeItemPath === config.sourceBookNCXHREF) {
+            elem.setAttribute('id', config.sourceBookNCXID);
+        } else {
+            elem.setAttribute('id', item.id);
+        }
         if (item.is_nav) set_property('nav');
         if (item.is_cover_image) set_property('cover-image');
         if (item.is_mathml) set_property('mathml');
@@ -686,11 +690,24 @@ exports.makeOpfXml = async function(config) {
         if (item.is_switch) set_property('switch');
         if (properties !== '') elem.setAttribute('properties', properties);
         elem.setAttribute('href', relativeItemPath);
-        elem.setAttribute('media-type', item.mime);
+        if (config.doGenerateNCX && relativeItemPath === config.sourceBookNCXHREF) {
+            elem.setAttribute('media-type', 'application/x-dtbncx+xml');
+        } else {
+            elem.setAttribute('media-type', item.mime);
+        }
         manifestElem.appendChild(elem);
     }
-    
-    // if (bookYaml.ncx.id) { spine.setAttribute('toc', bookYaml.ncx.id); }
+
+    // If we're supposed to generate an NCX, at this point what we do is
+    // add NCX entries to the OPF
+    if (config.doGenerateNCX) {
+        /* let elem = OPFXML.createElement('item');
+        elem.setAttribute('id', config.sourceBookNCXID);
+        elem.setAttribute('href', config.sourceBookNCXHREF);
+        elem.setAttribute('media-type', 'application/x-dtbncx+xml');
+        manifestElem.appendChild(elem); */
+        spine.setAttribute('toc', config.sourceBookNCXID);
+    }
     
     // <itemref idref="<%= item.idref %>" <%
     //    if (item.linear) { %>linear="<%= item.linear %>" <% }
@@ -709,4 +726,150 @@ exports.makeOpfXml = async function(config) {
     }
     
     return OPFXML;
-}
+};
+
+exports.makeNCXXML = async function(config) {
+
+    var NCXXML = new xmldom.DOMParser().parseFromString('<?xml version="1.0" encoding="UTF-8"?> \
+    <ncx version="2005-1" xml:lang="en" xmlns="http://www.daisy.org/z3986/2005/ncx/"> \
+      <head> </head> \
+      <docTitle> <text></text> </docTitle> \
+      <docAuthor> <text></text> </docAuthor> \
+      <navMap> </navMap> \
+    </ncx>', 'text/xml');
+    
+    var headElem;
+    var docTitleElem;
+    var docTitleText;
+    var docAuthorElem;
+    var docAuthorText;
+    var navMapElem;
+    var elem;
+
+    var heads = NCXXML.getElementsByTagName("head");
+    // util.log(util.inspect(rootfile));
+    for (let elem of utils.nodeListIterator(heads)) {
+        if (elem.nodeName.toUpperCase() === 'head'.toUpperCase()) headElem = elem;
+    }
+    
+    var docTitles = NCXXML.getElementsByTagName("docTitle");
+    // util.log(util.inspect(rootfile));
+    for (let elem of utils.nodeListIterator(docTitles)) {
+        if (elem.nodeName.toUpperCase() === 'docTitle'.toUpperCase()) docTitleElem = elem;
+    }
+    var docTitleTexts = docTitleElem.getElementsByTagName("text");
+    for (let elem of utils.nodeListIterator(docTitleTexts)) {
+        if (elem.nodeName.toUpperCase() === 'text'.toUpperCase()) docTitleText = elem;
+    }
+    
+    var docAuthors = NCXXML.getElementsByTagName("docAuthor");
+    // util.log(util.inspect(rootfile));
+    for (let elem of utils.nodeListIterator(docAuthors)) {
+        if (elem.nodeName.toUpperCase() === 'docAuthor'.toUpperCase()) docAuthorElem = elem;
+    }
+    var docAuthorTexts = docAuthorElem.getElementsByTagName("text");
+    for (let elem of utils.nodeListIterator(docAuthorTexts)) {
+        if (elem.nodeName.toUpperCase() === 'text'.toUpperCase()) docAuthorText = elem;
+    }
+    
+    var navMaps = NCXXML.getElementsByTagName("navMap");
+    // util.log(util.inspect(rootfile));
+    for (let elem of utils.nodeListIterator(navMaps)) {
+        if (elem.nodeName.toUpperCase() === 'navMap'.toUpperCase()) navMapElem = elem;
+    }
+    
+
+    var uniqueID;
+    config.opfIdentifiers.forEach(function(identifier) {
+        if (typeof identifier.unique !== 'undefined' && identifier.unique !== null) uniqueID = identifier;
+    });
+    if (!uniqueID) reject(new Error("No Identifier"));
+    
+    // <meta name="dtb:uid" content="<%= uniqueID.ncxidentifier %>"/>
+    // <meta name="dtb:uid" content="<%= uniqueID.idstring %>"/>
+    if (uniqueID.ncxidentifier) {
+        elem = NCXXML.createElement('meta');
+        elem.setAttribute('name', "dtb:uid");
+        elem.setAttribute('content', uniqueID.ncxidentifier);
+        headElem.appendChild(elem);
+    } else {
+        elem = NCXXML.createElement('meta');
+        elem.setAttribute('name', "dtb:uid");
+        elem.setAttribute('content', uniqueID.string);
+        headElem.appendChild(elem);
+    }
+
+    // <meta name="dtb:depth" content="1"/> <!-- 1 or higher -->
+    elem = NCXXML.createElement('meta');
+    elem.setAttribute('name', "dtb:depth");
+    elem.setAttribute('content', "1");
+    headElem.appendChild(elem);
+
+    // <meta name="dtb:totalPageCount" content="0"/> <!-- must be 0 -->
+    elem = NCXXML.createElement('meta');
+    elem.setAttribute('name', "dtb:totalPageCount");
+    elem.setAttribute('content', "0");
+    headElem.appendChild(elem);
+    
+    // <meta name="dtb:maxPageNumber" content="0"/> <!-- must be 0 -->
+    elem = NCXXML.createElement('meta');
+    elem.setAttribute('name', "dtb:maxPageNumber");
+    elem.setAttribute('content', "0");
+    headElem.appendChild(elem);
+    
+    let sawTitle = false;
+    for (let title of config.opfTitles) {
+        if (title.type === "main") {
+            docTitleText.appendChild(NCXXML.createTextNode(title.title));
+            sawTitle = true;
+        }
+    }
+    if (!sawTitle) {
+        throw new Error(`makeNCXXML saw no "main" title in `, config.opfTitles);
+    }
+    if (config.opfCreators.length <= 0) {
+        throw new Error(`makeNCXXML no creators in `, config.opfCreators);
+    }
+    if (config.opfCreators[0].name || config.opfCreators[0].nameReversed) {
+        docAuthorText.appendChild(NCXXML.createTextNode(
+            config.opfCreators[0].nameReversed
+            ? config.opfCreators[0].nameReversed
+            : config.opfCreators[0].name));
+    }
+
+    let tocdata = await manifest.tocData(config);
+
+    var spineorder = 0;
+    var navPointForChapter = function(chapter) {
+        var navPoint = NCXXML.createElement('navPoint');
+        navPoint.setAttribute('class', 'book');
+        navPoint.setAttribute('id', chapter.id);
+        navPoint.setAttribute('playOrder', spineorder++);
+        
+        var navLabel = NCXXML.createElement('navLabel');
+        var navLabelText = NCXXML.createElement('text');
+        navLabelText.appendChild(NCXXML.createTextNode(chapter.text));
+        navLabel.appendChild(navLabelText);
+        navPoint.appendChild(navLabel);
+        
+        var content = NCXXML.createElement('content');
+        content.setAttribute('src', chapter.href);
+        navPoint.appendChild(content);
+        
+        return navPoint;
+    };
+
+    var handleNavChapters = function(appendTo, chapters) {
+        chapters.forEach(chapter => {
+            var navPoint = navPointForChapter(chapter);
+            appendTo.appendChild(navPoint);
+            if (chapter.hasOwnProperty("children") && chapter.children) {
+                handleNavChapters(navPoint, chapter.children);
+            }
+        });
+    };
+    
+    handleNavChapters(navMapElem, tocdata);
+    
+    return NCXXML;
+};
