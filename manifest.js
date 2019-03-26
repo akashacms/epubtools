@@ -454,6 +454,12 @@ exports.from_fs = async function(config) {
     return new exports.Manifest(filez);
 };
 
+/*
+
+This was the old plan, where the config file would hold a manifest of the files.
+The code here may have some usefulness e.g. a command to list out the files
+in the directory.
+
 exports.scan = async function(config) {
     // console.log(`scanfiles bookroot ${config.sourceBookFullPath}`);
 
@@ -500,3 +506,4 @@ exports.scan = async function(config) {
     // Else add a new entry
     config.manifest.addItems(filez);
 };
+*/
