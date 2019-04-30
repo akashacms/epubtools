@@ -23,6 +23,7 @@ program
 
         try {
             const bookConfig = await configurator.readConfig(configFN);
+            await bookConfig.readTOCData();
             await bundleEPUB.bundleEPUB(bookConfig);
         } catch (e) {
             console.error(`package command ERRORED ${e.stack}`);

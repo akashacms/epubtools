@@ -353,6 +353,16 @@ module.exports.Configuration = class Configuration {
         return path.join(epubdir, tochref);
     }
 
+    async readTOCData() {
+        try {
+            await manifest.spineTitles(this);
+            this.tocdata = await manifest.tocData(this);
+        } catch (e) {
+            console.error(`epubtools caught error while building Configuration: ${e.stack}`);
+            throw new Error(`epubtools caught error while building Configuration: ${e.stack}`);
+        }
+    }
+
     get sourceBookCoverID() { 
         /* if (this[_config_yamlParsed]
          && this[_config_yamlParsed].opf
@@ -764,12 +774,5 @@ module.exports.readConfig = async function(fn) {
     config.configFileName = fn;
     await config.check();
     akrender.setconfig(config);
-    try {
-        await manifest.spineTitles(config);
-        config.tocdata = await manifest.tocData(config);
-    } catch (e) {
-        console.error(`epubtools caught error while building Configuration: ${e.stack}`);
-        throw new Error(`epubtools caught error while building Configuration: ${e.stack}`);
-    }
     return config;
 };
