@@ -659,6 +659,7 @@ exports.makeOpfXml = async function(config) {
     // console.log(config);
 
     var spineitems = [];
+    var sawNCX = false;
     for (let item of config.opfManifest) {
 
         let fullRoot = config.sourceBookFullPath;
@@ -677,6 +678,7 @@ exports.makeOpfXml = async function(config) {
         if (item.in_spine) spineitems.push(item);
         let elem = OPFXML.createElement('item');
         if (config.doGenerateNCX && relativeItemPath === config.sourceBookNCXHREF) {
+            sawNCX = true;
             elem.setAttribute('id', config.sourceBookNCXID);
         } else {
             elem.setAttribute('id', item.id);
@@ -695,6 +697,19 @@ exports.makeOpfXml = async function(config) {
         } else {
             elem.setAttribute('media-type', item.mime);
         }
+        manifestElem.appendChild(elem);
+    }
+
+    // Patch in the NCX if it's supposed to be there
+    if (config.doGenerateNCX && !sawNCX) {
+        let elem = OPFXML.createElement('item');
+        elem.setAttribute('id', config.sourceBookNCXID);
+        let fullRoot = config.sourceBookFullPath;
+        let fullOpfPath  = path.dirname(path.join(fullRoot, config.bookOPF));
+        let fullItemPath = path.join(fullRoot, config.sourceBookNCXHREF);
+        let relativeItemPath = path.relative(fullOpfPath, fullItemPath);
+        elem.setAttribute('href', relativeItemPath);
+        elem.setAttribute('media-type', 'application/x-dtbncx+xml');
         manifestElem.appendChild(elem);
     }
 
