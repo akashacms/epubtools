@@ -10,8 +10,6 @@ const cheerio = require('cheerio');
 const xmldom   = require('xmldom');
 const metadata = require('./metadata');
 const utils = require('./utils');
-const akasha        = require('akasharender');
-const akfilez       = require('akasharender/filez');
 
 exports.Manifest = class Manifest extends Array {
 

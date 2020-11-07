@@ -1,6 +1,4 @@
 
-const akasha        = require('akasharender');
-const akfilez       = require('akasharender/filez');
 const fs            = require('fs-extra');
 const path          = require('path');
 const util          = require('util');

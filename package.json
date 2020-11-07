@@ -28,9 +28,6 @@
     "xmldom": "^0.1.27",
     "cheerio": "1.0.0-rc.2",
     "unzipper": "0.10.5",
-    "akasharender": "^0.7.x",
-    "@akashacms/plugins-epub": "akashacms/akasharender-epub",
-    "text-statistics": "0.1.1",
-    "akashacms-dlassets": "akashacms/akashacms-dlassets"
+    "text-statistics": "0.1.1"
   }
 }
