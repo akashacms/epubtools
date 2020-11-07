@@ -1,0 +1,45 @@
+name: EPUB 3.0 Specification
+# akashaepub:
+#   do not have source, so no akashaepub
+epub: epub30-spec.epub
+rendered: epub30-spec
+toc:
+    id: toc
+    href: EPUB/xhtml/epub30-nav.xhtml
+# No NCX file present?
+ncx:
+   id: ncx
+   href: toc.ncx
+cover:
+    id: ci
+    href: EPUB/img/epub_logo_color.jpg
+# coverhtml:
+#    doesn't seem to be one?
+opf:
+    fileName: EPUB/package.opf
+    titles:
+        - id: ''
+          type: main
+          title: EPUB 3.0 Specification
+    identifiers:
+        - unique: false
+          id: uid
+          type: uuid
+          string: "b8f4bc3a-5e00-4c32-9da4-67e66609f33e"
+          # string: code.google.com.epub-samples.epub30-spec
+    languages:
+        - id: ''
+          langcode: en
+    creators:
+        - id: ''
+          name: EPUB 3 Working Group
+    contributors: []
+    publicationDate: '2012-02-27T16:38:35Z'
+    modifiedDate: '2012-02-27T16:38:35Z'
+    subjects: []
+    description: ''
+    modified: ''
+    format: ''
+    publisher: EPUB 3 Working Group
+    rights: 'Copyright 2012, EPUB 3 Working Group'
+

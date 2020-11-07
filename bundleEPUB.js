@@ -11,10 +11,6 @@ const opf       = require('./opf');
 const checkEPUB = require('./checkEPUB');
 const akrender  = require('./renderEPUB');
 
-async function ensureBookRenderDir(config) {
-    return await fs.mkdirs(config.bookRenderDestFullPath);
-}
-
 exports.bundleEPUB = async function(config) {
     // read container.xml -- extract OPF file name
     // read OPF file
@@ -24,39 +20,27 @@ exports.bundleEPUB = async function(config) {
     // for each entry in OPF - write that file
     // when done, finalize
 
-    // console.log(`bundleEPUB configFileName = ${config.configFileName}`); 
-    // console.log(`bundleEPUB configDir = ${path.dirname(config.configFileName)}`);
-    let destDir = path.join(config.configDirPath, config.bookroot);
-    // console.log(`bundleEPUB destDir = ${destDir}`);
-
     config.opfManifest = await manifest.from_fs(config);
-    await exports.mkMimeType(config);
-    await exports.mkMetaInfDir(config);
-    await exports.mkContainerXmlFile(config);
-    await exports.mkPackageOPF(config);
-    await exports.mkPackageNCX(config);
-
     await checkEPUB.checkEPUBConfig(config);
-    
     await archiveFiles(config);
 };
 
 async function archiveFiles(config) {
 
     // console.log(`archiveFiles`);
-    const rendered = config.bookRenderDestFullPath;
+    const rendered = config.renderedFullPath;
     const epubFileName = path.join(config.configDirPath, config.epubFileName);
     const opfFileName = config.bookOPF;
-    // console.log(`archiveFiles reading OPF config.bookRenderDestFullPath ${config.bookRenderDestFullPath} opfFileName ${opfFileName}`);
+    // console.log(`archiveFiles reading OPF config.renderedFullPath ${config.renderedFullPath} opfFileName ${opfFileName}`);
     const { 
         opfXmlText, opfXml 
-    } = await metadata.readOPF(config.bookRenderDestFullPath, opfFileName); 
+    } = await metadata.readOPF(config.renderedFullPath, opfFileName); 
     
     // console.log(`archiveFiles rendered ${rendered} epubFileName ${epubFileName} opfFileName ${opfFileName}`);
 
     const opfDirName = path.dirname(opfFileName);
 
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         try {
             var archive = archiver('zip');
             
@@ -74,18 +58,28 @@ async function archiveFiles(config) {
             });
             
             archive.pipe(output);
-            
+
             // The mimetype file must be the first entry, and must not be compressed
             // console.log(`reading ${path.join(rendered, "mimetype")} into archive`);
             archive.append(
-                fs.createReadStream(path.join(rendered, "mimetype")),
+                "application/epub+zip",
                 { name: "mimetype", store: true });
+
             archive.append(
-                fs.createReadStream(path.join(rendered, "META-INF", "container.xml")),
+                await mkContainerXmlFile(config),
                 { name: path.join("META-INF", "container.xml") });
+
+            const OPFXML = await opf.makeOpfXml(config);
             archive.append(
-                fs.createReadStream(path.join(rendered, opfFileName)),
+                new xmldom.XMLSerializer().serializeToString(OPFXML),
                 { name: opfFileName });
+
+            if (config.doGenerateNCX) {
+                const NCXXML = await opf.makeNCXXML(config);
+                archive.append(
+                    new xmldom.XMLSerializer().serializeToString(NCXXML),
+                    { name: config.sourceBookNCXHREF });
+            }
             
             var manifests = opfXml.getElementsByTagName("manifest");
             var manifest;
@@ -120,53 +114,7 @@ async function archiveFiles(config) {
 
 }
 
-exports.mkMimeType = async function(config) {
-    let mimetype = path.join(config.bookRenderDestFullPath, "mimetype");
-    // console.log(`writing ${mimetype}`);
-    await fs.writeFile(mimetype, "application/epub+zip", "utf8");
-};
-
-exports.mkMetaInfDir = async function(config) {
-    let metaInfDir = path.join(config.bookRenderDestFullPath, "META-INF");
-    // console.log(`mkMetaInfDir ${metaInfDir}`);
-    await fs.mkdirs(metaInfDir);
-};
-
-exports.mkPackageOPF = async function(config) {
-    if (!config.bookOPF && config.bookOPF === '') {
-        throw new Error(`No OPF file specified in ${config.projectName}`);
-    }
-    let write2 = path.join(config.bookRenderDestFullPath, config.bookOPF);
-    // console.log(`mkPackageOPF ${write2}`);
-    const OPFXML = await opf.makeOpfXml(config);
-
-    await fs.mkdirs(path.dirname(write2));
-    // console.log(`mkPackageOPF ... writing ${write2}`);
-    await fs.writeFile(write2, new xmldom.XMLSerializer().serializeToString(OPFXML), 
-        {
-            encoding: "utf8",
-            flag: "w"
-        });
-
-};
-
-exports.mkPackageNCX = async function(config) {
-    if (!config.doGenerateNCX) {
-        return;
-    }
-    let write2 = path.join(config.bookRenderDestFullPath, config.sourceBookNCXHREF);
-    // console.log(`mkPackageNCX ${write2}`);
-    const NCXXML = await opf.makeNCXXML(config);
-
-    await fs.mkdirs(path.dirname(write2));
-    await fs.writeFile(write2, new xmldom.XMLSerializer().serializeToString(NCXXML), 
-        {
-            encoding: "utf8",
-            flag: "w"
-        });
-}
-
-exports.mkContainerXmlFile = async function(config) {
+async function mkContainerXmlFile(config) {
     
     // util.log('createContainerXmlFile '+ rendered +' '+ util.inspect(bookYaml));
     
@@ -225,13 +173,6 @@ exports.mkContainerXmlFile = async function(config) {
             }
         }
     }
-    
-    const writeTo = path.join(config.bookRenderDestFullPath, "META-INF", "container.xml");
-    
-    await exports.mkMetaInfDir(config);
-    // console.log(`mkContainerXmlFile ${writeTo}`);
-    await fs.writeFile(
-            writeTo,
-            new xmldom.XMLSerializer().serializeToString(containerXml), 
-            "utf8");
+
+    return new xmldom.XMLSerializer().serializeToString(containerXml);
 };

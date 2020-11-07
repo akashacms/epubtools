@@ -269,7 +269,7 @@ exports.manifest = function(config, OPFXML) {
             id: item.getAttribute('id'),
             mime: item.getAttribute('media-type'),
             mimeoverride: "",
-            basedir: config.bookroot,
+            basedir: config.renderedFullPath,
             path: item.getAttribute('href'),
             dirname: path.dirname(item.getAttribute('href')),
             filename: path.basename(item.getAttribute('href')),
@@ -662,7 +662,7 @@ exports.makeOpfXml = async function(config) {
     var sawNCX = false;
     for (let item of config.opfManifest) {
 
-        let fullRoot = config.sourceBookFullPath;
+        let fullRoot = config.renderedFullPath;
         let fullOpfPath  = path.dirname(path.join(fullRoot, config.bookOPF));
         let fullItemPath = path.join(fullRoot, item.path);
         let relativeItemPath = path.relative(fullOpfPath, fullItemPath);
@@ -704,7 +704,7 @@ exports.makeOpfXml = async function(config) {
     if (config.doGenerateNCX && !sawNCX) {
         let elem = OPFXML.createElement('item');
         elem.setAttribute('id', config.sourceBookNCXID);
-        let fullRoot = config.sourceBookFullPath;
+        let fullRoot = config.renderedFullPath;
         let fullOpfPath  = path.dirname(path.join(fullRoot, config.bookOPF));
         let fullItemPath = path.join(fullRoot, config.sourceBookNCXHREF);
         let relativeItemPath = path.relative(fullOpfPath, fullItemPath);
@@ -854,6 +854,8 @@ exports.makeNCXXML = async function(config) {
 
     let tocdata = await manifest.tocData(config);
 
+    console.log(tocdata);
+    
     var spineorder = 0;
     var navPointForChapter = function(chapter) {
         var navPoint = NCXXML.createElement('navPoint');

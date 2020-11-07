@@ -4,6 +4,7 @@ const program   = require('commander');
 const epubtools = require('./index');
 const configurator = require('./Configuration');
 const bundleEPUB = require('./bundleEPUB');
+// TODO to be removed
 const renderEPUB = require('./renderEPUB');
 const util = require('util');
 const path = require('path');
@@ -29,21 +30,6 @@ program
             console.error(`package command ERRORED ${e.stack}`);
         }
 
-    });
-
-program
-    .command('render <configFN>')
-    .description('Render document files in the input directory to render directory')
-    .action(async (configFN) => {
-        try {
-            const bookConfig = await configurator.readConfig(configFN);
-            // MOOT, done in readConfig renderEPUB.setconfig(bookConfig);
-            await fs.mkdirs(bookConfig.bookRenderDestFullPath);
-            await renderEPUB.copyAssets(bookConfig);
-            await renderEPUB.renderProject();
-        } catch (e) {
-            console.error(`package command ERRORED ${e.stack}`);
-        }
     });
 
 program

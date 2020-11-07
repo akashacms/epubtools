@@ -57,7 +57,7 @@ module.exports.createProjectFromEPUBDir = async function(epubDir, projectFN) {
 
     let config = await exports.createEmptyProject(projectFN);
     
-    config.bookroot = epubDir;
+    config.renderedPath = epubDir;
     // config.destRenderRoot = ??
     config.epubFileName = `${epubDir}.epub`;
     if (opfFN) config.bookOPF = opfFN;
@@ -67,7 +67,7 @@ module.exports.createProjectFromEPUBDir = async function(epubDir, projectFN) {
     // config.sourceBookTOCHREF = ??
 
     // TODO scan files into manifest.  DONE For each have a flag whether seen in OPF, initialize FALSE
-    config.opfManifest = await manifest.from_fs(config.bookroot);
+    config.opfManifest = await manifest.from_fs(config.renderedFullPath);
 
     if (opfXml) {
         config.opfTitles = opf.titles(opfXml);

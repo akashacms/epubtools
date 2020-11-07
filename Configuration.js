@@ -27,50 +27,20 @@ module.exports.Configuration = class Configuration {
         this[_config_configFN] = undefined;
     }
 
+    get YAML() { return this[_config_yamlParsed]; }
+
     /**
      * Check if the configuration is minimally usable.
      */
     async check() {
-        if (!this.bookroot || this.bookroot === '') {
-            throw new Error(`No bookroot set in ${this.projectName}`);
+        if (!this.configFileName || this.configFileName === '') {
+            throw new Error(`No configFileName set in ${this.projectName}`);
         }
 
-        try {
-            await fs.access(this.sourceBookFullPath, fs.constants.R_OK);
-        } catch (e) {
-            throw new Error(`Book source directory is not readable or does not exist ${this.sourceBookFullPath}`);
-        }
-        if (this.assetsDir && this.assetsDir !== '') {
-            try {
-                await fs.access(this.assetsDirFullPath, fs.constants.R_OK);
-            } catch (e) {
-                throw new Error(`Assets directory is not readable or does not exist ${this.assetsDirFullPath}`);
-            }
-        }
-        if (this.partialsDir && this.partialsDir !== '') {
-            try {
-                await fs.access(this.partialsDirFullPath, fs.constants.R_OK);
-            } catch (e) {
-                throw new Error(`Partials directory is not readable or does not exist ${this.partialsDirFullPath}`);
-            }
-        }
-        if (this.layoutsDir && this.layoutsDir !== '') {
-            try {
-                await fs.access(this.layoutsDirFullPath, fs.constants.R_OK);
-            } catch (e) {
-                throw new Error(`Layouts directory is not readable or does not exist ${this.layoutsDirFullPath}`);
-            }
-        }
         if (!this.opfPublicationDate || this.opfPublicationDate === '') {
             throw new Error(`No publication date`);
         }
     }
-
-    /**
-     * Handle the corresponding AkashaCMS config
-     */
-    get akConfig()       { return this[_config_akasha]; }
-    set akConfig(config) { return this[_config_akasha] = config; }
 
     /**
      * File name for configuration file.  Appears this is to be
@@ -83,6 +53,9 @@ module.exports.Configuration = class Configuration {
      * Return the pathname containing the configuration file.
      */
     get configDirPath() {
+        if (!this.configFileName || this.configFileName === '') {
+            throw new Error(`No configFileName set in ${this.projectName}`);
+        }
         return path.dirname(this.configFileName);
     }
 
@@ -122,106 +95,6 @@ module.exports.Configuration = class Configuration {
         this[_config_yamlParsed].container.rootfiles = newOPFs;
     }
 
-    /**
-     * Directory containing the document files used in this book.
-     */
-    get bookroot() { 
-        return this[_config_yamlParsed]
-             && this[_config_yamlParsed].bookroot
-                ? this[_config_yamlParsed].bookroot
-                : undefined; 
-    }
-    set bookroot(newBookroot) {
-        this[_config_yamlParsed].bookroot = newBookroot;
-    }
-
-    /**
-     * Return the full path for the Root directory.  In
-     * the config file, the Root directory is specified relative
-     * to the config file.  But some callers require the full path.
-     */
-    get sourceBookFullPath() {
-        return path.normalize(path.join(this.configDirPath, this.bookroot ? this.bookroot : ""));
-    }
-
-    /**
-     * Directory where asset files are stored
-     */
-    get assetsDir() { 
-        return this[_config_yamlParsed]
-             && this[_config_yamlParsed].assetsDir
-                ? this[_config_yamlParsed].assetsDir
-                : undefined; 
-    }
-    set assetsDir(newAssetsDir) {
-        this[_config_yamlParsed].assetsDir = newAssetsDir;
-    }
-    get assetsDirFullPath() {
-        return path.normalize(path.join(this.configDirPath, this.assetsDir ? this.assetsDir : ""));
-    }
-
-    /**
-     * Directory where partial templates are stored
-     */
-    get partialsDir() { 
-        return this[_config_yamlParsed]
-             && this[_config_yamlParsed].partialsDir
-                ? this[_config_yamlParsed].partialsDir
-                : undefined; 
-    }
-    set partialsDir(newPartialsDir) {
-        this[_config_yamlParsed].partialsDir = newPartialsDir;
-    }
-    get partialsDirFullPath() {
-        return path.normalize(path.join(this.configDirPath, this.partialsDir ? this.partialsDir : ""));
-    }
-
-    /**
-     * Directory where layoout templates are stored
-     */
-    get layoutsDir() { 
-        return this[_config_yamlParsed]
-             && this[_config_yamlParsed].layoutsDir
-                ? this[_config_yamlParsed].layoutsDir
-                : undefined; 
-    }
-    set layoutsDir(newLayoutsDir) {
-        this[_config_yamlParsed].layoutsDir = newLayoutsDir;
-    }
-    get layoutsDirFullPath() {
-        return path.normalize(path.join(this.configDirPath, this.layoutsDir ? this.layoutsDir : ""));
-    }
-
-    /**
-     * Directory where the raw files for the EPUB will be rendered.
-     */
-    get bookRenderDest() {
-        return this[_config_yamlParsed]
-             && this[_config_yamlParsed].bookdest
-                ? this[_config_yamlParsed].bookdest
-                : undefined;
-    }
-    set bookRenderDest(newRenderRoot) {
-        this[_config_yamlParsed].bookdest = newRenderRoot;
-    }
-
-    get bookRenderDestFullPath() {
-        if (!this.bookRenderDest) throw new Error('No bookRenderDest set');
-        return path.normalize(
-            path.join(
-                this.configDirPath, this.bookRenderDest ? this.bookRenderDest : ""
-            )
-        );
-    }
-
-
-    get destRenderRoot() {
-        throw new Error('DEPRECATED use get bookRenderDest instead');
-    }
-    set destRenderRoot(newRenderRoot) {
-        throw new Error('DEPRECATED use set bookRenderDest instead');
-    }
-
     get opfManifest() {
         return this[_config_yamlParsed]
              && this[_config_yamlParsed].opf
@@ -258,6 +131,20 @@ module.exports.Configuration = class Configuration {
         ];
     }
 
+    get renderedPath() {
+        return this[_config_yamlParsed]
+             && this[_config_yamlParsed].rendered
+                ? this[_config_yamlParsed].rendered
+                : "out";
+    }
+    set renderedPath(newPath) {
+        this[_config_yamlParsed].rendered = newPath;
+    }
+
+    get renderedFullPath() {
+        return path.normalize(path.join(this.configDirPath, this.renderedPath ? this.renderedPath : ""));
+    }
+
     /**
      * Compute the full pathname to the OPF file.  In the config
      * file bookOPF is relative to the location of
@@ -265,19 +152,19 @@ module.exports.Configuration = class Configuration {
      * the full pathname.
      */
     get bookOPFFullPath() {
-        return path.join(this.sourceBookFullPath, this.bookOPF);
+        return path.join(this.renderedPath, this.bookOPF);
     }
 
     /**
      * Compute the path within the EPUB file for the OPF.
-     * Assume that bookroot is something like
+     * Assume that renderedFullPath is something like
      *       accessible_epub_3
      * While bookOPF is something like
      *       accessible_epub_3/EPUB/package.opf
      */
     get epubPathOPF() {
-        let ret = this.bookOPF.substr(this.bookroot.length + 1);
-        // console.log(`epubPathOPF bookroot ${this.bookroot} bookOPF ${this.bookOPF} ret ${ret}`);
+        let ret = this.bookOPF.substr(this.renderedFullPath.length + 1);
+        // console.log(`epubPathOPF renderedFullPath ${this.renderedFullPath} bookOPF ${this.bookOPF} ret ${ret}`);
         return ret;
     }
 
@@ -349,7 +236,7 @@ module.exports.Configuration = class Configuration {
 
     get TOCpath() {
         let tochref = this.sourceBookTOCHREF;
-        let epubdir = this.sourceBookFullPath;
+        let epubdir = this.renderedFullPath;
         return path.join(epubdir, tochref);
     }
 
@@ -574,6 +461,9 @@ module.exports.Configuration = class Configuration {
         if (!this[_config_yamlParsed].opf) {
             this[_config_yamlParsed].opf = {};
         }
+        if (!this[_config_yamlParsed].opf.metadata) {
+            this[_config_yamlParsed].opf.metadata = {};
+        }
         this[_config_yamlParsed].opf.metadata.subjects = newSubjects;
     }
 
@@ -748,14 +638,14 @@ module.exports.Configuration = class Configuration {
 
         /*  Useful debugging of the generated configuration */
         
-        console.log(`Configuration SAVE ${util.inspect(this[_config_yamlParsed])}`);
+        /* console.log(`Configuration SAVE ${util.inspect(this[_config_yamlParsed])}`);
         console.log(this[_config_yamlParsed]);
         console.log(this.opfTitles);
         console.log(this.opfLanguages);
         console.log(this.opfIdentifiers);
         console.log(this.opfCreators);
         console.log(this.opfContributors);
-        console.log(this.opfManifest);
+        console.log(this.opfManifest); */
         /* */
 
         await fs.writeFile(this.configFileName, 
@@ -773,6 +663,5 @@ module.exports.readConfig = async function(fn) {
     let config = new exports.Configuration(yamlText);
     config.configFileName = fn;
     await config.check();
-    akrender.setconfig(config);
     return config;
 };

@@ -213,8 +213,6 @@ exports.spineItems = function(epubConfig) {
 
 exports.spineTitles = async function(epubConfig) {
     let epubdir = epubConfig.sourceBookFullPath;
-    // let _spine = exports.spineItems(epubConfig);
-    // console.log(`spineTitles epubdir ${epubdir} ${typeof epubConfig.opfManifest} opfManifest opfManifest.spine ${typeof epubConfig.opfManifest.spine} _spine ${util.inspect(_spine)} opfManifest ${epubConfig.opfManifest}`);
     if (epubConfig.opfManifest) for (let item of epubConfig.opfManifest) {
         if (!item.in_spine) continue;
         let docpath = path.join(epubdir, item.path);
@@ -229,6 +227,8 @@ exports.spineTitles = async function(epubConfig) {
     }
 };
 
+let navolcount = 0;
+
 function getNavOLChildrenXML(DOM, navol, tocdir) {
     let ret = [];
     let children = navol.childNodes;
@@ -240,10 +240,14 @@ function getNavOLChildrenXML(DOM, navol, tocdir) {
             for (let lichild of utils.nodeListIterator(lichildren)) {
                 if (lichild.nodeType === 1 && lichild.tagName && lichild.tagName === 'a') { // ELEMENT_NODE
                     let href = lichild.getAttribute('href');
+                    let id = child.getAttribute('id');
+                    if (!id || id === '') {
+                        id = `item${navolcount++}`;
+                    }
                     item = {
                         text: lichild.textContent,
                         href: path.normalize(path.join(tocdir, href)),
-                        id: lichild.getAttribute('id'),
+                        id: id, //  lichild.getAttribute('id'),
                         children: []
                     };
                 }
@@ -260,20 +264,12 @@ function getNavOLChildrenXML(DOM, navol, tocdir) {
 }
 
 exports.tocData = async function(epubConfig) {
-    let epubdir = epubConfig.sourceBookFullPath;
-    let found = await akfilez.findRendersTo(epubConfig.akConfig, 
-                                            epubConfig.sourceBookTOCHREF);
-    if (!found) throw new Error(`tocData did not find ${epubConfig.sourceBookTOCHREF} in ${util.inspect(config.akConfig.documentDirs)}`);
-    var renderer = epubConfig.akConfig.findRendererPath(found.foundFullPath);
-    if (!renderer) throw new Error(`tocData did not find renderer for ${epubConfig.sourceBookTOCHREF} in ${util.inspect(config.akConfig.documentDirs)}`);
-
-    let fp = renderer.filePath(epubConfig.sourceBookTOCHREF);
 
     // console.log(`tocData ${epubConfig.sourceBookTOCHREF} found ${util.inspect(found)}`);
     // console.log(`tocData ${epubConfig.sourceBookTOCHREF} renderer ${util.inspect(renderer)}`);
 
     var content = await fs.readFile(
-                path.join(epubConfig.bookRenderDestFullPath, fp), 
+                path.join(epubConfig.renderedFullPath, epubConfig.sourceBookTOCHREF), 
                 'utf8');
 
     // console.log(`tocData ${epubConfig.sourceBookTOCHREF} content ${util.inspect(content)}`);
@@ -290,6 +286,7 @@ exports.tocData = async function(epubConfig) {
     for (let nav of utils.nodeListIterator(
         tocdom.getElementsByTagName('nav')
     )) {
+        console.log(`tocData found nav epub:type ${nav.getAttribute('epub:type')} id ${nav.getAttribute('id')} tocid ${tocid}`);
         if (nav.getAttribute('epub:type') === 'toc' && nav.getAttribute('id') === tocid) {
             tocnav = nav;
             break;
@@ -309,15 +306,19 @@ exports.tocData = async function(epubConfig) {
     if (!tocnavrootol) {
         throw new Error(`No root 'ol' node in nav epub:type===toc id===${tocid} in ${epubConfig.TOCpath}`);
     }
+    navolcount = 0;
     let tocdata = getNavOLChildrenXML(tocdom, tocnavrootol, tocdir);
     return tocdata;
 };
 
 exports.from_fs = async function(config) {
-    // console.log(`scanfiles bookroot ${epubdir}`);
+    // console.log(`scanfiles epubdir ${epubdir}`);
 
     // TODO Should this scan the source directory or the rendered directory?
-    let filez = await globfs.findAsync(config.bookRenderDestFullPath, '**');
+    // console.log(config.renderedFullPath);
+    let filez = await globfs.findAsync(config.renderedFullPath, '**');
+
+    // console.log(filez);
 
     // Remove directories
     let _filez = [];
@@ -337,10 +338,10 @@ exports.from_fs = async function(config) {
         }
     }
     filez = _filez;
-    // Modify the basedir to be Bookroot
+    // Modify the basedir to be renderedFullPath
     // Fill in other base ManifestItem fields
     for (let item of filez) {
-        item.basedir = config.bookRenderDestFullPath;
+        item.basedir = config.renderedPath;
         item.dirname = path.dirname(item.path);
         item.filename = path.basename(item.path);
         item.mime = mime.getType(item.path);
@@ -356,17 +357,16 @@ exports.from_fs = async function(config) {
 
         item.seen_in_opf = false;
 
-        let found = await akfilez.findRendersTo(config.akConfig, item.path);
-        if (found) {
-            if (config.sourceBookTOCHREF === found.foundFullPath) {
-                if (config.sourceBookTOCID) {
-                    item.id = config.sourceBookTOCID;
-                }
+        // console.log(`item.basedir ${item.basedir} item.dirname ${item.dirname} item.filename ${item.filename}`)
+
+        if (config.sourceBookTOCHREF === item.path) {
+            if (config.sourceBookTOCID) {
+                item.id = config.sourceBookTOCID;
             }
-            if (config.sourceBookCoverHTMLHREF === found.foundFullPath) {
-                if (config.sourceBookCoverHTMLID) {
-                    item.id = config.sourceBookCoverHTMLID;
-                }
+        }
+        if (config.sourceBookCoverHTMLHREF === item.path) {
+            if (config.sourceBookCoverHTMLID) {
+                item.id = config.sourceBookCoverHTMLID;
             }
         }
         if (config.sourceBookCoverHREF === item.path) {
@@ -381,7 +381,7 @@ exports.from_fs = async function(config) {
         if (!item.id) item.id = `item${itemnum++}`;
         if (item.in_spine) {
             try {
-                const file2read = path.join(config.bookRenderDestFullPath, item.path);
+                const file2read = path.join(config.renderedFullPath, item.path);
                 // console.log(`readXHTML ${file2read}`);
                 const data = await fs.readFile(file2read, 'utf8');
                 const $ = cheerio.load(data, {
@@ -461,9 +461,9 @@ The code here may have some usefulness e.g. a command to list out the files
 in the directory.
 
 exports.scan = async function(config) {
-    // console.log(`scanfiles bookroot ${config.sourceBookFullPath}`);
+    // console.log(`scanfiles renderedFullPath ${config.renderedFullPath}`);
 
-    var filez = await globfs.findAsync(config.sourceBookFullPath, '**');
+    var filez = await globfs.findAsync(config.renderedFullPath, '**');
 
     // console.log(util.inspect(config.manifest));
 
@@ -480,7 +480,7 @@ exports.scan = async function(config) {
     }
     // Modify the basedir to be Bookroot
     filez = _filez.map(item => {
-        item.basedir = config.bookroot;
+        item.basedir = config.renderedFullPath;
         return item;
     });
 

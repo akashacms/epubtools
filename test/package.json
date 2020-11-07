@@ -1,0 +1,18 @@
+{
+  "author": {
+    "name": "David Herron",
+    "email": "david@davidherron.com",
+    "url": "http://davidherron.com"
+  },
+  "name": "akasharender-epub-test",
+  "description": "AkashaEPUB test case",
+  "version": "0.6.1",
+  "homepage": "https://akashacms.com/epubtools/toc.html",
+  "scripts": {
+    "test": "mocha ./index ./manifest ./toc"
+  },
+  "dependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^8.2.0"
+  }
+}

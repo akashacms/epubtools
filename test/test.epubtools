@@ -1,0 +1,72 @@
+# PROBLEMS
+# 2. Convert .html to .xhtml
+#    Scan all files for links to .html where
+#    there is corresponding .xhtml
+# 5. Generate NCX file if config says so
+
+name: Test AkashaEPUB book
+akashaepub:
+    bookroot: documents
+    # These should default correctly
+    # layoutsDir: layouts
+    # assetsDir: assets
+    # bookdest: out
+    stylesheets:
+        - { id: "stylesheet", href: "/css/style.css" }
+rendered: out
+epub: test.epub
+toc:
+    href: toc.html.ejs
+    id: toc
+ncx:
+    id: "ncx"
+    href: "toc.ncx"
+cover:
+    id: cover-image
+    href: images/Human-Skeleton.jpg
+coverhtml:
+    id: cover-html
+    href: cover.html.md
+opf:
+    fileName: test.opf
+    titles:
+        -
+            id: ''
+            title: Skeletal AkashaEPUB book
+            type: main
+    identifiers:
+        -
+            unique: unique
+            type: uuid
+            string: "2db2943e-3e10-11e9-a517-8f0be7b86995"
+    languages:
+        -
+            id: ''
+            langcode: en
+    creators:
+        -
+            id: ''
+            name: David Herron
+            role: 'author'
+    contributors: []
+    publicationDate: '2012-02-20T00:01:01Z'
+    modifiedDate: '2019-03-06T00:00:00Z'
+    subjects: []
+    description: ''
+    modified: ''
+    format: ''
+    publisher: David Herron
+    rights: 'Copyright 2019, David Herron'
+
+# NOTE: Do not use container.rootfiles to list the OPF file
+#     Other files can be added and they will get listed in
+#     the container.xml file.
+#
+#     The OPF file listing in container.xml will be synthesized
+#     from the opf.filename value.
+#
+# container:
+#     rootfiles:
+#         -
+#             fullpath: skeleton.opf
+#             mime: application/oebps-package+xml
