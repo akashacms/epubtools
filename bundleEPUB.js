@@ -104,17 +104,21 @@ async function archiveFiles(config) {
                         
                         // Don't archive these files because they've already
                         // been added earlier
+                        let normalizedPath = path.normalize(path.join(opfDirName, itemHref));
                         if (itemHref === "mimetype"
                          || itemHref === opfFileName
                          || itemHref === container_xml
-                         || (config.doGenerateNCX && itemHref === config.sourceBookNCXHREF)) {
+                         || (config.doGenerateNCX && normalizedPath === config.sourceBookNCXHREF)) {
                             // Skip these special files
+                            // console.log(`skipping ${itemHref}`);
                             continue;
                         }
+
+                        // console.log(`packaging ${itemHref} - ${normalizedPath}`);
                         
                         archive.append(
                             fs.createReadStream(path.join(rendered, opfDirName, itemHref)),
-                            { name: path.normalize(path.join(opfDirName, itemHref)) }
+                            { name: normalizedPath }
                         );
                     }
                 }
