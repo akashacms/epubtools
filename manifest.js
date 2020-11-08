@@ -238,8 +238,16 @@ function getNavOLChildrenXML(DOM, navol, tocdir) {
             for (let lichild of utils.nodeListIterator(lichildren)) {
                 if (lichild.nodeType === 1 && lichild.tagName && lichild.tagName === 'a') { // ELEMENT_NODE
                     let href = lichild.getAttribute('href');
-                    let id = child.getAttribute('id');
-                    if (!id || id === '') {
+                    let id;
+                    let childid = child.getAttribute('id');
+                    let liid = child.getAttribute('id');
+                    // Get the ID value either from the <a>, or the containing <li>
+                    // If neither have it, then concoct an ID.
+                    if (childid && childid !== '') {
+                        id = childid;
+                    } else if (liid && liid !== '') {
+                        id = liid;
+                    } else {
                         id = `item${navolcount++}`;
                     }
                     item = {
