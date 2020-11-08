@@ -32,9 +32,11 @@ async function archiveFiles(config) {
     const epubFileName = path.join(config.configDirPath, config.epubFileName);
     const opfFileName = config.bookOPF;
     // console.log(`archiveFiles reading OPF config.renderedFullPath ${config.renderedFullPath} opfFileName ${opfFileName}`);
-    const { 
+
+    // Don't readOPF but instead use the constructed OPFXML object below.
+    /* const { 
         opfXmlText, opfXml 
-    } = await metadata.readOPF(config.renderedFullPath, opfFileName); 
+    } = await metadata.readOPF(config.renderedFullPath, opfFileName);  */
     
     // console.log(`archiveFiles rendered ${rendered} epubFileName ${epubFileName} opfFileName ${opfFileName}`);
 
@@ -65,9 +67,12 @@ async function archiveFiles(config) {
                 "application/epub+zip",
                 { name: "mimetype", store: true });
 
+            let container_xml = path.join("META-INF", "container.xml");
             archive.append(
                 await mkContainerXmlFile(config),
-                { name: path.join("META-INF", "container.xml") });
+                { name: container_xml });
+
+            // Create the OPF and optionally NCX objects
 
             const OPFXML = await opf.makeOpfXml(config);
             archive.append(
@@ -81,7 +86,12 @@ async function archiveFiles(config) {
                     { name: config.sourceBookNCXHREF });
             }
             
-            var manifests = opfXml.getElementsByTagName("manifest");
+            // This reads from the generated OPF object we just created.
+            // Previously this used opfXml that was read from the disk, but
+            // we don't want to depend on an OPF file that exists in
+            // the rendered output directory.  Instead we have a perfectly good
+            // OPF that was just created.
+            var manifests = OPFXML.getElementsByTagName("manifest");
             var manifest;
             for (let elem of utils.nodeListIterator(manifests)) {
                 if (elem.nodeName.toUpperCase() === 'manifest'.toUpperCase()) manifest = elem;
@@ -92,9 +102,12 @@ async function archiveFiles(config) {
                     if (item.nodeName.toUpperCase() === 'item'.toUpperCase()) {
                         var itemHref = item.getAttribute('href');
                         
+                        // Don't archive these files because they've already
+                        // been added earlier
                         if (itemHref === "mimetype"
                          || itemHref === opfFileName
-                         || itemHref === path.join("META-INF", "container.xml")) {
+                         || itemHref === container_xml
+                         || (config.doGenerateNCX && itemHref === config.sourceBookNCXHREF)) {
                             // Skip these special files
                             continue;
                         }

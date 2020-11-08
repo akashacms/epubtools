@@ -284,7 +284,7 @@ exports.tocData = async function(epubConfig) {
     for (let nav of utils.nodeListIterator(
         tocdom.getElementsByTagName('nav')
     )) {
-        console.log(`tocData found nav epub:type ${nav.getAttribute('epub:type')} id ${nav.getAttribute('id')} tocid ${tocid}`);
+        // console.log(`tocData found nav epub:type ${nav.getAttribute('epub:type')} id ${nav.getAttribute('id')} tocid ${tocid}`);
         if (nav.getAttribute('epub:type') === 'toc' && nav.getAttribute('id') === tocid) {
             tocnav = nav;
             break;

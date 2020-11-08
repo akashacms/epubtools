@@ -854,8 +854,8 @@ exports.makeNCXXML = async function(config) {
 
     let tocdata = await manifest.tocData(config);
 
-    console.log(tocdata);
-    
+    // console.log(tocdata);
+
     var spineorder = 0;
     var navPointForChapter = function(chapter) {
         var navPoint = NCXXML.createElement('navPoint');

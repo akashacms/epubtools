@@ -59,7 +59,10 @@ exports.readOPF = async function(epubDir, opfName) {
         };
     } catch (e) {
         console.log(`readOPF ${file2read} FAIL because ${e.stack}`);
-        return undefined;
+        return {
+            opfXmlText: undefined,
+            opfXml: undefined
+        };
     }
 };
 
