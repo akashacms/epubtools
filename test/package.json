@@ -8,8 +8,13 @@
   "description": "AkashaEPUB test case",
   "version": "0.6.1",
   "homepage": "https://akashacms.com/epubtools/toc.html",
+  "config": {
+    "epubcheckjar": "/Users/david/bin/epubcheck-4.0.2/epubcheck.jar"
+  },
   "scripts": {
-    "test": "mocha ./index ./manifest ./toc"
+    "test": "mocha ./index ./manifest ./toc",
+    "package-epub30-spec": "node ../cli.js package samples-3.0/epub30-spec.epubtools",
+    "check-epub30-spec": "java -jar ${npm_package_config_epubcheckjar} samples-3.0/epub30-spec.epub"
   },
   "dependencies": {
     "chai": "^4.2.0",
