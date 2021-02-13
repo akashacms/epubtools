@@ -5,6 +5,7 @@ const path      = require('path');
 const xmldom    = require('xmldom');
 const manifest  = require('./manifest');
 const Manifest  = manifest.Manifest;
+const fs        = require('fs-extra');
 
 exports.findMetadataInOPF = function(OPFXML) {
     for (let elem of utils.nodeList2Array(OPFXML.getElementsByTagName("metadata")).concat(utils.nodeList2Array(OPFXML.getElementsByTagName("opf:metadata")))) {
@@ -340,6 +341,12 @@ exports.manifest = function(config, OPFXML) {
     }
     return ret;
 };
+
+exports.readOpf = async function(opfFN) {
+    const opfTXT = await fs.readFile(opfFN, 'utf8');
+    const OPFXML = new xmldom.DOMParser().parseFromString(opfTXT);
+    return OPFXML;
+}
 
 // exports.makeOpfXml = async function(bookYaml, manifest, opfspine) {
 
@@ -742,6 +749,12 @@ exports.makeOpfXml = async function(config) {
     
     return OPFXML;
 };
+
+exports.readTocNCX = async function(tocncxFN) {
+    const tocncxTXT = await fs.readFile(tocncxFN, 'utf8');
+    const NCXXML = new xmldom.DOMParser().parseFromString(tocncxTXT);
+    return NCXXML;
+}
 
 exports.makeNCXXML = async function(config) {
 
