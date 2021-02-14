@@ -220,8 +220,10 @@ async function doMeta(config) {
     await fs.writeFile(path.join(config.renderedFullPath, "mimetype"), "application/epub+zip", 'utf8');
 
     let container_xml = path.join("META-INF", "container.xml");
+    let container_xml_full = path.join(config.renderedFullPath, container_xml);
+    await fs.mkdirs(path.dirname(container_xml_full));
     let CONTAINERXML = await mkContainerXmlFile(config);
-    await fs.writeFile(path.join(config.renderedFullPath, container_xml), CONTAINERXML, 'utf8');
+    await fs.writeFile(container_xml_full, CONTAINERXML, 'utf8');
 
     const OPFXML = await opf.makeOpfXml(config);
     const OPFTXT = new xmldom.XMLSerializer().serializeToString(OPFXML);
