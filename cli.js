@@ -23,11 +23,36 @@ program
     .action(async (configFN) => {
 
         try {
-            const bookConfig = await configurator.readConfig(configFN);
-            await bookConfig.readTOCData();
-            await bundleEPUB.bundleEPUB(bookConfig);
+            await bundleEPUB.doPackageCommand(configFN);
         } catch (e) {
             console.error(`package command ERRORED ${e.stack}`);
+        }
+    });
+
+program
+    .command('mkmeta <configFN>')
+    .description('Create metafiles (OPF, NCX, etc) for an EPUB3 directory structure')
+    .action(async (configFN) => {
+
+        try {
+            await bundleEPUB.doMkMetaCommand(configFN);
+        } catch (e) {
+            console.error(`mkmeta command ERRORED ${e.stack}`);
+        }
+    });
+
+program
+    .command('manifest <configFN>')
+    .description('Run manifest.from_fs')
+    .action(async (configFN) => {
+
+        try {
+            const bookConfig = await configurator.readConfig(configFN);
+            await bookConfig.check();
+            bookConfig.opfManifest = await manifest.from_fs(bookConfig);
+            console.log(bookConfig.opfManifest);
+        } catch (e) {
+            console.error(`manifest command ERRORED ${e.stack}`);
         }
 
     });

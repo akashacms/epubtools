@@ -10,6 +10,7 @@ const manifest  = require('./manifest');
 const opf       = require('./opf');
 const checkEPUB = require('./checkEPUB');
 const akrender  = require('./renderEPUB');
+const configurator = require('./Configuration');
 
 exports.bundleEPUB = async function(config) {
     // read container.xml -- extract OPF file name
@@ -23,6 +24,12 @@ exports.bundleEPUB = async function(config) {
     config.opfManifest = await manifest.from_fs(config);
     await checkEPUB.checkEPUBConfig(config);
     await archiveFiles(config);
+};
+
+exports.doPackageCommand = async function(configFN) {
+    const bookConfig = await configurator.readConfig(configFN);
+    await bookConfig.readTOCData();
+    await exports.bundleEPUB(bookConfig);
 };
 
 async function archiveFiles(config) {
@@ -61,36 +68,43 @@ async function archiveFiles(config) {
             
             archive.pipe(output);
 
-            // The mimetype file must be the first entry, and must not be compressed
+            // The mimetype file must be the first entry, it must have the
+            // textual content shown here, and it must not be compressed
             // console.log(`reading ${path.join(rendered, "mimetype")} into archive`);
             archive.append(
                 "application/epub+zip",
                 { name: "mimetype", store: true });
 
+            // Previously this function ran the functions to regenerate these
+            // meta files.  It was decided it made more sense for this function
+            // to simply package the files, and to provide a different command to
+            // generate the meta files.
+            //
+            // The reasoning is that another tool might be generating correct meta files
+            // and how can the archive function have a clearer ide of what should
+            // be in the meta files?
+
             let container_xml = path.join("META-INF", "container.xml");
-            archive.append(
-                await mkContainerXmlFile(config),
-                { name: container_xml });
 
-            // Create the OPF and optionally NCX objects
-
-            const OPFXML = await opf.makeOpfXml(config);
             archive.append(
-                new xmldom.XMLSerializer().serializeToString(OPFXML),
-                { name: opfFileName });
+                fs.createReadStream(path.join(rendered, container_xml)),
+                { name: container_xml }
+            );
+
+            archive.append(
+                fs.createReadStream(path.join(rendered, opfFileName)),
+                { name: opfFileName }
+            );
 
             if (config.doGenerateNCX) {
-                const NCXXML = await opf.makeNCXXML(config);
                 archive.append(
-                    new xmldom.XMLSerializer().serializeToString(NCXXML),
-                    { name: config.sourceBookNCXHREF });
+                    fs.createReadStream(path.join(rendered, config.sourceBookNCXHREF)),
+                    { name: config.sourceBookNCXHREF }
+                );
             }
-            
-            // This reads from the generated OPF object we just created.
-            // Previously this used opfXml that was read from the disk, but
-            // we don't want to depend on an OPF file that exists in
-            // the rendered output directory.  Instead we have a perfectly good
-            // OPF that was just created.
+
+            const OPFXML = await opf.readOpf(path.join(rendered, opfFileName));
+
             var manifests = OPFXML.getElementsByTagName("manifest");
             var manifest;
             for (let elem of utils.nodeListIterator(manifests)) {
@@ -193,3 +207,38 @@ async function mkContainerXmlFile(config) {
 
     return new xmldom.XMLSerializer().serializeToString(containerXml);
 };
+
+// DONE First, test the mkmeta function to make sure the meta files are created correctly
+// DONE Second, in archiveFiles the functions should only read files rather than create them
+// TODO Third, in akasharender-epub remove the doMeta function and command
+// TODO Fourth, is it possible to organize these around Classes that have Methods?
+
+async function doMeta(config) {
+    // console.log(`doMeta renderedFullPath ${config.renderedFullPath}`);
+    await fs.mkdirs(config.renderedFullPath);
+
+    await fs.writeFile(path.join(config.renderedFullPath, "mimetype"), "application/epub+zip", 'utf8');
+
+    let container_xml = path.join("META-INF", "container.xml");
+    let CONTAINERXML = await mkContainerXmlFile(config);
+    await fs.writeFile(path.join(config.renderedFullPath, container_xml), CONTAINERXML, 'utf8');
+
+    const OPFXML = await opf.makeOpfXml(config);
+    const OPFTXT = new xmldom.XMLSerializer().serializeToString(OPFXML);
+    await fs.writeFile(path.join(config.renderedFullPath, config.bookOPF), OPFTXT, 'utf8');
+
+    if (config.doGenerateNCX) {
+        const NCXXML = await opf.makeNCXXML(config);
+        const ncx = new xmldom.XMLSerializer().serializeToString(NCXXML);
+        await fs.writeFile(path.join(config.renderedFullPath, config.sourceBookNCXHREF), ncx, 'utf8');
+    }
+}
+module.exports.doMeta = doMeta;
+
+async function doMkMetaCommand(configFN) {
+    const bookConfig = await configurator.readConfig(configFN);
+    await bookConfig.check();
+    bookConfig.opfManifest = await manifest.from_fs(bookConfig);
+    await module.exports.doMeta(bookConfig);
+}
+module.exports.doMkMetaCommand = doMkMetaCommand;
