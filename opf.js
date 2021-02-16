@@ -823,7 +823,15 @@ exports.makeNCXXML = async function(config) {
     } else {
         elem = NCXXML.createElement('meta');
         elem.setAttribute('name', "dtb:uid");
-        elem.setAttribute('content', uniqueID.string);
+        if (typeof uniqueID.type && uniqueID.type === "urn") {
+            elem.setAttribute('content', uniqueID.string);
+        } else if (typeof uniqueID.type && uniqueID.type === "isbn") {
+            elem.setAttribute('content', `urn:isbn:${uniqueID.string}`);
+        } else if (typeof uniqueID.type && uniqueID.type === "uuid") {
+            elem.setAttribute('content', `urn:uuid:${uniqueID.string}`);
+        } else {
+            throw new Error(`identifier with no type ${util.inspect(uniqueID)}`);
+        }
         headElem.appendChild(elem);
     }
 
