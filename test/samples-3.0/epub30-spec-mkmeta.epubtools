@@ -2,7 +2,7 @@ name: EPUB 3.0 Specification
 # akashaepub:
 #   do not have source, so no akashaepub
 epub: ../samples-3.0-test/epub30-spec-tmp.epub
-rendered: ../samples-3.0-test/epub30-spec
+rendered: ../samples-3.0-test/epub30-spec-tmp
 toc:
     id: toc
     href: EPUB/xhtml/epub30-nav.xhtml

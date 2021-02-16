@@ -9,17 +9,18 @@
   "version": "0.6.1",
   "homepage": "https://akashacms.com/epubtools/toc.html",
   "config": {
-    "epubcheckjar": "/Users/david/bin/epubcheck-4.0.2/epubcheck.jar"
+    "epubcheckjar": "/Users/david/bin/epubcheck-4.2.4/epubcheck.jar"
   },
   "scripts": {
     "test": "mocha ./index ./manifest ./toc ./build.mjs",
     "test-build": "mocha ./build.mjs",
     "test-clean": "shx rm -rf samples-3.0-test/epub30-spec*",
-    "premkmeta": "shx rm -rf samples-3.0/epub30-spec-tmp && shx cp -R samples-3.0/epub30-spec samples-3.0/epub30-spec-tmp/",
-    "mkmeta": "node ../cli.js mkmeta samples-3.0/epub30-spec-mkmeta.epubtools",
-    "package-epub30-spec": "node ../cli.js package samples-3.0/epub30-spec.epubtools",
+    "build": "npm-run-all build:setup build:mkmeta build:package",
+    "build:setup": "shx rm -rf samples-3.0/epub30-spec-tmp && shx cp -R samples-3.0/epub30-spec samples-3.0-test/epub30-spec-tmp/",
+    "build:mkmeta": "node ../cli.js mkmeta samples-3.0/epub30-spec-mkmeta.epubtools",
+    "build:package": "node ../cli.js package samples-3.0/epub30-spec-mkmeta.epubtools",
     "check-spec": "npm-run-all check-spec:*",
-    "check-spec:exp": "java -jar ${npm_package_config_epubcheckjar} -mode exp samples-3.0-test/epub30-spec/",
+    "check-spec:exp": "java -jar ${npm_package_config_epubcheckjar} -mode exp samples-3.0-test/epub30-spec-tmp/",
     "check-spec:epub": "java -jar ${npm_package_config_epubcheckjar} samples-3.0-test/epub30-spec-tmp.epub",
     "check-epub30-spec": "java -jar ${npm_package_config_epubcheckjar} samples-3.0/epub30-spec.epub",
     "check-epub30-tmp-spec": "java -jar ${npm_package_config_epubcheckjar} -mode exp samples-3.0-test/epub30-spec/",
