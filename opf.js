@@ -674,6 +674,8 @@ exports.makeOpfXml = async function(config) {
         let fullItemPath = path.join(fullRoot, item.path);
         let relativeItemPath = path.relative(fullOpfPath, fullItemPath);
 
+        // console.log(`makeOpfXml item.path ${item.path} fullItemPath ${fullItemPath} relativeItemPath ${relativeItemPath}`)
+
         let properties = '';
 
         const set_property = (value) => {
