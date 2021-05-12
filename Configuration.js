@@ -16,7 +16,7 @@ module.exports.Configuration = class Configuration {
 
     constructor(yamlText) {
         this[_config_yamlText] = yamlText;
-        this[_config_yamlParsed] = yaml.safeLoad(yamlText);
+        this[_config_yamlParsed] = yaml.load(yamlText);
         if (!this[_config_yamlParsed]) {
             this[_config_yamlParsed] = {};
         } else {
@@ -649,7 +649,7 @@ module.exports.Configuration = class Configuration {
         /* */
 
         await fs.writeFile(this.configFileName, 
-            yaml.safeDump(this[_config_yamlParsed], {
+            yaml.dump(this[_config_yamlParsed], {
                 indent: 4
             }), 'utf8');
     }
