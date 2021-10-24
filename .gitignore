@@ -28,3 +28,5 @@ node_modules
 
 modified.epubtools
 epub30-spec.epub 
+
+package-lock.json
