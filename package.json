@@ -1,41 +1,33 @@
 {
   "name": "epubtools",
-  "author": {
-    "name": "David Herron",
-    "email": "david@davidherron.com",
-    "url": "http://davidherron.com"
-  },
-  "version": "0.1.6",
+  "version": "0.8.0",
   "description": "Generate EPUB3 documents and assets",
+  "main": "index.js",
+  "bin": {
+    "epubtools": "cli.js"
+  },
+  "scripts": {
+  },
   "homepage": "https://github.com/epubtools/epubtools",
   "repository": {
     "type": "git",
     "url": "https://github.com/epubtools/epubtools.git"
   },
-  "main": "epubber.js",
-  "bin": {
-    "epubtools": "cli.js"
-  },
-  "keywords": [
-    "EPUB3"
-  ],
-  "engines": {
-    "node": ">=4.2.0"
-  },
+  "author": "David Herron <david@davidherron.com>",
+  "license": "ISC",
   "dependencies": {
-    "archiver": "^0.21.0",
-    "async": "^1.5.0",
-    "commander": "^2.9.0",
-    "fs-extra": "^0.26.4",
-    "globfs": "^0.1.1",
-    "js-yaml": "^3.4.6",
-    "jsdom": "^7.2.2",
-    "mime": "^1.3.4",
-    "node-unzip-2": "^0.2.1",
-    "sprintf-js": "^1.0.3",
-    "uuid": "^2.0.1",
-    "xmldom": "*",
-    "text-statistics": "*",
-    "debug": "*"
+    "archiver": "^5.3.x",
+    "cheerio": "1.0.0-rc.2",
+    "chokidar": "^3.5.2",
+    "commander": "^7.2.x",
+    "fs-extra": "^10.x",
+    "globfs": "^0.3.3",
+    "js-yaml": "^4.1.x",
+    "mime": "^2.5.x",
+    "sprintf-js": "^1.1.2",
+    "text-statistics": "0.1.1",
+    "unzipper": "^0.10.x",
+    "uuid": "^8.3.x",
+    "xmldom": "^0.6.x"
   }
 }
