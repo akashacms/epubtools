@@ -18,16 +18,17 @@
   "license": "ISC",
   "dependencies": {
     "archiver": "^5.3.x",
+    "cheerio": "1.0.0-rc.2",
+    "chokidar": "^3.5.2",
     "commander": "^7.2.x",
     "fs-extra": "^10.x",
     "globfs": "^0.3.3",
     "js-yaml": "^4.1.x",
     "mime": "^2.5.x",
     "sprintf-js": "^1.1.2",
-    "uuid": "^8.3.x",
-    "xmldom": "^0.6.x",
-    "cheerio": "1.0.0-rc.2",
+    "text-statistics": "0.1.1",
     "unzipper": "^0.10.x",
-    "text-statistics": "0.1.1"
+    "uuid": "^8.3.x",
+    "xmldom": "^0.6.x"
   }
 }

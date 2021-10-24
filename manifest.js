@@ -210,9 +210,10 @@ exports.spineItems = function(epubConfig) {
 };
 
 exports.spineTitles = async function(epubConfig) {
-    let epubdir = epubConfig.sourceBookFullPath;
+    let epubdir = epubConfig.renderedFullPath;
     if (epubConfig.opfManifest) for (let item of epubConfig.opfManifest) {
         if (!item.in_spine) continue;
+        // console.log(`spineTitles ${epubdir} ${item.path}`);
         let docpath = path.join(epubdir, item.path);
         let doctxt = await fs.readFile(docpath, 'utf8');
         const $ = cheerio.load(doctxt, {

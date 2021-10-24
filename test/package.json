@@ -22,7 +22,9 @@
     "check-spec": "npm-run-all check-spec:*",
     "check-spec:exp": "java -jar ${npm_package_config_epubcheckjar} -mode exp samples-3.0-test/epub30-spec-tmp/",
     "check-spec:epub": "java -jar ${npm_package_config_epubcheckjar} samples-3.0-test/epub30-spec.epub",
-    "env": "env"
+    "env": "env",
+    "watch-test": "npm-run-all build:setup watch-test:watcher",
+    "watch-test:watcher": "node ../cli.js watch samples-3.0/epub30-spec-mkmeta.epubtools"
   },
   "dependencies": {
     "chai": "^4.2.0",

@@ -13,6 +13,7 @@ const manifest = require('./manifest');
 const unzip = require('unzipper');
 const textStatistics = require('text-statistics');
 const globfs = require('globfs');
+const _watcher = import('./watcher.mjs');
 
 process.title = 'epubuilder';
 program.version('0.4.0');
@@ -39,6 +40,23 @@ program
         } catch (e) {
             console.error(`mkmeta command ERRORED ${e.stack}`);
         }
+    });
+
+program
+    .command('watch <configFN>')
+    .description('Watch for changes and rebuild EPUB')
+    .action(async (configFN) => {
+
+        try {
+            const bookConfig = await configurator.readConfig(configFN);
+            await bookConfig.check();
+            bookConfig.opfManifest = await manifest.from_fs(bookConfig);
+            console.log(bookConfig);
+            (await _watcher).setup(bookConfig);
+        } catch (e) {
+            console.error(`watch command ERRORED ${e.stack}`);
+        }
+
     });
 
 program

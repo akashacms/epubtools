@@ -131,6 +131,12 @@ module.exports.Configuration = class Configuration {
         ];
     }
 
+    /**
+     * The directory path where the rendered files are stored.  In akasharender-epub
+     * an additional YAML location is supported, <code>this.YAML.akashaepub.bookdest</code>,
+     * but it would be a mistake for epubtools to support that data, and it would be
+     * better for akasharender-epub to use the rendered field.
+     */
     get renderedPath() {
         return this[_config_yamlParsed]
              && this[_config_yamlParsed].rendered
