@@ -6,15 +6,20 @@ The purposes for this package include:
 * Assisting with generating the metadata files required by EPUB3
 * Extracting an EPUB3 to a directory
 
-Installation:
+The EPUBTools package is meant to be used in a Node.js project comprising content files for an eBook that is to be formatted in the EPUB3 format.  As a Node.js project there must be a `package.json` file.
+
+To get started you must have Node.js installed.  After creating a blank directory, then run these commands:
 
 ```
+$ npm init -y
 $ npm install epubtools --save
 ```
 
-This package provides both an API and a CLI tool.
+The first initializes a default `package.json` file.  The second installs EPUBTools as a command in that project directory.
 
 To facilitate using the CLI tool, add `./node_modules/.bin` to your PATH variable.  By doing so you can easily run any CLI tool installed by a Node.js package.
+
+There is both an API and a CLI tool.
 
 # CLI
 

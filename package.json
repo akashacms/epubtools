@@ -1,13 +1,12 @@
 {
   "name": "epubtools",
-  "version": "0.1.7",
+  "version": "0.8.0",
   "description": "Generate EPUB3 documents and assets",
   "main": "index.js",
   "bin": {
     "epubtools": "cli.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "homepage": "https://github.com/epubtools/epubtools",
   "repository": {
