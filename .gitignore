@@ -30,3 +30,6 @@ modified.epubtools
 epub30-spec.epub 
 
 package-lock.json
+
+guide/out
+guide/node_modules
