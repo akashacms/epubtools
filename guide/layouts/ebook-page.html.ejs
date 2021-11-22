@@ -31,6 +31,9 @@
     <div class="panel panel-default">
         <ebook-navigation-header showtoc="true" id="ebook-navigation" class="panel-heading"></ebook-navigation-header>
         <div id="book-page-content" class="panel-body">
+            <section id="breadcrumb" class="col-sm-12">
+                <breadcrumb-trail></breadcrumb-trail>
+            </section>
             <% if (typeof teaser  !== "undefined") {
                  %><div class="jumbotron"><p class="lead"><%= teaser %></p></div> <%
             } %>

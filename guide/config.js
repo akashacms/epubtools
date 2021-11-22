@@ -27,6 +27,24 @@ config
     })
     .addLayoutsDir('layouts')
     .addDocumentsDir('documents')
+    .addDocumentsDir({
+        src: 'guide',
+        dest: 'guide',
+        baseMetadata: {
+            bookHomeURL: "/guide/index.html",
+            title: "Table of Contents",
+            tags: "AkashaRender",
+            headerHeight: "140px",
+            bookTitle: "EPUBTools Project Documentation",
+            bookAuthor: "David Herron",
+            authors: "David Herron",
+            published: "2021 David Herron",
+            language: "English",
+            coverImage: "/images/Better-Fritzing.png",
+            logoImage: "/images/Better-Fritzing.png",
+            noLogoImage: "false"
+        }
+    })
     .addPartialsDir('partials');
 
 config.setRenderDestination('out');
@@ -69,9 +87,8 @@ config
                 }
             }
         }
-    });
-
-    // ADD EVENTUALLY .use(require('epub-website'))
+    })
+    .use(require('epub-website'));
 
 config
     .addFooterJavaScript({ href: "/vendor/jquery/jquery.min.js" })
