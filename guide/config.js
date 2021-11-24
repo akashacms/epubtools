@@ -22,7 +22,7 @@ config
         dest: 'vendor/popper.js'
     })
     .addAssetsDir({
-        src: 'node_modules/@fortawesome/fontawesome-free/',
+        src: 'node_modules/@fortawesome/fontawesome-free',
         dest: 'vendor/fontawesome-free'
     })
     .addLayoutsDir('layouts')
@@ -32,16 +32,16 @@ config
         dest: 'guide',
         baseMetadata: {
             bookHomeURL: "/guide/index.html",
-            title: "Table of Contents",
+            title: "EPUBTools Table of Contents",
             tags: "AkashaRender",
             headerHeight: "140px",
-            bookTitle: "EPUBTools Project Documentation",
+            bookTitle: "EPUBTools User Guide",
             bookAuthor: "David Herron",
             authors: "David Herron",
             published: "2021 David Herron",
             language: "English",
-            coverImage: "/images/Better-Fritzing.png",
-            logoImage: "/images/Better-Fritzing.png",
+            coverImage: "/images/EPUBTools-User-Guide.png",
+            logoImage: "/images/EPUBTools-User-Guide.png",
             noLogoImage: "false"
         }
     })

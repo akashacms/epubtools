@@ -17,32 +17,8 @@ $ npm install epubtools --save
 
 The first initializes a default `package.json` file.  The second installs EPUBTools as a command in that project directory.
 
-To facilitate using the CLI tool, add `./node_modules/.bin` to your PATH variable.  By doing so you can easily run any CLI tool installed by a Node.js package.
+EPUBTools is part of [AkashaCMS](https://akashacms.com).
 
-There is both an API and a CLI tool.
+It does not contain support for rendering the XHTML files that are to be included in the EPUB container.  You must generate the content files through some other means.  A companion project, [AkashaRenderEPUB](https://github.com/akashacms/akasharender-epub), fills this purpose.  It takes Markdown or AsciiDoc files, and produces content files suitable for use in an EPUB.  Between the AkashaRenderEPUB and EPUBTools, you have a full EPUB production toolchain.
 
-# CLI
-
-To get help run: `epubtools --help`
-
-```
-$ epubtools package configFileFN
-```
-
-Package the EPUB described by the configuration file.
-
-```
-$ epubtools unpack file-name.epub
-```
-
-Unpacks the given EPUB file. TODO this command does not work as advertised
-
-```
-$ epubtools import path/to/EPUB/directory config.epubtools
-```
-
-Reads information from the OPF file in the EPUB directory, and constructs the configuration file.
-
-# Configuration file
-
-Configuration files are named with the extension `.epubtools`.  They are in YAML format, and describe some EPUB3 metadata and other information required to build an EPUB3 package.
+For documentation see https://akashacms.github.io/epubtools
