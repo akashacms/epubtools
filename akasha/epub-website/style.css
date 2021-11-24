@@ -1,0 +1,58 @@
+
+.epub-website-ebook-masthead {
+	width: 100%;
+	text-align: center;
+	/* display: flex;
+    flex-direction: row; */
+}
+
+.epub-website-ebook-masthead > table {
+	width: 100%;
+}
+
+.epub-website-ebook-masthead .epub-website-ebook-masthead-logo {
+	/* flex-shrink: 0; */
+	max-height: 150px;
+}
+
+.epub-website-ebook-masthead .epub-website-ebook-masthead-logo img {
+	/* position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0; */
+	max-height: 150px;
+	/* max-width: 100%; */
+	margin: auto;
+}
+
+.epub-website-ebook-masthead .epub-website-ebook-masthead-title {
+    /* flex-grow: 1; */
+	height: 100%;
+}
+
+.epub-website-ebook-navigation-header {
+	vertical-align: middle;
+	text-align: center;
+}
+
+.epub-website-ebook-navigation-header .epub-website-ebook-logo-area {
+	float: left;
+	min-height: 40px;
+}
+
+.epub-website-ebook-navigation-header .epub-website-ebook-chapter-area {
+	vertical-align: middle;
+	min-height: 40px;
+}
+
+.epub-website-ebook-navigation-header .epub-website-ebook-chapter-area h1 {
+	vertical-align: middle;
+	text-align: center;
+	word-wrap: break-word;
+	display: inline;
+}
+
+.epub-website-ebook-navigation-header .epub-website-ebook-chapter-area .epub-website-ebook-chevron-left {
+	display: inline;
+}

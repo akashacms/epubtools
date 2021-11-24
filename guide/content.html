@@ -1,0 +1,254 @@
+<!doctype html>
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!-- Consider adding a manifest.appcache: h5bp.com/d/Offline -->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width">
+<title>Examining EPUB content in EPUBTools</title>
+
+
+
+ 
+ 
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="pagename" content="Examining EPUB content in EPUBTools">
+
+
+
+
+
+
+
+
+
+<meta name="date" content="2021-11-24T02:05:58.522Z">
+
+<meta name="DC.title" content="Examining EPUB content in EPUBTools">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- OpenGraph Meta Tags -->
+
+<meta name="og:title" content="Examining EPUB content in EPUBTools">
+
+<meta name="og:url" content="https://akashacms.github.io/epubtools/guide/content.html">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="canonical" href="https://akashacms.github.io/epubtools/guide/content.html">
+
+<link rel="sitemap" type="application/xml" title="Sitemap" href="../sitemap.xml">
+
+
+<link rel="stylesheet" type="text/css" href="../akasha/epub-website/style.css"><link rel="stylesheet" type="text/css" href="../vendor/bootstrap/css/bootstrap.min.css"><link rel="stylesheet" type="text/css" href="../css/flatly.min.css"><link rel="stylesheet" type="text/css" href="../css/style.css"><link rel="stylesheet" type="text/css" href="../vendor/fontawesome-free/css/all.min.css">
+
+<style>
+#container { padding-top: 5px; }
+</style>
+</head>
+<body class="ebook-page">
+<nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="../index.html" munged="yes"><i class="fas fa-home"></i>Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="index.html" munged="yes">Documentation</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="../news/index.html" munged="yes">News</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://akashacms.com" rel="nofollow">Return to AkashaCMS</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+<div id="container" class="container">
+<header class="epub-website-ebook-masthead" id="ebook-masthead">
+<table border="0"><tr>
+
+<td class="epub-website-ebook-masthead-logo"><a href="index.html" munged="yes"><img src="../images/EPUBTools-User-Guide.png"></a></td>
+
+<td class="epub-website-ebook-masthead-title">
+<a href="index.html" munged="yes"><h2 align="center">EPUBTools User Guide</h2></a><em>By David Herron</em>
+</td>
+</tr></table>
+</header>
+<div class="panel panel-default">
+<div class="panel-heading epub-website-ebook-navigation-header" id="ebook-navigation">
+
+<div class="epub-website-ebook-logo-area">
+<div class="btn-group">
+<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+Table of Contents
+<span class="caret"></span>
+</button>
+<ol type="1" start="1" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    <li class="dropdown-item"><a href="introduction.html" id="introduction" type="button" class="btn btn-link" munged="yes" title="Introduction to EPUBTools">Introduction to EPUBTools</a></li>
+    <li class="dropdown-item"><a href="setup.html" id="setup" type="button" class="btn btn-link" munged="yes" title="Setting up a project with EPUBTools">Setting up a project with EPUBTools</a></li>
+    <li class="dropdown-item"><a href="config.html" id="configuration" type="button" class="btn btn-link" munged="yes" title="The EPUBTools configuration file">The EPUBTools configuration file</a></li>
+    <li class="dropdown-item"><a href="mkmeta.html" id="metafiles" type="button" class="btn btn-link" munged="yes" title="Generating EPUB metafiles">Generating EPUB metafiles</a></li>
+    <li class="dropdown-item"><a href="bundle.html" id="bundle" type="button" class="btn btn-link" munged="yes" title="Packaging EPUB&apos;s with EPUBTools">Packaging EPUB&apos;s with EPUBTools</a></li>
+    <li class="dropdown-item"><a href="content.html" id="content" type="button" class="btn btn-link" munged="yes" title="Examining EPUB content in EPUBTools">Examining EPUB content in EPUBTools</a></li>
+</ol>
+</div>
+</div>
+
+<div class="epub-website-ebook-chapter-area">
+<a href="bundle.html" munged="yes">
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+</a>
+<h1 class="panel-title" align="center" style>Examining EPUB content in EPUBTools</h1>
+<a href="introduction.html" munged="yes">
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+</a>
+</div>
+</div>
+<div id="book-page-content" class="panel-body">
+<section id="breadcrumb" class="col-sm-12">
+<nav aria-label="breadcrumb" id="breadcrumbTrail">
+<ol class="breadcrumb">
+ <li class="breadcrumb-item "> <a href="../index.html" munged="yes">AskashaEPUB @akashacms/epubtools documentation</a> </li> <li class="breadcrumb-item "> <a href="index.html" munged="yes">Table of Contents</a> </li> <li class="breadcrumb-item "> <a href="content.html" munged="yes">Examining EPUB content in EPUBTools</a> </li>
+</ol>
+</nav>
+</section>
+
+<div id="book-page-content" class="panel-body"><p>We don&apos;t just want to package EPUB&apos;s, and generate the metadata files.  We&apos;re also interested in any statistics we can collect about the text in the book, and introspecting the EPUB content in other ways.</p>
+<h1>Looking at the EPUB &quot;manifest&quot;</h1>
+<p>A core feature of the OPF and NCX files is a list of the content files in the EPUB.  This list is called the <em>manifest</em>.  It is sometimes important to double check that EPUBTools is generating a correct manifest.</p>
+<pre><code>s manifest CONFIG-FILE.epubtools
+</code></pre>
+<p>This prints out the JavaScript object for each item in the manifest.  This is useful to those implementing EPUBTools code, for debugging the code.  It may be useful to those using EPUBTools for book production, to give more insight into things.</p>
+<h1>Unpacking an EPUB</h1>
+<p>You may have an EPUB and need to examine the contents as individual files.</p>
+<pre><code>$ epubtools unpack EPUB-FILE.epub DIRECTORY-NAME
+</code></pre>
+<p>You could perform this task with the <code>unzip</code> command if you like.  In any case, this extracts the files from the EPUB into the named directory.</p>
+<h1>Non-functioning commands</h1>
+<p>EPUBTools requires some more work on these commands:</p>
+<ul>
+<li><code>import</code> - This is meant to generate a <code>.epubtools</code> configuration file from a directory containing EPUB files</li>
+<li><code>toc</code> - This should print the table of contents</li>
+<li><code>stats</code> - This should print text characteristics (readability, etc)</li>
+<li><code>words</code> - This should print a word count of the book</li>
+</ul>
+</div>
+<div class="panel-heading epub-website-ebook-navigation-header" id="ebook-navigation-bottom">
+
+<div class="epub-website-ebook-logo-area">
+<div class="btn-group">
+<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+Table of Contents
+<span class="caret"></span>
+</button>
+<ol type="1" start="1" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    <li class="dropdown-item"><a href="introduction.html" id="introduction" type="button" class="btn btn-link" munged="yes" title="Introduction to EPUBTools">Introduction to EPUBTools</a></li>
+    <li class="dropdown-item"><a href="setup.html" id="setup" type="button" class="btn btn-link" munged="yes" title="Setting up a project with EPUBTools">Setting up a project with EPUBTools</a></li>
+    <li class="dropdown-item"><a href="config.html" id="configuration" type="button" class="btn btn-link" munged="yes" title="The EPUBTools configuration file">The EPUBTools configuration file</a></li>
+    <li class="dropdown-item"><a href="mkmeta.html" id="metafiles" type="button" class="btn btn-link" munged="yes" title="Generating EPUB metafiles">Generating EPUB metafiles</a></li>
+    <li class="dropdown-item"><a href="bundle.html" id="bundle" type="button" class="btn btn-link" munged="yes" title="Packaging EPUB&apos;s with EPUBTools">Packaging EPUB&apos;s with EPUBTools</a></li>
+    <li class="dropdown-item"><a href="content.html" id="content" type="button" class="btn btn-link" munged="yes" title="Examining EPUB content in EPUBTools">Examining EPUB content in EPUBTools</a></li>
+</ol>
+</div>
+</div>
+
+<div class="epub-website-ebook-chapter-area">
+<a href="bundle.html" munged="yes">
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+</a>
+<h1 class="panel-title" align="center" style>Examining EPUB content in EPUBTools</h1>
+<a href="introduction.html" munged="yes">
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+</a>
+</div>
+</div>
+</div>
+</div>
+<footer id="footer-row" class="container">
+
+</footer>
+</div>
+<script src="../vendor/jquery/jquery.min.js"></script><script src="../vendor/popper.js/umd/popper.min.js"></script><script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+
+</body>
+</html>

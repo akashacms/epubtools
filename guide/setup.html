@@ -1,0 +1,335 @@
+<!doctype html>
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!-- Consider adding a manifest.appcache: h5bp.com/d/Offline -->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width">
+<title>Setting up a project with EPUBTools</title>
+
+
+
+ 
+ 
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="pagename" content="Setting up a project with EPUBTools">
+
+
+
+
+
+
+
+
+
+<meta name="date" content="2021-11-23T05:43:29.460Z">
+
+<meta name="DC.title" content="Setting up a project with EPUBTools">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- OpenGraph Meta Tags -->
+
+<meta name="og:title" content="Setting up a project with EPUBTools">
+
+<meta name="og:url" content="https://akashacms.github.io/epubtools/guide/setup.html">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="canonical" href="https://akashacms.github.io/epubtools/guide/setup.html">
+
+<link rel="sitemap" type="application/xml" title="Sitemap" href="../sitemap.xml">
+
+
+<link rel="stylesheet" type="text/css" href="../akasha/epub-website/style.css"><link rel="stylesheet" type="text/css" href="../vendor/bootstrap/css/bootstrap.min.css"><link rel="stylesheet" type="text/css" href="../css/flatly.min.css"><link rel="stylesheet" type="text/css" href="../css/style.css"><link rel="stylesheet" type="text/css" href="../vendor/fontawesome-free/css/all.min.css">
+
+<style>
+#container { padding-top: 5px; }
+</style>
+</head>
+<body class="ebook-page">
+<nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="../index.html" munged="yes"><i class="fas fa-home"></i>Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="index.html" munged="yes">Documentation</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="../news/index.html" munged="yes">News</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://akashacms.com" rel="nofollow">Return to AkashaCMS</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+<div id="container" class="container">
+<header class="epub-website-ebook-masthead" id="ebook-masthead">
+<table border="0"><tr>
+
+<td class="epub-website-ebook-masthead-logo"><a href="index.html" munged="yes"><img src="../images/EPUBTools-User-Guide.png"></a></td>
+
+<td class="epub-website-ebook-masthead-title">
+<a href="index.html" munged="yes"><h2 align="center">EPUBTools User Guide</h2></a><em>By David Herron</em>
+</td>
+</tr></table>
+</header>
+<div class="panel panel-default">
+<div class="panel-heading epub-website-ebook-navigation-header" id="ebook-navigation">
+
+<div class="epub-website-ebook-logo-area">
+<div class="btn-group">
+<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+Table of Contents
+<span class="caret"></span>
+</button>
+<ol type="1" start="1" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    <li class="dropdown-item"><a href="introduction.html" id="introduction" type="button" class="btn btn-link" munged="yes" title="Introduction to EPUBTools">Introduction to EPUBTools</a></li>
+    <li class="dropdown-item"><a href="setup.html" id="setup" type="button" class="btn btn-link" munged="yes" title="Setting up a project with EPUBTools">Setting up a project with EPUBTools</a></li>
+    <li class="dropdown-item"><a href="config.html" id="configuration" type="button" class="btn btn-link" munged="yes" title="The EPUBTools configuration file">The EPUBTools configuration file</a></li>
+    <li class="dropdown-item"><a href="mkmeta.html" id="metafiles" type="button" class="btn btn-link" munged="yes" title="Generating EPUB metafiles">Generating EPUB metafiles</a></li>
+    <li class="dropdown-item"><a href="bundle.html" id="bundle" type="button" class="btn btn-link" munged="yes" title="Packaging EPUB&apos;s with EPUBTools">Packaging EPUB&apos;s with EPUBTools</a></li>
+    <li class="dropdown-item"><a href="content.html" id="content" type="button" class="btn btn-link" munged="yes" title="Examining EPUB content in EPUBTools">Examining EPUB content in EPUBTools</a></li>
+</ol>
+</div>
+</div>
+
+<div class="epub-website-ebook-chapter-area">
+<a href="introduction.html" munged="yes">
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+</a>
+<h1 class="panel-title" align="center" style>Setting up a project with EPUBTools</h1>
+<a href="config.html" munged="yes">
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+</a>
+</div>
+</div>
+<div id="book-page-content" class="panel-body">
+<section id="breadcrumb" class="col-sm-12">
+<nav aria-label="breadcrumb" id="breadcrumbTrail">
+<ol class="breadcrumb">
+ <li class="breadcrumb-item "> <a href="../index.html" munged="yes">AskashaEPUB @akashacms/epubtools documentation</a> </li> <li class="breadcrumb-item "> <a href="index.html" munged="yes">Table of Contents</a> </li> <li class="breadcrumb-item "> <a href="setup.html" munged="yes">Setting up a project with EPUBTools</a> </li>
+</ol>
+</nav>
+</section>
+
+<div id="book-page-content" class="panel-body"><p>To use EPUBTools requires three things:</p>
+<ol>
+<li>Node.js installed on your computer</li>
+<li>Initializing a project directory, and installing <code>epubtools</code></li>
+<li>A process for generating the HTML+CSS+JavaScript files that are to be bundled into the EPUB</li>
+</ol>
+<p>In this section we&apos;ll talk about the first two steps.</p>
+<h1>Setting up Node.js</h1>
+<p>Node.js is a platform for running JavaScript applications on macOS, Windows, Linux, and several other operating systems.  It allows one to run JavaScript code outside of web browsers, and therefore free&apos;s JavaScript from being dismissed as just a browser language.  A long list of developer tools, application frameworks, and more, are available for the Node.js platform.</p>
+<p>The installation process varies from one platform to another, depending on whether there is a package manager and certain details about its use.  That is, one method for installing Node.js is to go to the download page (<a href="https://nodejs.org/en/download/" rel="nofollow">https://nodejs.org/en/download/</a>) and download the installer for your operating system.  But it is better to use a package management system if only to simplify updating it when a new release is issued.</p>
+<p>For modern versions of Windows, run this command:</p>
+<pre><code>PS C:\...&gt; winget search nodejs
+PS C:\...&gt; winget install OpenJS.NodeJS.LTS
+</code></pre>
+<p>The first command shows you the available packages, and the second installs the current LTS version of Node.js.</p>
+<p>For macOS using MacPorts, run these commands:</p>
+<pre><code>$ sudo port search nodejs
+$ sudo port install nodejsNN
+</code></pre>
+<p>The first command shows you the available packages, for example <code>nodejs14</code> or <code>nodejs16</code>.  For the second command, substitute for NN the version number you desire.  As of this writing, <code>nodejs16</code> is the latest production version, and development on <code>nodejs17</code> has just begun.</p>
+<p>For macOS using HomeBrew, run these commands:</p>
+<pre><code>$ brew search nodejs
+$ brew install node@NN
+</code></pre>
+<p>The first command shows you the available packages.  For HomeBrew, the naming convention is to use <code>@NN</code> to specify the version number.</p>
+<p>The Node.js website has instructions for many more operating systems at:  <a href="https://nodejs.org/en/download/package-manager/" rel="nofollow">https://nodejs.org/en/download/package-manager/</a></p>
+<p>Once you&apos;ve installed Node.js, you can verify it by running these commands:</p>
+<pre><code>$ node --version
+$ node --help
+</code></pre>
+<p>They print out useful information, and act to verify that Node.js is installed and running.</p>
+<h1>Creating a project for EPUBTools</h1>
+<p>Before we start talking about EPUBTools in-depth, let&apos;s go for a quick win.  That is, let&apos;s use some pre-built files and generate an EPUB.  In the <code>akashacms/epubtools</code> repository, we have such a directory.  The plan is to build a simple project directory, copy those files into that directory, and create a simple build script.</p>
+<p>The W3C&apos;s EPUB3 Community Group is now shepherding EPUB standards development.  One of their tools is a GitHub repository containing EPUB3 samples: <a href="https://github.com/IDPF/epub3-samples" rel="nofollow">https://github.com/IDPF/epub3-samples</a></p>
+<p>In the EPUBTools repository, we&apos;ve duplicated one of them, plus an EPUBTools configuration file, at:  <a href="https://github.com/akashacms/epubtools/tree/master/test/samples-3.0" rel="nofollow">https://github.com/akashacms/epubtools/tree/master/test/samples-3.0</a>  Our plan is to create a project directory with a simple build script to build this EPUB.</p>
+<p>First, clone the EPUBTools repository into a work directory:</p>
+<pre><code>$ git clone https://github.com/akashacms/epubtools
+</code></pre>
+<p>You&apos;ll find the sample mentioned above in <code>epubtools/test/samples-3.0</code>.  In this directory is <code>epub30-spec</code>, which is a directory containing the files pertaining to the EPUB v4 specification, and <code>epub30-spec.epubtools</code>, which is a configuration file to use with EPUBTools.</p>
+<p>Next create a directory and do initial setup:</p>
+<pre><code>$ mkdir epub3-spec
+$ cd epub3-spec
+$ npm init -y
+$ npm install akashacms/epubtools npm-run-all --save
+$ cp -r ../epubtools/test/samples-3.0/epub30-spec .
+$ cp -r ../epubtools/test/samples-3.0/epub30-spec.epubtools  .
+</code></pre>
+<p>This sets up a project directory with a <code>package.json</code> file.  This file is used by Node.js primarily to record project dependencies.  We installed two packages, recording them in this file.  Another primary purpose we have is to record a build procedure.</p>
+<p>Edit the <code>package.json</code> and change the <code>scripts</code> section to this:</p>
+<pre><code class="language-json"> &quot;scripts&quot;: {
+    &quot;build&quot;: &quot;npm-run-all build:*&quot;,
+    &quot;build:mkmeta&quot;: &quot;epubtools mkmeta epub30-spec.epubtools&quot;,
+    &quot;build:bundle&quot;: &quot;epubtools package epub30-spec.epubtools&quot;
+},
+</code></pre>
+<p>This is our build procedure.  There are two commands, <code>epubtools mkmeta</code> to build the EPUB3 metadata files, and <code>epubtools package</code> to construct the EPUB file.</p>
+<p>The <code>epub30-spec.epubtools</code> describes where to find the files, and various particulars to use in the EPUB.  It is written in YAML format, that describes the particulars of this project.  We&apos;ll go over this file in more detail later.</p>
+<p>Next, run this:</p>
+<pre><code>$ npm run build
+
+&gt; epub3-spec@1.0.0 build
+&gt; npm-run-all build:*
+
+
+&gt; epub3-spec@1.0.0 build:mkmeta
+&gt; epubtools mkmeta epub30-spec.epubtools
+
+
+&gt; epub3-spec@1.0.0 build:bundle
+&gt; epubtools package epub30-spec.epubtools
+</code></pre>
+<p>This runs both steps of the build procedure.  There should be no errors or other messages, and you should end up with a file named <code>epub30-spec.epub</code>.</p>
+<p>If you have an EPUB3 reader application, you can now use that to open this file.  One suitable application is <em>Adobe Digital Editions</em>.</p>
+<p>Another test you can run is this:</p>
+<pre><code>$ unzip -l epub30-spec.epub
+Archive:  epub30-spec.epub
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+       20  11-23-2021 01:43   mimetype
+      312  11-23-2021 01:43   META-INF/container.xml
+     2383  11-23-2021 01:43   EPUB/package.opf
+    61573  11-23-2021 01:43   toc.ncx
+    13001  11-23-2021 01:43   EPUB/css/epub-spec.css
+   134445  11-23-2021 01:43   EPUB/img/epub_logo_color.jpg
+    19659  11-23-2021 01:43   EPUB/img/idpflogo_web_125.jpg
+    56587  11-23-2021 01:43   EPUB/xhtml/epub30-acknowledgements.xhtml
+    43915  11-23-2021 01:43   EPUB/xhtml/epub30-changes.xhtml
+   199590  11-23-2021 01:43   EPUB/xhtml/epub30-contentdocs.xhtml
+   103527  11-23-2021 01:43   EPUB/xhtml/epub30-mediaoverlays.xhtml
+    37945  11-23-2021 01:43   EPUB/xhtml/epub30-nav.xhtml
+    84779  11-23-2021 01:43   EPUB/xhtml/epub30-ocf.xhtml
+    55966  11-23-2021 01:43   EPUB/xhtml/epub30-overview.xhtml
+   214636  11-23-2021 01:43   EPUB/xhtml/epub30-publications.xhtml
+    27100  11-23-2021 01:43   EPUB/xhtml/epub30-references.xhtml
+    17505  11-23-2021 01:43   EPUB/xhtml/epub30-terminology.xhtml
+      998  11-23-2021 01:43   EPUB/xhtml/epub30-titlepage.xhtml
+---------                     -------
+  1073941                     18 files
+</code></pre>
+<p>An EPUB is simply a ZIP file containing XHTML, CSS and image files, plus a few metadata files.  The file <code>toc.ncx</code> contains a <em>Table of Contents</em> and other data, and is a hold-over from EPUB v2.  The <code>package.opf</code> file contains a <em>manifest</em> of the files, and some other data.  The <code>epub30-nav.xhtml</code> contains the HTML version of the table of contents.  The other <code>.xhtml</code> files are the content of this book.</p>
+</div>
+<div class="panel-heading epub-website-ebook-navigation-header" id="ebook-navigation-bottom">
+
+<div class="epub-website-ebook-logo-area">
+<div class="btn-group">
+<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+Table of Contents
+<span class="caret"></span>
+</button>
+<ol type="1" start="1" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    <li class="dropdown-item"><a href="introduction.html" id="introduction" type="button" class="btn btn-link" munged="yes" title="Introduction to EPUBTools">Introduction to EPUBTools</a></li>
+    <li class="dropdown-item"><a href="setup.html" id="setup" type="button" class="btn btn-link" munged="yes" title="Setting up a project with EPUBTools">Setting up a project with EPUBTools</a></li>
+    <li class="dropdown-item"><a href="config.html" id="configuration" type="button" class="btn btn-link" munged="yes" title="The EPUBTools configuration file">The EPUBTools configuration file</a></li>
+    <li class="dropdown-item"><a href="mkmeta.html" id="metafiles" type="button" class="btn btn-link" munged="yes" title="Generating EPUB metafiles">Generating EPUB metafiles</a></li>
+    <li class="dropdown-item"><a href="bundle.html" id="bundle" type="button" class="btn btn-link" munged="yes" title="Packaging EPUB&apos;s with EPUBTools">Packaging EPUB&apos;s with EPUBTools</a></li>
+    <li class="dropdown-item"><a href="content.html" id="content" type="button" class="btn btn-link" munged="yes" title="Examining EPUB content in EPUBTools">Examining EPUB content in EPUBTools</a></li>
+</ol>
+</div>
+</div>
+
+<div class="epub-website-ebook-chapter-area">
+<a href="introduction.html" munged="yes">
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+<span class="fas fa-chevron-left" aria-hidden="true" style></span>
+</a>
+<h1 class="panel-title" align="center" style>Setting up a project with EPUBTools</h1>
+<a href="config.html" munged="yes">
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+<span class="fas fa-chevron-right" aria-hidden="true" style="display: inline"></span>
+</a>
+</div>
+</div>
+</div>
+</div>
+<footer id="footer-row" class="container">
+
+</footer>
+</div>
+<script src="../vendor/jquery/jquery.min.js"></script><script src="../vendor/popper.js/umd/popper.min.js"></script><script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+
+</body>
+</html>

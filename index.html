@@ -110,7 +110,7 @@
 <site-verification></site-verification>
 <ak-header-linkreltags></ak-header-linkreltags>
 -->
-<link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.min.css"><link rel="stylesheet" type="text/css" href="css/flatly.min.css"><link rel="stylesheet" type="text/css" href="css/style.css"><link rel="stylesheet" type="text/css" href="vendor/fontawesome-free/css/all.min.css">
+<link rel="stylesheet" type="text/css" href="akasha/epub-website/style.css"><link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.min.css"><link rel="stylesheet" type="text/css" href="css/flatly.min.css"><link rel="stylesheet" type="text/css" href="css/style.css"><link rel="stylesheet" type="text/css" href="vendor/fontawesome-free/css/all.min.css">
 <!-- ak-stylesheets></ak-stylesheets -->
 
 <!-- ak-headerJavaScript></ak-headerJavaScript -->
@@ -133,6 +133,9 @@
         <li class="nav-item">
           <a class="nav-link" href="news/index.html" munged="yes">News</a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://akashacms.com" rel="nofollow">Return to AkashaCMS</a>
+        </li>
       </ul>
     </div>
   </nav>
@@ -141,19 +144,20 @@
 <header class="col-md-12">
 <div class="row">
 <span class="col-md-8" style="text-align: center;">
-<a href="index.html" munged="yes"><img src="images/project-logo.jpg" width="150px" align="left"></a>
+<a href="index.html" munged="yes">
+<img src="images/akashaepub-logo.jpg" width="100px" align="left"></a>
 <h1 align="center">AskashaEPUB @akashacms/epubtools documentation</h1>
 </span>
 <span class="col-md-4">
 <form method="get" id="ddgSearch" action="https://duckduckgo.com/">
-<input type="hidden" name="sites" value="techsparx.com">
+<input type="hidden" name="sites" value="akashacms.github.io">
 <input type="hidden" name="k7" value="#ffffff">
 <input type="hidden" name="k8" value="#222222">
 <input type="hidden" name="k9" value="#00278e">
 <input type="hidden" name="kx" value="#20692b">
 <input type="hidden" name="kj" value="#fafafa">
 <input type="hidden" name="kt" value="p">
-<input type="text" name="q" placeholder="Search TechSparx" aria-label="Search techsparx.com on DuckDuckGo">
+<input type="text" name="q" placeholder="Search AkashaEPUB" aria-label="Search AkashaEPUB on DuckDuckGo">
 <button type="submit">Search</button>
 </form>
 </span>
@@ -172,9 +176,29 @@
 
 </span></small></p>
 <p><authors-byline></authors-byline></p>
-<p>EPUBTools handles several tasks related to constructing EPUB v3 files.</p>
-<p>The subcommands take as input a YAML-formatted configuration file that describes metadata of the EPUB, as well as important filesystem locations.</p>
-<p>THIS IS A CHANGE</p>
+<p>EPUBTools handles generating EPUB 3 metadata files, and bundling EPUB v3 containers.  This means you must generate the content files using other tools.</p>
+<p>There is a companion tool, <a href="https://github.com/akashacms/akasharender-epub" rel="nofollow">AkashaRenderEPUB</a>, that takes Markdown or AsciiDoc files, and produces content files suitable for use in an EPUB.  It is meant to be used with EPUBTools.  But, you are free to use EPUBTools with any other application that can produce suitable XHTML, CSS and Image files.</p>
+<p>A YAML-formatted configuration file describes the EPUB3 metadata and other important parameters.</p>
+<pre><code>$ epubtools --help
+Usage: epubtools [options] [command]
+
+Options:
+  -V, --version                 output the version number
+  -h, --help                    display help for command
+
+Commands:
+  package &lt;configFN&gt;            Package an EPUB3 file from a directory
+  mkmeta &lt;configFN&gt;             Create metafiles (OPF, NCX, etc) for an EPUB3 directory structure
+  watch &lt;configFN&gt;              Watch for changes and rebuild EPUB
+  manifest &lt;configFN&gt;           Run manifest.from_fs
+  unpack &lt;epubFN&gt; &lt;unpackTo&gt;    Unpack an EPUB file into destination directory
+  import &lt;epubDir&gt; &lt;projectFN&gt;  Generate an &quot;.epubtools&quot; configuration file from an EPUB
+  toc &lt;configFN&gt;                Read the Table Of Contents for the book described in the config
+  stats &lt;configFN&gt;              Print text statistics for the EPUB
+  words &lt;configFN&gt;              Print word count statistics for rendered HTML file in a directory
+  help [command]                display help for command
+</code></pre>
+<p>For further documentation <a href="guide/index.html" munged="yes">see the EPUBTools Users Guide</a></p>
 
 </article>
 <section id="right" class="col-md-2">
