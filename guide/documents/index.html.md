@@ -29,6 +29,6 @@ Commands:
   stats <configFN>              Print text statistics for the EPUB
   words <configFN>              Print word count statistics for rendered HTML file in a directory
   help [command]                display help for command
-  ```
+```
 
-  For further documentation [see the EPUBTools Users Guide](/guide/index.html)
+For further documentation [see the EPUBTools Users Guide](/guide/index.html)
