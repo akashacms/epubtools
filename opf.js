@@ -5,7 +5,7 @@ const path      = require('path');
 const xmldom    = require('xmldom');
 const manifest  = require('./manifest');
 const Manifest  = manifest.Manifest;
-const fs        = require('fs-extra');
+const fs        = require('fs/promises');
 
 exports.findMetadataInOPF = function(OPFXML) {
     for (let elem of utils.nodeList2Array(OPFXML.getElementsByTagName("metadata")).concat(utils.nodeList2Array(OPFXML.getElementsByTagName("opf:metadata")))) {

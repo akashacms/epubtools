@@ -1,7 +1,7 @@
 
 // const path = require('path');
 const util = require('util');
-const fs = require('fs-extra');
+const fs = require('fs/promises');
 const url = require('url');
 const path = require('path');
 const globfs = require('globfs');

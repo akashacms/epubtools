@@ -8,11 +8,12 @@ const bundleEPUB = require('./bundleEPUB');
 const renderEPUB = require('./renderEPUB');
 const util = require('util');
 const path = require('path');
-const fs = require('fs-extra');
+const fs   = require('fs');
+const fsp  = require('fs/promises');
 const manifest = require('./manifest');
-const unzip = require('unzipper');
+const unzip    = require('unzipper');
 const textStatistics = require('text-statistics');
-const globfs = require('globfs');
+const globfs   = require('globfs');
 const _watcher = import('./watcher.mjs');
 
 process.title = 'epubuilder';
@@ -80,7 +81,8 @@ program
     .description('Unpack an EPUB file into destination directory')
     .action(async (epubFN, unpackTo) => {
         try {
-            await fs.mkdirs(unpackTo); 
+            await fsp.mkdir(unpackTo, { recursive: true });
+            // await fs.mkdirs(unpackTo); 
             await new Promise((resolve, reject) => {
                 let didresolve = false;
                 const doresolve = () => { 

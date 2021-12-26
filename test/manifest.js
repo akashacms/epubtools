@@ -23,6 +23,7 @@ describe('read config file', function() {
 describe('read manifest', function() {
 
     it('should read the manifest', async function() {
+        this.timeout(75000);
         assert.isDefined(config);
         config.opfManifest = await manifest.from_fs(config);
         // console.log(config.opfManifest);

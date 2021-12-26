@@ -1,6 +1,6 @@
 
 const xmldom    = require('xmldom');
-const fs        = require('fs-extra');
+const fs        = require('fs/promises');
 const path      = require('path');
 const utils     = require('./utils');
 

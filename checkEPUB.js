@@ -1,6 +1,7 @@
 
 const path = require('path');
-const fs   = require('fs-extra');
+const fsp  = require('fs/promises');
+const fs   = require('fs');
 const util = require('util');
 
 exports.checkEPUBConfig = async function(config) {
@@ -11,9 +12,9 @@ exports.checkEPUBConfig = async function(config) {
         }
         let pathItem = path.join(config.renderedFullPath, mItem.path);
         try {
-            await fs.access(pathItem, fs.constants.R_OK);
+            await fsp.access(pathItem, fs.constants.R_OK);
         } catch (e) {
-            throw new Error(`Manifest item is not readable or does not exist ${mItem.path}`);
+            throw new Error(`Manifest item is not readable or does not exist ${mItem.path} - ${pathItem} because ${e}`);
         }
     }
 };

@@ -2,9 +2,9 @@
 const archiver  = require('archiver');
 const xmldom    = require('xmldom');
 const utils     = require('./utils');
-const fs        = require('fs-extra');
+const fs        = require('fs');
+const fsp       = require('fs/promises');
 const path      = require('path');
-const globfs    = require('globfs');
 const metadata  = require('./metadata');
 const manifest  = require('./manifest');
 const opf       = require('./opf');
@@ -215,24 +215,26 @@ async function mkContainerXmlFile(config) {
 
 async function doMeta(config) {
     // console.log(`doMeta renderedFullPath ${config.renderedFullPath}`);
-    await fs.mkdirs(config.renderedFullPath);
+    // await fs.mkdirs(config.renderedFullPath);
+    await fsp.mkdir(config.renderedFullPath, { recursive: true });
 
-    await fs.writeFile(path.join(config.renderedFullPath, "mimetype"), "application/epub+zip", 'utf8');
+    await fsp.writeFile(path.join(config.renderedFullPath, "mimetype"), "application/epub+zip", 'utf8');
 
     let container_xml = path.join("META-INF", "container.xml");
     let container_xml_full = path.join(config.renderedFullPath, container_xml);
-    await fs.mkdirs(path.dirname(container_xml_full));
+    // await fs.mkdirs(path.dirname(container_xml_full));
+    await fsp.mkdir(path.dirname(container_xml_full), { recursive: true });
     let CONTAINERXML = await mkContainerXmlFile(config);
-    await fs.writeFile(container_xml_full, CONTAINERXML, 'utf8');
+    await fsp.writeFile(container_xml_full, CONTAINERXML, 'utf8');
 
     const OPFXML = await opf.makeOpfXml(config);
     const OPFTXT = new xmldom.XMLSerializer().serializeToString(OPFXML);
-    await fs.writeFile(path.join(config.renderedFullPath, config.bookOPF), OPFTXT, 'utf8');
+    await fsp.writeFile(path.join(config.renderedFullPath, config.bookOPF), OPFTXT, 'utf8');
 
     if (config.doGenerateNCX) {
         const NCXXML = await opf.makeNCXXML(config);
         const ncx = new xmldom.XMLSerializer().serializeToString(NCXXML);
-        await fs.writeFile(path.join(config.renderedFullPath, config.sourceBookNCXHREF), ncx, 'utf8');
+        await fsp.writeFile(path.join(config.renderedFullPath, config.sourceBookNCXHREF), ncx, 'utf8');
     }
 }
 module.exports.doMeta = doMeta;
