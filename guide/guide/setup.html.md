@@ -57,11 +57,11 @@ They print out useful information, and act to verify that Node.js is installed a
 
 # Creating a project for EPUBTools
 
-Before we start talking about EPUBTools in-depth, let's go for a quick win.  That is, let's use some pre-built files and generate an EPUB.  In the `akashacms/epubtools` repository, we have such a directory.  The plan is to build a simple project directory, copy those files into that directory, and create a simple build script.
+The primary function of EPUBTools is bundling an EPUB from a directory containing files prepared to the EPUB3 spec.  That means an EPUBTools project is related to such a directory.  In typical use you'll have another tool with which to build the files to be bundled into the EPUB. 
 
-The W3C's EPUB3 Community Group is now shepherding EPUB standards development.  One of their tools is a GitHub repository containing EPUB3 samples: https://github.com/IDPF/epub3-samples
+To get familiarized with EPUBTools, let's go for a quick win.  Namely, in the `akashacms/epubtools` we have pre-built files with which we can generate an EPUB.  The plan is to build a simple project directory, copy those files into that directory, and create a simple build script.
 
-In the EPUBTools repository, we've duplicated one of them, plus an EPUBTools configuration file, at:  https://github.com/akashacms/epubtools/tree/master/test/samples-3.0  Our plan is to create a project directory with a simple build script to build this EPUB.
+The W3C's EPUB3 Community Group is now shepherding EPUB standards development.  One of their tools is a GitHub repository containing EPUB3 samples: https://github.com/IDPF/epub3-samples  The pre-built files used in this example come from that repository.  Hence, we have a directory containing the files for an EPUB, plus an EPUBTools configuration file, at:  https://github.com/akashacms/epubtools/tree/master/test/samples-3.0  Our plan is to create a project directory with a simple build script to build this EPUB.
 
 First, clone the EPUBTools repository into a work directory:
 
@@ -77,7 +77,7 @@ Next create a directory and do initial setup:
 $ mkdir epub3-spec
 $ cd epub3-spec
 $ npm init -y
-$ npm install akashacms/epubtools npm-run-all --save
+$ npm install epubtools npm-run-all --save
 $ cp -r ../epubtools/test/samples-3.0/epub30-spec .
 $ cp -r ../epubtools/test/samples-3.0/epub30-spec.epubtools  .
 ```
