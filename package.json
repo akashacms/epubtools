@@ -24,7 +24,9 @@
   "bin": {
     "epubtools": "cli.js"
   },
-  "scripts": {},
+  "scripts": {
+    "dopublish": "npm publish --access public"
+  },
   "homepage": "https://github.com/epubtools/epubtools",
   "repository": {
     "type": "git",

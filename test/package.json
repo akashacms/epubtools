@@ -15,7 +15,6 @@
     "test": "mocha ./index ./manifest ./toc ./build.mjs",
     "test-build": "mocha ./build.mjs",
     "test-clean": "shx rm -rf samples-3.0-test/epub30-spec*",
-    "dopublish": "npm publish --access public",
     "build": "npm-run-all build:setup build:mkmeta build:package",
     "build:setup": "shx rm -rf samples-3.0-test/epub30-spec-tmp && shx mkdir -p samples-3.0-test/epub30-spec-tmp && shx cp -R samples-3.0/epub30-spec/* samples-3.0-test/epub30-spec-tmp/",
     "build:mkmeta": "node ../cli.js mkmeta samples-3.0/epub30-spec-mkmeta.epubtools",
