@@ -2,6 +2,24 @@
   "name": "epubtools",
   "version": "0.8.0",
   "description": "Generate EPUB3 documents and assets",
+  "keywords": [
+    "epub-builder",
+    "epub-maker",
+    "epub-generator",
+    "epub-generation",
+    "epub-creator",
+    "epub-constructor",
+    "epub3",
+    "epub",
+    "ebook",
+    "ebooks",
+    "books",
+    "book",
+    "epub-parser",
+    "epub-packager",
+    "packager",
+    "akashacms"
+  ],
   "main": "index.js",
   "bin": {
     "epubtools": "cli.js"
