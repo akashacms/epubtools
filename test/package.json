@@ -6,10 +6,10 @@
   },
   "name": "akasharender-epub-test",
   "description": "AkashaEPUB test case",
-  "version": "0.6.1",
+  "version": "0.8.0",
   "homepage": "https://akashacms.com/epubtools/toc.html",
   "config": {
-    "epubcheckjar": "/Users/david/bin/epubcheck-4.2.4/epubcheck.jar"
+    "epubcheckVersion": "4.2.4"
   },
   "scripts": {
     "test": "mocha ./index ./manifest ./toc ./build.mjs",
@@ -20,17 +20,22 @@
     "build:mkmeta": "node ../cli.js mkmeta samples-3.0/epub30-spec-mkmeta.epubtools",
     "build:package": "node ../cli.js package samples-3.0/epub30-spec-mkmeta.epubtools",
     "check-spec": "npm-run-all check-spec:*",
-    "check-spec:exp": "java -jar ${npm_package_config_epubcheckjar} -mode exp samples-3.0-test/epub30-spec-tmp/",
-    "check-spec:epub": "java -jar ${npm_package_config_epubcheckjar} samples-3.0-test/epub30-spec.epub",
+    "check-spec:exp": "java -jar ${npm_package_config_epubcheckVersion}/epubcheck.jar -mode exp samples-3.0-test/epub30-spec-tmp/",
+    "check-spec:epub": "java -jar ${npm_package_config_epubcheckVersion}/epubcheck.jar samples-3.0-test/epub30-spec.epub",
     "env": "env",
     "watch-test": "npm-run-all build:setup watch-test:watcher",
-    "watch-test:watcher": "node ../cli.js watch samples-3.0/epub30-spec-mkmeta.epubtools"
+    "watch-test:watcher": "node ../cli.js watch samples-3.0/epub30-spec-mkmeta.epubtools",
+    "setup": "npm-run-all setup:epubcheck",
+    "setup:epubcheck": "node fetch-epubcheck.mjs ${npm_package_config_epubcheckVersion}"
   },
   "dependencies": {
+    "adm-zip": "^0.5.x",
     "chai": "^4.2.0",
     "mocha": "^8.2.0",
+    "node-fetch": "^3.1.0",
     "npm-run-all": "^4.1.5",
     "shelljs": "^0.8.4",
-    "shx": "^0.3.3"
+    "shx": "^0.3.3",
+    "tempy": "^2.0.x"
   }
 }

@@ -24,8 +24,7 @@
   "bin": {
     "epubtools": "cli.js"
   },
-  "scripts": {
-  },
+  "scripts": {},
   "homepage": "https://github.com/epubtools/epubtools",
   "repository": {
     "type": "git",

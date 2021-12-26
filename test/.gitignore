@@ -5,3 +5,5 @@ epub3-samples-test
 package-lock.json
 epub30-spec-tmp
 samples-3.0-test
+
+epubcheck-4.2.4

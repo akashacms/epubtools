@@ -33,3 +33,5 @@ package-lock.json
 
 guide/out
 guide/node_modules
+
+epubcheck-4.2.4
