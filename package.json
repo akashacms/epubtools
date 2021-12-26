@@ -18,7 +18,8 @@
     "epub-parser",
     "epub-packager",
     "packager",
-    "akashacms"
+    "akashacms",
+    "akashaepub"
   ],
   "main": "index.js",
   "bin": {
@@ -27,10 +28,10 @@
   "scripts": {
     "dopublish": "npm publish --access public"
   },
-  "homepage": "https://github.com/epubtools/epubtools",
+  "homepage": "https://akashacms.github.io/epubtools",
   "repository": {
     "type": "git",
-    "url": "https://github.com/epubtools/epubtools.git"
+    "url": "https://github.com/akashacms/epubtools.git"
   },
   "author": "David Herron <david@davidherron.com>",
   "license": "ISC",
