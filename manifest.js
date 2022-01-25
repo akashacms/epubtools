@@ -7,7 +7,7 @@ const path     = require('path');
 const glob     = require('tiny-glob');
 const mime     = require('mime');
 const cheerio  = require('cheerio');
-const xmldom   = require('xmldom');
+const xmldom   = require('@xmldom/xmldom');
 const metadata = require('./metadata');
 const utils    = require('./utils');
 
