@@ -33,6 +33,7 @@ describe('read manifest', function() {
 describe('check manifest items', function() {
     it('should read epub-spec.css', function() {
         let item = config.opfManifest.byPath('EPUB/css/epub-spec.css');
+        // console.log(`should read epub-spec.css item=`, item);
         assert.isDefined(item);
         assert.equal(item.basedir, 'epub30-spec');
         assert.equal(item.dirname, 'EPUB/css');

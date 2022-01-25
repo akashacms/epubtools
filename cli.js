@@ -13,7 +13,7 @@ const fsp  = require('fs/promises');
 const manifest = require('./manifest');
 const unzip    = require('unzipper');
 const textStatistics = require('text-statistics');
-const globfs   = require('globfs');
+const glob     = require('tiny-glob');
 const _watcher = import('./watcher.mjs');
 
 process.title = 'epubuilder';
@@ -82,7 +82,6 @@ program
     .action(async (epubFN, unpackTo) => {
         try {
             await fsp.mkdir(unpackTo, { recursive: true });
-            // await fs.mkdirs(unpackTo); 
             await new Promise((resolve, reject) => {
                 let didresolve = false;
                 const doresolve = () => { 
@@ -159,41 +158,34 @@ program
     .action(async (configFN) => {
         try {
             const config = await configurator.readConfig(configFN);
-            new Promise((resolve, reject) => {
-                globfs.operate(config.bookRenderDestFullPath,
-                         [ "**/*.xhtml" ], (basedir, fpath, fini) => {
-                    fs.readFile(path.join(basedir, fpath), 'utf8', (err, text) => {
-                        if (err) return fini(err);
-                        
-                        var stats = textStatistics(text);
-                        
-                        console.log('******** '+ fpath);
-                        console.log();
-                        console.log('fleschKincaidReadingEase          '+ stats.fleschKincaidReadingEase());
-                        console.log('fleschKincaidGradeLevel           '+ stats.fleschKincaidGradeLevel());
-                        console.log('gunningFogScore                   '+ stats.gunningFogScore());
-                        console.log('colemanLiauIndex                  '+ stats.colemanLiauIndex());
-                        console.log('smogIndex                         '+ stats.smogIndex());
-                        console.log('automatedReadabilityIndex         '+ stats.automatedReadabilityIndex());
-                        console.log('textLength                        '+ stats.textLength());
-                        console.log('letterCount                       '+ stats.letterCount());
-                        console.log('wordCount                         '+ stats.wordCount());
-                        console.log('sentenceCount                     '+ stats.sentenceCount());
-                        console.log('averageWordsPerSentence           '+ stats.averageWordsPerSentence());
-                        console.log('averageSyllablesPerWord           '+ stats.averageSyllablesPerWord());
-                        console.log('wordsWithThreeSyllables           '+ stats.wordsWithThreeSyllables());
-                        console.log('percentageWordsWithThreeSyllables '+ stats.percentageWordsWithThreeSyllables());
-                        // console.log('syllableCount                     '+ stats.syllableCount());
-                        console.log();
-                        
-                        fini();
-                    });
-                },
-                err => {
-                    if (err) reject(err);
-                    else resolve();
-                });
+            const xhtmls = await glob('**/*.xhtml', {
+                cwd: config.bookRenderDestFullPath,
+                dot: true,
+                absolute: true,
+                filesOnly: true
             });
+            for (let fn of xhtmls) {
+                const text = await fsp.readFile(fn, 'utf8');
+                const stats = textStatistics(text);
+                console.log('******** '+ fn);
+                console.log();
+                console.log('fleschKincaidReadingEase          '+ stats.fleschKincaidReadingEase());
+                console.log('fleschKincaidGradeLevel           '+ stats.fleschKincaidGradeLevel());
+                console.log('gunningFogScore                   '+ stats.gunningFogScore());
+                console.log('colemanLiauIndex                  '+ stats.colemanLiauIndex());
+                console.log('smogIndex                         '+ stats.smogIndex());
+                console.log('automatedReadabilityIndex         '+ stats.automatedReadabilityIndex());
+                console.log('textLength                        '+ stats.textLength());
+                console.log('letterCount                       '+ stats.letterCount());
+                console.log('wordCount                         '+ stats.wordCount());
+                console.log('sentenceCount                     '+ stats.sentenceCount());
+                console.log('averageWordsPerSentence           '+ stats.averageWordsPerSentence());
+                console.log('averageSyllablesPerWord           '+ stats.averageSyllablesPerWord());
+                console.log('wordsWithThreeSyllables           '+ stats.wordsWithThreeSyllables());
+                console.log('percentageWordsWithThreeSyllables '+ stats.percentageWordsWithThreeSyllables());
+                // console.log('syllableCount                     '+ stats.syllableCount());
+                console.log();
+            }
         } catch (e) {
             console.error(`stats ERRORED ${e.stack}`);
         }
@@ -205,26 +197,20 @@ program
     .action(async (configFN) => {
         try {
             const config = await configurator.readConfig(configFN);
-            new Promise((resolve, reject) => {
-                globfs.operate(config.bookRenderDestFullPath,
-                         [ "**/*.xhtml" ], (basedir, fpath, fini) => {
-                    fs.readFile(path.join(basedir, fpath), 'utf8', (err, text) => {
-                        if (err) return fini(err);
-                        
-                        var stats = textStatistics(text);
-                        
-                        console.log(fpath +' '+ stats.textLength() +' '+ stats.letterCount() +' '+ stats.wordCount() +' '+ stats.sentenceCount()
-                        +' '+ stats.averageWordsPerSentence() +' '+ stats.averageSyllablesPerWord()
-                        +' '+ stats.wordsWithThreeSyllables() +' '+ stats.percentageWordsWithThreeSyllables());
-                        
-                        fini();
-                    });
-                },
-                err => {
-                    if (err) reject(err);
-                    else resolve();
-                });
+            const xhtmls = await glob('**/*.xhtml', {
+                cwd: config.bookRenderDestFullPath,
+                dot: true,
+                absolute: true,
+                filesOnly: true
             });
+            for (let fn of xhtmls) {
+                const text = await fsp.readFile(fn, 'utf8');
+                var stats = textStatistics(text);
+
+                console.log(fn +' '+ stats.textLength() +' '+ stats.letterCount() +' '+ stats.wordCount() +' '+ stats.sentenceCount()
+                +' '+ stats.averageWordsPerSentence() +' '+ stats.averageSyllablesPerWord()
+                +' '+ stats.wordsWithThreeSyllables() +' '+ stats.percentageWordsWithThreeSyllables());
+            }
         } catch (e) {
             console.error(`stats ERRORED ${e.stack}`);
         }

@@ -1,15 +1,15 @@
 
 // const path = require('path');
-const util = require('util');
-const fs = require('fs/promises');
-const url = require('url');
-const path = require('path');
-const globfs = require('globfs');
-const mime = require('mime');
-const cheerio = require('cheerio');
+const util     = require('util');
+const fs       = require('fs/promises');
+const url      = require('url');
+const path     = require('path');
+const glob     = require('tiny-glob');
+const mime     = require('mime');
+const cheerio  = require('cheerio');
 const xmldom   = require('xmldom');
 const metadata = require('./metadata');
-const utils = require('./utils');
+const utils    = require('./utils');
 
 exports.Manifest = class Manifest extends Array {
 
@@ -323,28 +323,39 @@ exports.from_fs = async function(config) {
 
     // TODO Should this scan the source directory or the rendered directory?
     // console.log(config.renderedFullPath);
-    let filez = await globfs.findAsync(config.renderedFullPath, '**');
+    let filez = await glob('**', {
+        cwd: config.renderedFullPath,
+        dot: true,
+        // absolute: true,
+        filesOnly: true
+    })
+    // let filez = await globfs.findAsync(config.renderedFullPath, '**');
 
-    // console.log(filez);
+    // console.log(`files found in ${config.renderedFullPath}`, filez);
 
     // Remove directories
     let _filez = [];
     for (let item of filez) {
         // Do not include admin files
-        if (item.path === 'mimetype') continue;
-        if (item.path === 'META-INF/container.xml') continue;
-        if (item.path === config.bookOPF) continue;
+        if (item === 'mimetype') continue;
+        if (item === 'META-INF/container.xml') continue;
+        if (item === config.bookOPF) continue;
         let stats;
         // Only include files which can be stat'd and are not directories
         // console.log(item);
+        let fullpath = path.join(config.renderedFullPath, item);
         try {
-            stats = await fs.stat(item.fullpath);
+            stats = await fs.stat(fullpath);
         } catch (e) { continue; }
         if (!stats.isDirectory()) {
-            _filez.push(item);
+            _filez.push({
+                path: item,
+                fullpath: fullpath
+            });
         }
     }
     filez = _filez;
+    // console.log(`files found in ${config.renderedFullPath}`, filez);
     // Modify the basedir to be renderedFullPath
     // Fill in other base ManifestItem fields
     for (let item of filez) {

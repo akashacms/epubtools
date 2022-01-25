@@ -45,6 +45,7 @@
     "mime": "^3.x",
     "sprintf-js": "^1.1.2",
     "text-statistics": "0.1.1",
+    "tiny-glob": "^0.2.9",
     "unzipper": "^0.10.x",
     "uuid": "^8.3.x",
     "xmldom": "^0.6.x"
