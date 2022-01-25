@@ -2,11 +2,63 @@
 const configurator = require('./Configuration');
 const metadata = require('./metadata');
 const manifest = require('./manifest');
+const bundler  = require('./bundleEPUB');
+const checker  = require('./checkEPUB');
 const opf = require('./opf');
 const path = require('path');
 const util = require('util');
 const fs = require('fs/promises');
 
+module.exports.Configuration = configurator.Configuration;
+
+module.exports.bundleEPUB    = bundler.bundleEPUB;
+module.exports.doPackageCommand = bundler.doPackageCommand;
+module.exports.doMeta        = bundler.doMeta;
+module.exports.doMkMetaCommand = bundler.doMkMetaCommand;
+
+module.exports.checkEPUBConfig = checker.checkEPUBConfig;
+
+module.exports.Manifest        = manifest.Manifest;
+module.exports.ManifestItem    = manifest.ManifestItem;
+module.exports.spineItems      = manifest.spineItems;
+module.exports.spineTitles     = manifest.spineTitles;
+module.exports.tocData         = manifest.tocData;
+module.exports.from_fs         = manifest.from_fs;
+
+// TODO - Instead, there should be classes for each
+// sort of metadata file, reading in, providing an abstraction,
+// and serializing
+
+module.exports.readContainerXml = metadata.readContainerXml;
+module.exports.findRootfiles    = metadata.findRootfiles;
+module.exports.findOpfFileName  = metadata.findOpfFileName;
+module.exports.readOPF          = metadata.readOPF;
+module.exports.readXHTML        = metadata.readXHTML;
+
+// TODO - This must become a class - OPF - where these
+// functions are methods
+
+module.exports.findMetadataInOPF = opf.findMetadataInOPF;
+module.exports.findManifestInOPF = opf.findManifestInOPF;
+module.exports.findSpineInOPF    = opf.findSpineInOPF;
+module.exports.refines           = opf.refines;
+module.exports.titles            = opf.titles;
+module.exports.identifiers       = opf.identifiers;
+module.exports.languages         = opf.languages;
+module.exports.creators          = opf.creators;
+module.exports.publicationDate   = opf.publicationDate;
+module.exports.subjects          = opf.subjects;
+module.exports.description       = opf.description;
+module.exports.format            = opf.format;
+module.exports.publisher         = opf.publisher;
+module.exports.relation          = opf.relation;
+module.exports.coverage          = opf.coverage;
+module.exports.rights            = opf.rights;
+module.exports.manifest          = opf.manifest;
+module.exports.readOpf           = opf.readOpf;
+module.exports.makeOpfXml        = opf.makeOpfXml;
+module.exports.readTocNCX        = opf.readTocNCX;
+module.exports.makeNCXXML        = opf.makeNCXXML;
 
 module.exports.openProject = async function(projectFileName) {
     const bookConfig = await configurator.readConfig(projectFileName);
