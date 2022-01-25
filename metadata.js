@@ -1,5 +1,5 @@
 
-const xmldom    = require('xmldom');
+const xmldom    = require('@xmldom/xmldom');
 const fs        = require('fs/promises');
 const path      = require('path');
 const utils     = require('./utils');

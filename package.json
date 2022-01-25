@@ -1,6 +1,6 @@
 {
   "name": "epubtools",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Generate EPUB3 documents and assets",
   "keywords": [
     "epub-builder",
@@ -48,7 +48,7 @@
     "tiny-glob": "0.2.9",
     "unzipper": "0.10.11",
     "uuid": "8.3.2",
-    "xmldom": "0.6.0"
+    "@xmldom/xmldom": "0.8.0"
   },
   "devDependencies": {
     "@types/node": "^17.0.12",

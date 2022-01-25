@@ -1,6 +1,6 @@
 
 const archiver  = require('archiver');
-const xmldom    = require('xmldom');
+const xmldom    = require('@xmldom/xmldom');
 const utils     = require('./utils');
 const fs        = require('fs');
 const fsp       = require('fs/promises');
