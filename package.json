@@ -1,6 +1,6 @@
 {
   "name": "epubtools",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "Generate EPUB3 documents and assets",
   "keywords": [
     "epub-builder",
@@ -22,6 +22,7 @@
     "akashaepub"
   ],
   "main": "index.js",
+  "types": "./types/index.d.ts",
   "bin": {
     "epubtools": "cli.js"
   },
