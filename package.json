@@ -26,6 +26,7 @@
     "epubtools": "cli.js"
   },
   "scripts": {
+    "build:types": "npx tsc",
     "dopublish": "npm publish --access public"
   },
   "homepage": "https://akashacms.github.io/epubtools",
@@ -48,5 +49,9 @@
     "unzipper": "0.10.11",
     "uuid": "8.3.2",
     "xmldom": "0.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.12",
+    "typescript": "^4.5.5"
   }
 }
