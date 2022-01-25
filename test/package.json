@@ -29,6 +29,7 @@
     "setup:epubcheck": "node fetch-epubcheck.mjs ${npm_package_config_epubcheckVersion}"
   },
   "dependencies": {
+    "adm-zip": "^0.5.9",
     "chai": "4.3.4",
     "mocha": "9.2.0",
     "node-fetch": "3.2.0",
