@@ -9,7 +9,6 @@ const metadata  = require('./metadata');
 const manifest  = require('./manifest');
 const opf       = require('./opf');
 const checkEPUB = require('./checkEPUB');
-const akrender  = require('./renderEPUB');
 const configurator = require('./Configuration');
 
 exports.bundleEPUB = async function(config) {

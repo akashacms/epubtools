@@ -4,8 +4,6 @@ const program   = require('commander');
 const epubtools = require('./index');
 const configurator = require('./Configuration');
 const bundleEPUB = require('./bundleEPUB');
-// TODO to be removed
-const renderEPUB = require('./renderEPUB');
 const util = require('util');
 const path = require('path');
 const fs   = require('fs');

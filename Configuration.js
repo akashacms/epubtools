@@ -662,8 +662,6 @@ module.exports.Configuration = class Configuration {
 
 }
 
-const akrender  = require('./renderEPUB');
-
 module.exports.readConfig = async function(fn) {
     const yamlText = await fs.readFile(fn, 'utf8');
     let config = new exports.Configuration(yamlText);
