@@ -9,7 +9,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 <meta name="viewport" content="width=device-width">
-<title>EPUBTools 0.8.0 released</title>
+<title>EPUBTools 0.8.3 -- Adopting latest xmldom, TypeScript types</title>
 
 
 
@@ -30,7 +30,7 @@
 
 
 
-<meta name="pagename" content="EPUBTools 0.8.0 released">
+<meta name="pagename" content="EPUBTools 0.8.3 -- Adopting latest xmldom, TypeScript types">
 
 
 
@@ -40,9 +40,9 @@
 
 
 
-<meta name="date" content="2021-12-26T17:59:08.799Z">
+<meta name="date" content="2022-01-25T23:24:31.417Z">
 
-<meta name="DC.title" content="EPUBTools 0.8.0 released">
+<meta name="DC.title" content="EPUBTools 0.8.3 -- Adopting latest xmldom, TypeScript types">
 
 
 
@@ -59,11 +59,9 @@
 
 <!-- OpenGraph Meta Tags -->
 
-<meta name="og:title" content="EPUBTools 0.8.0 released">
+<meta name="og:title" content="EPUBTools 0.8.3 -- Adopting latest xmldom, TypeScript types">
 
-<meta name="og:url" content="https://akashacms.github.io/epubtools/news/2021/release.html">
-
-
+<meta name="og:url" content="https://akashacms.github.io/epubtools/news/2022/xmldom.html">
 
 
 
@@ -95,7 +93,9 @@
 
 
 
-<link rel="canonical" href="https://akashacms.github.io/epubtools/news/2021/release.html">
+
+
+<link rel="canonical" href="https://akashacms.github.io/epubtools/news/2022/xmldom.html">
 
 <link rel="sitemap" type="application/xml" href="../../sitemap.xml" title="Sitemap">
 
@@ -133,7 +133,7 @@
 <span class="col-md-8" style="text-align: center;">
 <a href="../../index.html">
 <img src="../../images/akashaepub-logo.jpg" width="100px" align="left"></a>
-<h1 align="center">EPUBTools 0.8.0 released</h1>
+<h1 align="center">EPUBTools 0.8.3 -- Adopting latest xmldom, TypeScript types</h1>
 </span>
 <span class="col-md-4">
 <form method="get" id="ddgSearch" action="https://duckduckgo.com/">
@@ -155,13 +155,13 @@
 <section id="breadcrumb" class="col-sm-12">
 <nav aria-label="breadcrumb" id="breadcrumbTrail">
 <ol class="breadcrumb">
- <li class="breadcrumb-item "> <a href="../../index.html">AskashaEPUB @akashacms/epubtools documentation</a> </li> <li class="breadcrumb-item "> <a href="../index.html">EPUBTools news</a> </li> <li class="breadcrumb-item "> <a href="index.html">News for 2021</a> </li> <li class="breadcrumb-item "> <a href="release.html">EPUBTools 0.8.0 released</a> </li>
+ <li class="breadcrumb-item "> <a href="../../index.html">AskashaEPUB @akashacms/epubtools documentation</a> </li> <li class="breadcrumb-item "> <a href="../index.html">EPUBTools news</a> </li> <li class="breadcrumb-item "> <a href="index.html">News for 2022</a> </li> <li class="breadcrumb-item "> <a href="xmldom.html">EPUBTools 0.8.3 -- Adopting latest xmldom, TypeScript types</a> </li>
 </ol>
 </nav>
 </section>
 <section id="category-tags" class="col-sm-12">
 
-    Date: Sun Dec 26 2021
+    Date: Sat Jan 22 2022
 
  <span class="taglist">
  <a style="padding: 5px;" class="taglink-header p-category" href="../../tags/epubtools.html">EPUBTools</a>  &#xBB;&#xBB;&#xBB;&#xBB;  <a style="padding: 5px;" class="taglink-header p-category" href="../../tags/milestone.html">Milestone</a> 
@@ -170,26 +170,21 @@
 </div>
 <div class="row">
 <article class="col-sm-10">
-<p><strong><p><strong>EPUBTools version 0.8 has been released, in conjunction with release of AkashaRender 0.8.  All prior versions of EPUBTools have been deprecated, and are no longer supported.
+<p><strong><p><strong>EPUBTools version 0.8.3 has been released, eliminating a security warning for the <em>xmldom</em> dependency.  This release also includes TypeScript type definitions files.
 </strong></p>
 </strong></p> 
-<p>As we noted earlier, EPUBTools has been under major rewrite conditions for a few years.  <a href="announce.html" title="Announcing EPUBTools and its website">Announcing EPUBTools and its website</a></p>
-<p>The milestones reached in November were</p>
-<ul>
-<li>Getting EPUBTools to a very mature state, which is easy to use</li>
-<li>Getting an associated tool, AkashaRenderEPUB, to a similar easy-to-use state</li>
-<li>Developing this website to publish EPUBTools documentation</li>
-</ul>
-<p>What we&apos;ve done since is to improve the EPUBTools release process, to make sure it, its test suite, and website build, are all automated.</p>
-<p>Yesterday, December 25, 2021, I released version 0.8 and also deprecated 0.4, and earlier.  The earlier releases have a very different code base, use a very different configuration file, and so forth.  With 0.8, it is so much easier to use, plus the same configuration file is supported by the companion tool AkashaRender-EPUB.</p>
-<p>A part of the long delay between releases was that EPUBTools and AkashaRender-EPUB are so closely related.  Several ideas were tried between the two, and at one time EPUBTools contained the functionality of AkashaRender-EPUB.  It was eventually decided the two should be kept as distinct tools, and AkashaRender itself has undergone a major transformation.</p>
-<p>As of this writing AkashaRender-EPUB does not have a 0.8.x release, but that should be handled shortly.</p>
+<p>Running <code>npm audit</code> for EPUBTools gave a warning that the <code>xmldom</code> package contains a security vulnerability in version 0.6.0 and prior.  Unfortunately 0.6.0 is the last release for this package.</p>
+<p>It turns out that the <code>xmldom</code> package is stuck in time because of a dispute with GitHub over who owns that project.  Instead, current releases of this package are published under the name <code>@xmldom/xmldom</code>.</p>
+<p>For documentation see: <a href="https://www.npmjs.com/package/@xmldom/xmldom">https://www.npmjs.com/package/@xmldom/xmldom</a></p>
+<p>The bottom line for EPUBTools is that I switched to the new package, <code>@xmldom/xmldom</code>, reran the test suite, and all tests passed.</p>
+<p>As for the TypeScript declaration files.  I&apos;m updating a book, <em>Quick Start to using Typescript and TypeORM in Node.js applications</em>, and in a moment of enthusiasm for TypeScript type definitions, went ahead and used the TypeScript tools to generate type definition files.  I may also rewrite EPUBTools in TypeScript, but that&apos;s a longer term project.</p>
+<p>The type files are declared in <code>package.json</code> and will be automatically picked up by the appropriate tools.</p>
 
 <div class="btn-group blog-prev-next-wrapper" role="group" aria-label="Next/Previous">
-<a class="btn btn-outline-primary blog-prev-link" href="../2022/xmldom.html" role="button">
-&#xAB;&#xAB;&#xAB;&#xAB;&#xAB;&#xAB; EPUBTools 0.8.3 -- Adopting latest xmldom, TypeScript types</a>
-<a class="btn btn-outline-primary blog-next-link" href="announce.html" role="button">
-<span style="float: right">Announcing EPUBTools and its website &#xBB;&#xBB;&#xBB;&#xBB;&#xBB;&#xBB;</span></a>
+<a class="btn btn-outline-primary blog-prev-link" href="../2021/announce.html" role="button">
+&#xAB;&#xAB;&#xAB;&#xAB;&#xAB;&#xAB; Announcing EPUBTools and its website</a>
+<a class="btn btn-outline-primary blog-next-link" href="../2021/release.html" role="button">
+<span style="float: right">EPUBTools 0.8.0 released &#xBB;&#xBB;&#xBB;&#xBB;&#xBB;&#xBB;</span></a>
 </div>
 </article>
 <section id="right" class="col-sm-2">
