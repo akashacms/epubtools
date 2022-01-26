@@ -27,7 +27,8 @@
     "epubtools": "./dist/cli.js"
   },
   "scripts": {
-    "build:lib": "npx tsc -p tsconfig.json",
+    "watch": "npx tsc --watch",
+    "build:lib": "npx tsc",
     "dopublish": "npm publish --access public"
   },
   "homepage": "https://akashacms.github.io/epubtools",

@@ -6,12 +6,11 @@ import util from 'util';
 import yaml from 'js-yaml';
 
 // import epubuild from '../index.js';
-import manifest  from './manifest.js';
+import * as manifest  from './manifest.js';
 
 const _config_yamlText = Symbol('yamlText');
 const _config_yamlParsed = Symbol('yamlParsed');
 const _config_configFN = Symbol('configFN');
-const _config_akasha = Symbol('akConfig');
 const _config_tocdata = Symbol('tocdata');
 
 export class Configuration {

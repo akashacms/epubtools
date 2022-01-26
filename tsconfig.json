@@ -1,7 +1,7 @@
 {
     "files": [
-        "lib/bundleEPUB.js", "lib/checkEPUB.js", "lib/cli.js",
-        "lib/Configuration.ts", "lib/index.ts", "lib/manifest.js",
+        "lib/bundleEPUB.js", "lib/checkEPUB.ts", "lib/cli.js",
+        "lib/Configuration.ts", "lib/index.ts", "lib/manifest.ts",
         "lib/metadata.js", "lib/opf.js",
         "lib/utils.js", "lib/watcher.mjs"
     ],
