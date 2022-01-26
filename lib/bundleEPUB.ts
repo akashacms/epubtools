@@ -1,17 +1,17 @@
 
-const archiver  = require('archiver');
-const xmldom    = require('@xmldom/xmldom');
-const utils     = require('./utils');
-const fs        = require('fs');
-const fsp       = require('fs/promises');
-const path      = require('path');
-const metadata  = require('./metadata');
-const manifest  = require('./manifest');
-const opf       = require('./opf');
-const checkEPUB = require('./checkEPUB');
-const configurator = require('./Configuration');
+import archiver from 'archiver';
+import xmldom from '@xmldom/xmldom';
+import * as utils from './utils.js';
+import { promises as fsp, default as fs } from 'fs';
+import path from 'path';
+import util from 'util';
+import * as metadata from './metadata';
+import * as manifest from './manifest';
+import * as opf from './opf';
+import * as checkEPUB from './checkEPUB';
+import * as configurator from './Configuration';
 
-exports.bundleEPUB = async function(config) {
+export async function bundleEPUB(config) {
     // read container.xml -- extract OPF file name
     // read OPF file
     // write mimetype file
@@ -25,7 +25,7 @@ exports.bundleEPUB = async function(config) {
     await archiveFiles(config);
 };
 
-exports.doPackageCommand = async function(configFN) {
+export async function doPackageCommand(configFN) {
     const bookConfig = await configurator.readConfig(configFN);
     await bookConfig.readTOCData();
     await exports.bundleEPUB(bookConfig);
@@ -57,7 +57,7 @@ async function archiveFiles(config) {
             output.on('close', () => {
                 // logger.info(archive.pointer() + ' total bytes');
                 // logger.info('archiver has been finalized and the output file descriptor has closed.');
-                resolve();
+                resolve(undefined);
             });
             
             archive.on('error', err => {
@@ -183,7 +183,7 @@ async function mkContainerXmlFile(config) {
     const addElem = (rfs, path, _mime) => {
         let elem = containerXml.createElement('rootfile');
         let mime = _mime ? _mime : 'application/oebps-package+xml';
-        if (mime === 'application/oebps-package+xml') addedOPF = true;
+        // ??? if (mime === 'application/oebps-package+xml') addedOPF = true;
         elem.setAttribute('full-path', path);
         elem.setAttribute('media-type', mime);
         rfs.appendChild(elem);
@@ -212,7 +212,7 @@ async function mkContainerXmlFile(config) {
 // TODO Third, in akasharender-epub remove the doMeta function and command
 // TODO Fourth, is it possible to organize these around Classes that have Methods?
 
-async function doMeta(config) {
+export async function doMeta(config) {
     // console.log(`doMeta renderedFullPath ${config.renderedFullPath}`);
     // await fs.mkdirs(config.renderedFullPath);
     await fsp.mkdir(config.renderedFullPath, { recursive: true });
@@ -236,12 +236,10 @@ async function doMeta(config) {
         await fsp.writeFile(path.join(config.renderedFullPath, config.sourceBookNCXHREF), ncx, 'utf8');
     }
 }
-module.exports.doMeta = doMeta;
 
-async function doMkMetaCommand(configFN) {
+export async function doMkMetaCommand(configFN) {
     const bookConfig = await configurator.readConfig(configFN);
     await bookConfig.check();
     bookConfig.opfManifest = await manifest.from_fs(bookConfig);
     await module.exports.doMeta(bookConfig);
 }
-module.exports.doMkMetaCommand = doMkMetaCommand;
