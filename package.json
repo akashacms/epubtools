@@ -1,6 +1,6 @@
 {
   "name": "epubtools",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "Generate EPUB3 documents and assets",
   "keywords": [
     "epub-builder",
