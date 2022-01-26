@@ -1,8 +1,8 @@
 
 const { promisify } = require('util');
 const { assert } = require('chai');
-const epubtools  = require('../index');
-const epubconfig = require('../Configuration');
+const epubtools  = require('../dist/index');
+const epubconfig = require('../dist/Configuration');
 
 
 describe('read config file', function() {

@@ -1,17 +1,18 @@
 
-// const path = require('path');
-const util     = require('util');
-const fs       = require('fs/promises');
-const url      = require('url');
-const path     = require('path');
-const glob     = require('tiny-glob');
-const mime     = require('mime');
-const cheerio  = require('cheerio');
-const xmldom   = require('@xmldom/xmldom');
-const metadata = require('./metadata');
-const utils    = require('./utils');
+import { promises as fs } from 'fs';
+import path from 'path';
+import util from 'util';
 
-exports.Manifest = class Manifest extends Array {
+import url from 'url';
+import glob from 'tiny-glob';
+import * as mime from 'mime';
+import cheerio from 'cheerio';
+import xmldom from '@xmldom/xmldom';
+import * as metadata from './metadata.js';
+import * as utils from './utils.js';
+import { Configuration } from './Configuration.js';
+
+export class Manifest extends Array {
 
     constructor(toimport) {
         super();
@@ -31,6 +32,7 @@ exports.Manifest = class Manifest extends Array {
 
     byPath(path2find) {
         for (let item of this) {
+            console.log(`byPath ${item.path} === ${path2find}`);
             if (item.path === path2find) return item;
         }
         return undefined;
@@ -75,7 +77,11 @@ exports.Manifest = class Manifest extends Array {
         }
     }
 
-    checkItemsFromOPF(opfManifest) {
+    // It seems this function was never invoked, never tested.
+    // The only execution is in a function in index.ts that is
+    // itself not tested and commented-out
+
+    /* checkItemsFromOPF(opfManifest) {
 
         // Maybe this does not belong here since it is presumed to be part of a process driven elsewhere
         // Maybe instead this belongs in that place
@@ -86,7 +92,9 @@ exports.Manifest = class Manifest extends Array {
         // Ergo the from_fs stage cannot get a lot of the details which are in the OPF 
 
         for (let mItem of opfManifest) {
-            let existing = config.opfManifest.byPath(mItem.path);
+            // What did it mean to prefix this with "config."?
+            // This doesn't make sense.
+            let existing = /*config.*--/opfManifest.byPath(mItem.path);
 
             if (existing) {
                 existing.seen_in_opf = true;
@@ -115,7 +123,7 @@ exports.Manifest = class Manifest extends Array {
             }
         }
 
-    }
+    } */
 
     replaceItems(newItems) {
         while (this.length > 0) {
@@ -137,11 +145,11 @@ exports.Manifest = class Manifest extends Array {
 
 }
 
-exports.ManifestItem = class ManifestItem {
+export class ManifestItem {
     constructor(item) {
         this.id = typeof item.id !== 'undefined' ? item.id : "";
         this.basedir = typeof item.basedir !== 'undefined' ? item.basedir : "";
-        this.path = typeof item.path !== 'undefined' ? item.path : "";
+        this.path = typeof item.path !== 'undefined' ? item.path : "--unknown--";
         this.dirname = typeof item.dirname !== 'undefined' ? item.dirname : "";
         this.filename = typeof item.filename !== 'undefined' ? item.filename : "";
         this.mime = typeof item.mime !== 'undefined' ? item.mime : "";
@@ -163,15 +171,15 @@ exports.ManifestItem = class ManifestItem {
         }
         // TODO <meta name="cover" content="cover-img"/>
         this.is_mathml 
-            = typeof item.is_mathml !== 'undefined' ? item.is_mathml : "";
+            = typeof item.is_mathml !== 'undefined' ? item.is_mathml : false;
         this.is_scripted 
-            = typeof item.is_scripted !== 'undefined' ? item.is_scripted : "";
+            = typeof item.is_scripted !== 'undefined' ? item.is_scripted : false;
         this.is_svg 
-            = typeof item.is_svg !== 'undefined' ? item.is_svg : "";
+            = typeof item.is_svg !== 'undefined' ? item.is_svg : false;
         this.is_remote_resources 
-            = typeof item.is_remote_resources !== 'undefined' ? item.is_remote_resources : "";
+            = typeof item.is_remote_resources !== 'undefined' ? item.is_remote_resources : false;
         this.is_switch 
-            = typeof item.is_switch !== 'undefined' ? item.is_switch : "";
+            = typeof item.is_switch !== 'undefined' ? item.is_switch : false;
         // TODO some additional item/itemref properties
         //     rendition:layout
         //     rendition:orientation
@@ -192,9 +200,34 @@ exports.ManifestItem = class ManifestItem {
         // console.log(util.inspect(this));
     }
 
+    id: string;
+    basedir: string;
+    path: string;
+    dirname: string;
+    filename: string;
+    mime: string;
+    mimeoverride: string;
+    nav_id: string;
+    nav_path: string;
+    is_nav: boolean;
+    properties: string;
+    cover_id: string;
+    cover_path: string;
+    is_cover_image: boolean;
+    is_mathml: boolean;
+    is_scripted: boolean;
+    is_svg: boolean;
+    is_remote_resources: boolean;
+    is_switch: boolean;
+    suppressOPF: boolean;
+    suppress: boolean;
+    in_spine: boolean;
+    spine_order: number;
+    linear: boolean;
+    seen_in_opf: boolean;
 };
 
-exports.spineItems = function(epubConfig) {
+export function spineItems(epubConfig) {
     if (!epubConfig || !epubConfig.opfManifest) return [];
     const spine = epubConfig.opfManifest.filter(item => {
         if (item.in_spine) return true;
@@ -209,7 +242,7 @@ exports.spineItems = function(epubConfig) {
     return spine;
 };
 
-exports.spineTitles = async function(epubConfig) {
+export async function spineTitles(epubConfig) {
     let epubdir = epubConfig.renderedFullPath;
     if (epubConfig.opfManifest) for (let item of epubConfig.opfManifest) {
         if (!item.in_spine) continue;
@@ -270,12 +303,12 @@ function getNavOLChildrenXML(DOM, navol, tocdir) {
     return ret;
 }
 
-exports.tocData = async function(epubConfig) {
+export async function tocData(epubConfig: Configuration) {
 
     // console.log(`tocData ${epubConfig.sourceBookTOCHREF} found ${util.inspect(found)}`);
     // console.log(`tocData ${epubConfig.sourceBookTOCHREF} renderer ${util.inspect(renderer)}`);
 
-    var content = await fs.readFile(
+    let content = await fs.readFile(
                 path.join(epubConfig.renderedFullPath, epubConfig.sourceBookTOCHREF), 
                 'utf8');
 
@@ -283,7 +316,7 @@ exports.tocData = async function(epubConfig) {
 
     let tocdom = new xmldom.DOMParser().parseFromString(content, 'application/xhtml+xml');
     if (!tocdom) {
-        throw new Error(`epubtools tocData FAIL to read ${epubdir} ${epubConfig.sourceBookTOCHREF}`);
+        throw new Error(`epubtools tocData FAIL to read ${epubConfig.renderedFullPath} ${epubConfig.sourceBookTOCHREF}`);
     }
     // let tochtml = tocxhtml.xhtmlText;
     // let tocdom = tocxhtml.xhtmlDOM;
@@ -318,7 +351,7 @@ exports.tocData = async function(epubConfig) {
     return tocdata;
 };
 
-exports.from_fs = async function(config) {
+export async function from_fs(config) {
     // console.log(`scanfiles epubdir ${epubdir}`);
 
     // TODO Should this scan the source directory or the rendered directory?
@@ -334,67 +367,61 @@ exports.from_fs = async function(config) {
     // console.log(`files found in ${config.renderedFullPath}`, filez);
 
     // Remove directories
-    let _filez = [];
-    for (let item of filez) {
+    let itemz = [];
+    for (let filenm of filez) {
         // Do not include admin files
-        if (item === 'mimetype') continue;
-        if (item === 'META-INF/container.xml') continue;
-        if (item === config.bookOPF) continue;
+        if (filenm === 'mimetype') continue;
+        if (filenm === 'META-INF/container.xml') continue;
+        if (filenm === config.bookOPF) continue;
         let stats;
         // Only include files which can be stat'd and are not directories
         // console.log(item);
-        let fullpath = path.join(config.renderedFullPath, item);
+        let fullpath = path.join(config.renderedFullPath, filenm);
         try {
             stats = await fs.stat(fullpath);
         } catch (e) { continue; }
         if (!stats.isDirectory()) {
-            _filez.push({
-                path: item,
-                fullpath: fullpath
+            // Modify the basedir to be renderedFullPath
+            // Fill in other base ManifestItem fields
+            let item = new ManifestItem({
+                basedir: config.renderedPath,
+                path: filenm,
+                dirname: path.dirname(filenm),
+                filename: path.basename(filenm),
+                fullpath: fullpath,
+                mime: mime.getType(filenm),
+                // is_nav elsewhere
+                mimeoverride: false,
+                suppressOPF: false,
+                suppress: false
             });
-        }
-    }
-    filez = _filez;
-    // console.log(`files found in ${config.renderedFullPath}`, filez);
-    // Modify the basedir to be renderedFullPath
-    // Fill in other base ManifestItem fields
-    for (let item of filez) {
-        item.basedir = config.renderedPath;
-        item.dirname = path.dirname(item.path);
-        item.filename = path.basename(item.path);
-        item.mime = mime.getType(item.path);
-        if (item.mime === 'text/html') {
-            item.mime = 'application/xhtml+xml';
-        }
-        item.mimeoverride = false;
-        // is_nav elsewhere
-        item.suppressOPF  = false;
-        item.suppress = false;
-        item.in_spine = item.mime === 'text/html' || item.mime === 'application/xhtml+xml'
+            if (item.mime === 'text/html') {
+                item.mime = 'application/xhtml+xml';
+            }
+            item.in_spine = item.mime === 'text/html' || item.mime === 'application/xhtml+xml'
                 ? true : false;
-
-        item.seen_in_opf = false;
-
-        // console.log(`item.basedir ${item.basedir} item.dirname ${item.dirname} item.filename ${item.filename}`)
-
-        if (config.sourceBookTOCHREF === item.path) {
-            if (config.sourceBookTOCID) {
-                item.id = config.sourceBookTOCID;
+            item.seen_in_opf = false;
+            if (config.sourceBookTOCHREF === item.path) {
+                if (config.sourceBookTOCID) {
+                    item.id = config.sourceBookTOCID;
+                }
             }
-        }
-        if (config.sourceBookCoverHTMLHREF === item.path) {
-            if (config.sourceBookCoverHTMLID) {
-                item.id = config.sourceBookCoverHTMLID;
+            if (config.sourceBookCoverHTMLHREF === item.path) {
+                if (config.sourceBookCoverHTMLID) {
+                    item.id = config.sourceBookCoverHTMLID;
+                }
             }
-        }
-        if (config.sourceBookCoverHREF === item.path) {
-            if (config.sourceBookCoverID) {
-                item.id = config.sourceBookCoverID;
+            if (config.sourceBookCoverHREF === item.path) {
+                if (config.sourceBookCoverID) {
+                    item.id = config.sourceBookCoverID;
+                }
             }
+            // console.log(`from_fs pushed  for ${filenm}`, item);
+            itemz.push(item);
         }
     }
     let itemnum = 0;
-    for (let item of filez) {
+    for (let item of itemz) {
         // console.log(`from_fs scan ${item.dirname} ${item.path} ${item.in_spine}`);
         if (!item.id) item.id = `item${itemnum++}`;
         if (item.in_spine) {
@@ -424,7 +451,7 @@ exports.from_fs = async function(config) {
                             path.join(item.dirname, aHref)
                         );
                         // console.log(`from_fs scan ${item.path} toc entry ${aHref} ${aPath}`);
-                        for (let reffed of filez) {
+                        for (let reffed of itemz) {
                             if (reffed.path === aPath) {
                                 reffed.spine_order = order++;
                                 break;
@@ -469,7 +496,7 @@ exports.from_fs = async function(config) {
 
     // console.log(`from_fs `, filez);
 
-    return new exports.Manifest(filez);
+    return new exports.Manifest(itemz);
 };
 
 /*

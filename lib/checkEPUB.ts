@@ -1,10 +1,8 @@
 
-const path = require('path');
-const fsp  = require('fs/promises');
-const fs   = require('fs');
-const util = require('util');
+import * as path from 'path';
+import { promises as fsp, default as fs } from 'fs';
 
-exports.checkEPUBConfig = async function(config) {
+export async function checkEPUBConfig(config) {
 
     for (let mItem of config.opfManifest) {
         if (!mItem.id || typeof mItem.id !== 'string' || mItem.id === '') {

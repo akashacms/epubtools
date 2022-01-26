@@ -1,7 +1,7 @@
 
-const sprintf   = require("sprintf-js").sprintf;
+import { sprintf } from 'sprintf-js';
 
-module.exports.w3cdate = function w3cdate(date) {
+export function w3cdate(date) {
     return sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
            date.getUTCFullYear(),
           (date.getUTCMonth() + 1),
@@ -12,7 +12,7 @@ module.exports.w3cdate = function w3cdate(date) {
     );
 };
 
-module.exports.nodeListIterator = function nodeListIterator(nodeList) {
+export function nodeListIterator(nodeList) {
     nodeList[Symbol.iterator] = function() {
         return {
             next: function() {
@@ -30,7 +30,7 @@ module.exports.nodeListIterator = function nodeListIterator(nodeList) {
     return nodeList;
 };
 
-module.exports.nodeList2Array = function(nodeList) {
+export function nodeList2Array(nodeList) {
     var ret = [];
     for (let item of module.exports.nodeListIterator(nodeList)) {
         ret.push(item);

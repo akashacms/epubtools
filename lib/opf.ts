@@ -1,13 +1,13 @@
 
-const util      = require('util');
-const utils     = require('./utils');
-const path      = require('path');
-const xmldom    = require('@xmldom/xmldom');
-const manifest  = require('./manifest');
-const Manifest  = manifest.Manifest;
-const fs        = require('fs/promises');
+import util from 'util';
+import * as utils from './utils.js';
+import path from 'path';
+import xmldom from '@xmldom/xmldom';
+import { Manifest, ManifestItem, tocData as manifest_tocData } from './manifest';
+import { promises as fsp, default as fs } from 'fs';
+import { Configuration } from './Configuration.js';
 
-exports.findMetadataInOPF = function(OPFXML) {
+export function findMetadataInOPF(OPFXML) {
     for (let elem of utils.nodeList2Array(OPFXML.getElementsByTagName("metadata")).concat(utils.nodeList2Array(OPFXML.getElementsByTagName("opf:metadata")))) {
         if (elem.nodeName.toUpperCase() === 'metadata'.toUpperCase()
          || elem.nodeName.toUpperCase() === 'opf:metadata'.toUpperCase()) {
@@ -16,7 +16,7 @@ exports.findMetadataInOPF = function(OPFXML) {
     }
 };
 
-exports.findManifestInOPF = function(OPFXML) {
+export function findManifestInOPF(OPFXML) {
     for (let elem of utils.nodeList2Array(OPFXML.getElementsByTagName("manifest")).concat(utils.nodeList2Array(OPFXML.getElementsByTagName("opf:manifest")))) {
         if (elem.nodeName.toUpperCase() === 'manifest'.toUpperCase()
         || elem.nodeName.toUpperCase() === 'opf:manifest'.toUpperCase()) {
@@ -25,7 +25,7 @@ exports.findManifestInOPF = function(OPFXML) {
     }
 };
 
-exports.findSpineInOPF = function(OPFXML) {
+export function findSpineInOPF(OPFXML) {
     for (let elem of utils.nodeList2Array(OPFXML.getElementsByTagName("spine")).concat(utils.nodeList2Array(OPFXML.getElementsByTagName("opf:spine")))) {
         if (elem.nodeName.toUpperCase() === 'spine'.toUpperCase()
         || elem.nodeName.toUpperCase() === 'opf:spine'.toUpperCase()) {
@@ -34,7 +34,7 @@ exports.findSpineInOPF = function(OPFXML) {
     }
 };
 
-exports.refines = function(metadata, id) {
+export function refines(metadata, id) {
     const ret = [];
     for (let meta of utils.nodeList2Array(metadata.getElementsByTagName("meta")).concat(utils.nodeList2Array(metadata.getElementsByTagName("opf:meta")))) {
         let refines = meta.getAttribute('refines');
@@ -45,7 +45,7 @@ exports.refines = function(metadata, id) {
     return ret;
 }
 
-exports.titles = function(OPFXML) {
+export function titles(OPFXML) {
     const metadata = exports.findMetadataInOPF(OPFXML);
     const ret = [];
     for (let title of utils.nodeListIterator(
@@ -62,11 +62,11 @@ exports.titles = function(OPFXML) {
             for (let refine of refines) {
                 let property = refine.getAttribute('property');
                 if (property === 'title-type') {
-                    ret.titleType = refine.textContent;
+                    title.titleType = refine.textContent;
                 } else if (property === 'display-seq') {
-                    ret.displaySequence = refine.textContent;
+                    title.displaySequence = refine.textContent;
                 } else if (property === 'file-as') {
-                    ret.fileAs = refine.textContent;
+                    title.fileAs = refine.textContent;
                 }
             }
         }
@@ -74,7 +74,7 @@ exports.titles = function(OPFXML) {
     return ret;
 };
 
-exports.identifiers = function(OPFXML) {
+export function identifiers(OPFXML) {
     const metadata = exports.findMetadataInOPF(OPFXML);
     // Get the ID indicating Unique Identifier
     const uniqueIDname = OPFXML.documentElement.getAttribute('unique-identifier');
@@ -87,8 +87,12 @@ exports.identifiers = function(OPFXML) {
         let isUnique = idIdentifier && idIdentifier === uniqueIDname
                 ? true : false;
         let newIdentifier = {
+            id: undefined,
+            type: undefined,
             unique: isUnique,
-            string: identifier.textContent
+            string: identifier.textContent,
+            identifierTypeScheme: undefined,
+            identifierType: undefined
         };
         if (idIdentifier && idIdentifier !== '') {
             newIdentifier.id = idIdentifier;
@@ -122,7 +126,7 @@ exports.identifiers = function(OPFXML) {
     return ret;
 };
 
-exports.languages = function(OPFXML) {
+export function languages(OPFXML) {
     const metadata = exports.findMetadataInOPF(OPFXML);
     const ret = [];
     for (let language of utils.nodeListIterator(
@@ -136,7 +140,7 @@ exports.languages = function(OPFXML) {
     return ret;
 };
 
-exports.creators = function(OPFXML, tag) {
+export function creators(OPFXML, tag) {
     const metadata = exports.findMetadataInOPF(OPFXML);
     const ret = [];
     for (let creator of utils.nodeListIterator(
@@ -147,7 +151,12 @@ exports.creators = function(OPFXML, tag) {
             theID = undefined;
         }
         let item = {
-            name: creator.textContent
+            id: undefined,
+            name: creator.textContent,
+            role: undefined,
+            roleSchema: undefined,
+            fileAs: undefined
+
         };
         if (theID) item.id = theID;
         if (item.id) {
@@ -168,7 +177,7 @@ exports.creators = function(OPFXML, tag) {
     return ret;
 };
 
-exports.publicationDate = function(OPFXML) {
+export function publicationDate(OPFXML) {
     const metadata = exports.findMetadataInOPF(OPFXML);
     for (let date of utils.nodeListIterator(
         metadata.getElementsByTagName('dc:date')
@@ -178,7 +187,7 @@ exports.publicationDate = function(OPFXML) {
     return "";
 };
 
-exports.modifiedDate = function(OPFXML) {
+export function modifiedDate(OPFXML) {
     const metadata = exports.findMetadataInOPF(OPFXML);
     for (let meta of utils.nodeList2Array(OPFXML.getElementsByTagName("meta"))
         .concat(utils.nodeList2Array(OPFXML.getElementsByTagName("opf:meta")))) {
@@ -190,7 +199,7 @@ exports.modifiedDate = function(OPFXML) {
     return "";
 };
 
-exports.subjects = function(OPFXML) {
+export function subjects(OPFXML) {
     const metadata = exports.findMetadataInOPF(OPFXML);
     const ret = [];
     for (let subject of utils.nodeListIterator(
@@ -201,7 +210,7 @@ exports.subjects = function(OPFXML) {
     return ret;
 };
 
-exports.description = function(OPFXML) {
+export function description(OPFXML) {
     const metadata = exports.findMetadataInOPF(OPFXML);
     for (let description of utils.nodeListIterator(
         metadata.getElementsByTagName('dc:description')
@@ -211,7 +220,7 @@ exports.description = function(OPFXML) {
     return "";
 };
 
-exports.format = function(OPFXML) {
+export function format(OPFXML) {
     const metadata = exports.findMetadataInOPF(OPFXML);
     for (let format of utils.nodeListIterator(
         metadata.getElementsByTagName('dc:format')
@@ -221,7 +230,7 @@ exports.format = function(OPFXML) {
     return "";
 };
 
-exports.publisher = function(OPFXML) {
+export function publisher(OPFXML) {
     const metadata = exports.findMetadataInOPF(OPFXML);
     for (let publisher of utils.nodeListIterator(
         metadata.getElementsByTagName('dc:publisher')
@@ -231,7 +240,7 @@ exports.publisher = function(OPFXML) {
     return "";
 };
 
-exports.relation = function(OPFXML) {
+export function relation(OPFXML) {
     const metadata = exports.findMetadataInOPF(OPFXML);
     for (let relation of utils.nodeListIterator(
         metadata.getElementsByTagName('dc:relation')
@@ -241,7 +250,7 @@ exports.relation = function(OPFXML) {
     return "";
 };
 
-exports.coverage = function(OPFXML) {
+export function coverage(OPFXML) {
     const metadata = exports.findMetadataInOPF(OPFXML);
     for (let coverage of utils.nodeListIterator(
         metadata.getElementsByTagName('dc:coverage')
@@ -251,7 +260,7 @@ exports.coverage = function(OPFXML) {
     return "";
 };
 
-exports.rights = function(OPFXML) {
+export function rights(OPFXML) {
     const metadata = exports.findMetadataInOPF(OPFXML);
     for (let rights of utils.nodeListIterator(
         metadata.getElementsByTagName('dc:rights')
@@ -261,12 +270,12 @@ exports.rights = function(OPFXML) {
     return "";
 };
 
-exports.manifest = function(config, OPFXML) {
+export function manifest(config, OPFXML) {
     const manifest = exports.findManifestInOPF(OPFXML);
-    const ret = new Manifest();
+    const ret = new Manifest([]);
     for (let item of utils.nodeList2Array(manifest.getElementsByTagName("item"))
         .concat(utils.nodeList2Array(manifest.getElementsByTagName("opf:item")))) {
-        let datum = {
+        let datum = new ManifestItem({
             id: item.getAttribute('id'),
             mime: item.getAttribute('media-type'),
             mimeoverride: "",
@@ -277,7 +286,7 @@ exports.manifest = function(config, OPFXML) {
             suppressOPF: false,
             in_spine: false,
             spine_order: false
-        };
+        });
         let properties = item.getAttribute('properties');
         if (properties) datum.properties = properties;
         if (properties && properties.indexOf('nav') >= 0) {
@@ -342,15 +351,15 @@ exports.manifest = function(config, OPFXML) {
     return ret;
 };
 
-exports.readOpf = async function(opfFN) {
-    const opfTXT = await fs.readFile(opfFN, 'utf8');
+export async function readOpf(opfFN) {
+    const opfTXT = await fsp.readFile(opfFN, 'utf8');
     const OPFXML = new xmldom.DOMParser().parseFromString(opfTXT);
     return OPFXML;
 }
 
 // exports.makeOpfXml = async function(bookYaml, manifest, opfspine) {
 
-exports.makeOpfXml = async function(config) {
+export async function makeOpfXml(config) {
     
     // TODO this will require different templates for EPUB versions
 
@@ -752,13 +761,13 @@ exports.makeOpfXml = async function(config) {
     return OPFXML;
 };
 
-exports.readTocNCX = async function(tocncxFN) {
-    const tocncxTXT = await fs.readFile(tocncxFN, 'utf8');
+export async function readTocNCX(tocncxFN) {
+    const tocncxTXT = await fsp.readFile(tocncxFN, 'utf8');
     const NCXXML = new xmldom.DOMParser().parseFromString(tocncxTXT);
     return NCXXML;
 }
 
-exports.makeNCXXML = async function(config) {
+export async function makeNCXXML(config: Configuration) {
 
     var NCXXML = new xmldom.DOMParser().parseFromString('<?xml version="1.0" encoding="UTF-8"?> \
     <ncx version="2005-1" xml:lang="en" xmlns="http://www.daisy.org/z3986/2005/ncx/"> \
@@ -813,7 +822,7 @@ exports.makeNCXXML = async function(config) {
     config.opfIdentifiers.forEach(function(identifier) {
         if (typeof identifier.unique !== 'undefined' && identifier.unique !== null) uniqueID = identifier;
     });
-    if (!uniqueID) reject(new Error("No Identifier"));
+    if (!uniqueID) throw new Error("No Identifier");
     
     // <meta name="dtb:uid" content="<%= uniqueID.ncxidentifier %>"/>
     // <meta name="dtb:uid" content="<%= uniqueID.idstring %>"/>
@@ -863,10 +872,10 @@ exports.makeNCXXML = async function(config) {
         }
     }
     if (!sawTitle) {
-        throw new Error(`makeNCXXML saw no "main" title in `, config.opfTitles);
+        throw new Error(`makeNCXXML saw no "main" title in ${util.inspect(config.opfTitles)}`);
     }
     if (config.opfCreators.length <= 0) {
-        throw new Error(`makeNCXXML no creators in `, config.opfCreators);
+        throw new Error(`makeNCXXML no creators in ${util.inspect(config.opfCreators)}`);
     }
     if (config.opfCreators[0].name || config.opfCreators[0].nameReversed) {
         docAuthorText.appendChild(NCXXML.createTextNode(
@@ -875,7 +884,7 @@ exports.makeNCXXML = async function(config) {
             : config.opfCreators[0].name));
     }
 
-    let tocdata = await manifest.tocData(config);
+    let tocdata = await manifest_tocData(config);
 
     // console.log(tocdata);
 
@@ -884,7 +893,8 @@ exports.makeNCXXML = async function(config) {
         var navPoint = NCXXML.createElement('navPoint');
         navPoint.setAttribute('class', 'book');
         navPoint.setAttribute('id', chapter.id);
-        navPoint.setAttribute('playOrder', spineorder++);
+        navPoint.setAttribute('playOrder', spineorder.toString());
+        spineorder++;
         
         var navLabel = NCXXML.createElement('navLabel');
         var navLabelText = NCXXML.createElement('text');

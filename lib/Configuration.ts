@@ -1,18 +1,19 @@
 
-const yaml      = require('js-yaml');
-const epubuild  = require('./index');
-const uuid      = require('uuid');
-const fs        = require('fs/promises');
-const path      = require('path');
-const util      = require('util');
-const manifest  = require('./manifest');
+// import uuid from 'uuid';
+import { promises as fs } from 'fs';
+import path from 'path';
+import util from 'util';
+import yaml from 'js-yaml';
+
+// import epubuild from '../index.js';
+import * as manifest  from './manifest.js';
 
 const _config_yamlText = Symbol('yamlText');
 const _config_yamlParsed = Symbol('yamlParsed');
 const _config_configFN = Symbol('configFN');
-const _config_akasha = Symbol('akConfig');
+const _config_tocdata = Symbol('tocdata');
 
-module.exports.Configuration = class Configuration {
+export class Configuration {
 
     constructor(yamlText) {
         this[_config_yamlText] = yamlText;
@@ -25,6 +26,7 @@ module.exports.Configuration = class Configuration {
         }
         // console.log(`Configuration constructor ${typeof this[_config_yamlParsed].source.manifest} ${this[_config_yamlParsed].source.manifest instanceof manifest.Manifest}`);
         this[_config_configFN] = undefined;
+        this[_config_tocdata]  = undefined;
     }
 
     get YAML() { return this[_config_yamlParsed]; }
@@ -46,13 +48,13 @@ module.exports.Configuration = class Configuration {
      * File name for configuration file.  Appears this is to be
      * the full path name?
      */
-    get configFileName()   { return this[_config_configFN]; }
-    set configFileName(FN) { return this[_config_configFN] = FN; }
+    get configFileName(): string   { return this[_config_configFN]; }
+    set configFileName(FN: string) { this[_config_configFN] = FN; }
 
     /**
      * Return the pathname containing the configuration file.
      */
-    get configDirPath() {
+    get configDirPath(): string {
         if (!this.configFileName || this.configFileName === '') {
             throw new Error(`No configFileName set in ${this.projectName}`);
         }
@@ -246,10 +248,12 @@ module.exports.Configuration = class Configuration {
         return path.join(epubdir, tochref);
     }
 
+    get tocdata() { return this[_config_tocdata]; }
+
     async readTOCData() {
         try {
             await manifest.spineTitles(this);
-            this.tocdata = await manifest.tocData(this);
+            this[_config_tocdata] = await manifest.tocData(this);
         } catch (e) {
             console.error(`epubtools caught error while building Configuration: ${e.stack}`);
             throw new Error(`epubtools caught error while building Configuration: ${e.stack}`);
@@ -662,9 +666,9 @@ module.exports.Configuration = class Configuration {
 
 }
 
-module.exports.readConfig = async function(fn) {
+export async function readConfig(fn) {
     const yamlText = await fs.readFile(fn, 'utf8');
-    let config = new exports.Configuration(yamlText);
+    let config = new Configuration(yamlText);
     config.configFileName = fn;
     await config.check();
     return config;

@@ -1,9 +1,9 @@
 
 const { promisify } = require('util');
 const { assert } = require('chai');
-const epubtools  = require('../index');
-const epubconfig = require('../Configuration');
-const manifest  = require('../manifest');
+const epubtools  = require('../dist/index');
+const epubconfig = require('../dist/Configuration');
+const manifest  = require('../dist/manifest');
 
 
 let config;

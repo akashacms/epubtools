@@ -4,7 +4,7 @@ import { default as chokidar } from 'chokidar';
 import * as util from 'util';
 import * as path from 'path';
 
-import bundleEPUB from './bundleEPUB.js';
+import * as bundleEPUB from './bundleEPUB.js';
 
 let watcher;
 
