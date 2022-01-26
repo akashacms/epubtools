@@ -1,10 +1,12 @@
 
-const xmldom    = require('@xmldom/xmldom');
-const fs        = require('fs/promises');
-const path      = require('path');
-const utils     = require('./utils');
+import xmldom from '@xmldom/xmldom';
+import { promises as fs } from 'fs';
+import path from 'path';
+import util from 'util';
+import * as utils from './utils.js';
 
-exports.readContainerXml = async function(epubDir) {
+
+export async function readContainerXml(epubDir) {
     try {
         const data = await fs.readFile(
             path.join(epubDir, "META-INF", "container.xml"), 
@@ -19,7 +21,7 @@ exports.readContainerXml = async function(epubDir) {
     }
 };
 
-exports.findRootfiles = function(containerXml) {
+export function findRootfiles(containerXml) {
     var rootfiles = [];
 
     for (let rootfile of utils.nodeListIterator(
@@ -36,7 +38,7 @@ exports.findRootfiles = function(containerXml) {
 };
 
 // MOOT - finds a single OPF file name
-exports.findOpfFileName = function(containerXml) {
+export function findOpfFileName(containerXml) {
     var rootfiles = containerXml.getElementsByTagName("rootfile");
     // console.log(util.inspect(rootfile));
     var rootfile;
@@ -48,7 +50,7 @@ exports.findOpfFileName = function(containerXml) {
     return rootfile.getAttribute('full-path');
 };
 
-exports.readOPF = async function(epubDir, opfName) {
+export async function readOPF(epubDir, opfName) {
     const file2read = path.join(epubDir, opfName);
     try {
         // console.log(`readOPF ${file2read}`);
@@ -66,7 +68,7 @@ exports.readOPF = async function(epubDir, opfName) {
     }
 };
 
-exports.readXHTML = async function(epubDir, opfName) {
+export async function readXHTML(epubDir, opfName) {
     const file2read = path.join(epubDir, opfName);
     // console.log(`readXHTML ${file2read}`);
     try {
