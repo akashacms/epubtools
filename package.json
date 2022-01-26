@@ -27,8 +27,7 @@
     "epubtools": "./dist/cli.js"
   },
   "scripts": {
-    "build:types": "npx tsc -p tsconfig-types.json",
-    "build:lib": "npx tsc -p tsconfig-build.json",
+    "build:lib": "npx tsc -p tsconfig.json",
     "dopublish": "npm publish --access public"
   },
   "homepage": "https://akashacms.github.io/epubtools",
