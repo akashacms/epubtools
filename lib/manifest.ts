@@ -10,6 +10,7 @@ import cheerio from 'cheerio';
 import xmldom from '@xmldom/xmldom';
 import * as metadata from './metadata.js';
 import * as utils from './utils.js';
+import { Configuration } from './Configuration.js';
 
 export class Manifest extends Array {
 
@@ -302,7 +303,7 @@ function getNavOLChildrenXML(DOM, navol, tocdir) {
     return ret;
 }
 
-export async function tocData(epubConfig) {
+export async function tocData(epubConfig: Configuration) {
 
     // console.log(`tocData ${epubConfig.sourceBookTOCHREF} found ${util.inspect(found)}`);
     // console.log(`tocData ${epubConfig.sourceBookTOCHREF} renderer ${util.inspect(renderer)}`);

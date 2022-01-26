@@ -2,7 +2,7 @@
     "files": [
         "lib/bundleEPUB.ts", "lib/checkEPUB.ts", "lib/cli.js",
         "lib/Configuration.ts", "lib/index.ts", "lib/manifest.ts",
-        "lib/metadata.ts", "lib/opf.js",
+        "lib/metadata.ts", "lib/opf.ts",
         "lib/utils.ts", "lib/watcher.mjs"
     ],
     "compilerOptions": {
