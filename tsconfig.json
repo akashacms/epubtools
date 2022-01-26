@@ -3,7 +3,7 @@
         "lib/bundleEPUB.ts", "lib/checkEPUB.ts", "lib/cli.js",
         "lib/Configuration.ts", "lib/index.ts", "lib/manifest.ts",
         "lib/metadata.ts", "lib/opf.ts",
-        "lib/utils.ts", "lib/watcher.mjs"
+        "lib/utils.ts", "lib/watcher.ts"
     ],
     "compilerOptions": {
         "lib": [ "es6", "es2021", "esnext" ],
