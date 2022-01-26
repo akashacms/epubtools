@@ -1,8 +1,8 @@
 import shell from 'shelljs';
-import configurator from '../Configuration.js';
-import bundleEPUB from '../bundleEPUB.js';
-import metadata from '../metadata.js';
-import opf from '../opf.js';
+import configurator from '../dist/Configuration.js';
+import bundleEPUB from '../dist/bundleEPUB.js';
+import metadata from '../dist/metadata.js';
+import opf from '../dist/opf.js';
 import chaipkg from 'chai';
 const { assert } = chaipkg;
 import process from 'process';

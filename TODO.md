@@ -6,14 +6,12 @@ https://www.npmjs.com/package/library-simplified-webpub-viewer
 EPUB Object Model striving to be standards compliant
 https://www.npmjs.com/package/epubavocado
 
-Reads and writes OPF files
+Reads and writes OPF & NCX files 
 https://www.npmjs.com/package/@mfgames-writing/opf
-
-Reads OCF
-https://www.npmjs.com/package/epub-ocf
-
-NCX
 https://www.npmjs.com/package/@mfgames-writing/ncx
+
+Reads OCF -- VERY OLD -- IGNORE?
+https://www.npmjs.com/package/epub-ocf
 
 CSS (SCSS) stuff for ebooks
 https://www.npmjs.com/package/buckram

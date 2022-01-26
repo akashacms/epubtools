@@ -21,13 +21,14 @@
     "akashacms",
     "akashaepub"
   ],
-  "main": "index.js",
-  "types": "./types/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "bin": {
-    "epubtools": "cli.js"
+    "epubtools": "./dist/cli.js"
   },
   "scripts": {
-    "build:types": "npx tsc",
+    "build:types": "npx tsc -p tsconfig-types.json",
+    "build:lib": "npx tsc -p tsconfig-build.json",
     "dopublish": "npm publish --access public"
   },
   "homepage": "https://akashacms.github.io/epubtools",

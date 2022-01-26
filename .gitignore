@@ -39,3 +39,4 @@ epubcheck-4.2.4
 # Do not store built types in Git but they do get
 # published in the npm package
 types
+dist
