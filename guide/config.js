@@ -45,6 +45,10 @@ config
             noLogoImage: "false"
         }
     })
+    .addDocumentsDir({
+        src: 'apidocs',
+        dest: 'api'
+    })
     .addPartialsDir('partials');
 
 config.setRenderDestination('out');
