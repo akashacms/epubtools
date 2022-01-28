@@ -2,7 +2,7 @@
 import xmldom from '@xmldom/xmldom';
 import { promises as fs } from 'fs';
 import path from 'path';
-import util from 'util';
+// import util from 'util';
 import * as utils from './utils.js';
 
 /**
@@ -37,7 +37,7 @@ export async function readContainerXml(epubDir: string): Promise<ContainerXMLDat
         console.error(`readContainerXml WARNING ${e.stack}`);
         return undefined;
     }
-};
+}
 
 export type RootFileData = {
     fullpath: string, mime: string
@@ -51,9 +51,9 @@ export type RootFileData = {
  * @returns An array of {@link RootFileData} objects
  */
 export function findRootfiles(containerXml) {
-    let rootfiles = [];
+    const rootfiles = [];
 
-    for (let rootfile of utils.nodeListIterator(
+    for (const rootfile of utils.nodeListIterator(
         containerXml.getElementsByTagName("rootfile")
     )) {
         rootfiles.push(<RootFileData>{
@@ -64,20 +64,20 @@ export function findRootfiles(containerXml) {
     // console.log(util.inspect(rootfiles));
     return rootfiles;
 
-};
+}
 
 // MOOT - finds a single OPF file name
 export function findOpfFileName(containerXml) {
-    var rootfiles = containerXml.getElementsByTagName("rootfile");
+    const rootfiles = containerXml.getElementsByTagName("rootfile");
     // console.log(util.inspect(rootfile));
-    var rootfile;
-    for (var rfnum = 0; rfnum < rootfiles.length; rfnum++) {
-        var elem = rootfiles.item(rfnum);
+    let rootfile;
+    for (let rfnum = 0; rfnum < rootfiles.length; rfnum++) {
+        const elem = rootfiles.item(rfnum);
         if (elem.nodeName.toUpperCase() === 'rootfile'.toUpperCase()) rootfile = elem;
     }
     if (!rootfile) throw new Error('No rootfile element in container.xml');
     return rootfile.getAttribute('full-path');
-};
+}
 
 type OPFData = {
     opfXmlText: string,
@@ -107,7 +107,7 @@ export async function readOPF(epubDir: string, opfName: string): Promise<OPFData
             opfXml: undefined
         };
     }
-};
+}
 
 export type XHTMLData = {
     xhtmlText: string,
@@ -135,4 +135,4 @@ export async function readXHTML(epubDir: string, xhtmlName: string): Promise<XHT
         console.error(`epubtools metadata readXHTML ${file2read} FAIL because ${e.stack}`);
         return undefined;
     }
-};
+}

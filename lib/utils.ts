@@ -10,14 +10,14 @@ export function w3cdate(date) {
           (date.getUTCMinutes() + 1),
           (date.getUTCSeconds() + 1)
     );
-};
+}
 
 export function nodeListIterator(nodeList) {
     nodeList[Symbol.iterator] = function() {
         return {
             next: function() {
                 if (this._index < nodeList.length) {
-                    var ret = nodeList.item(this._index);
+                    const ret = nodeList.item(this._index);
                     this._index++;
                     return { value: ret, done: false };
                 } else {
@@ -28,12 +28,12 @@ export function nodeListIterator(nodeList) {
         };
     };
     return nodeList;
-};
+}
 
 export function nodeList2Array(nodeList) {
-    var ret = [];
-    for (let item of module.exports.nodeListIterator(nodeList)) {
+    const ret = [];
+    for (const item of module.exports.nodeListIterator(nodeList)) {
         ret.push(item);
     }
     return ret;
-};
+}

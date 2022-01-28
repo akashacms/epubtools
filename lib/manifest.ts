@@ -8,7 +8,7 @@ import glob from 'tiny-glob';
 import * as mime from 'mime';
 import cheerio from 'cheerio';
 import xmldom from '@xmldom/xmldom';
-import * as metadata from './metadata.js';
+// import * as metadata from './metadata.js';
 import * as utils from './utils.js';
 import { Configuration } from './Configuration.js';
 
@@ -17,7 +17,7 @@ export class Manifest extends Array {
     constructor(toimport) {
         super();
         if (toimport) {
-            for (let item of toimport) {
+            for (const item of toimport) {
                 this.push(new exports.ManifestItem(item));
             }
         }
@@ -30,7 +30,7 @@ export class Manifest extends Array {
      * @returns The matching {@link ManifestItem}
      */
     byID(id: string): ManifestItem {
-        for (let item of this) {
+        for (const item of this) {
             if (item.id === id) return item;
         }
         return undefined;
@@ -43,7 +43,7 @@ export class Manifest extends Array {
      * @returns The matching {@link ManifestItem}
      */
     byPath(path2find: string): ManifestItem {
-        for (let item of this) {
+        for (const item of this) {
             // console.log(`byPath ${item.path} === ${path2find}`);
             if (item.path === path2find) return item;
         }
@@ -77,7 +77,7 @@ export class Manifest extends Array {
      * @param newItem The new {@link ManifestItem} to add or update
      */
     addItem(newItem: ManifestItem): void {
-        let mItem = this.byPath(newItem.path);
+        const mItem = this.byPath(newItem.path);
         if (mItem) {
             mItem.basedir = newItem.basedir;
             mItem.path = newItem.path;
@@ -102,7 +102,7 @@ export class Manifest extends Array {
      * @param items Array of {@link ManifestItem} items
      */
     addItems(items: ManifestItem[]): void {
-        for (let f of items) {
+        for (const f of items) {
             this.addItem(f);
         }
     }
@@ -175,7 +175,7 @@ export class Manifest extends Array {
      * @param path2remove The path of the item to remove.
      */
     remove(path2remove: string): void {
-        for (let item of this) {
+        for (const item of this) {
             if (item.path === path2remove) {
                 const i = this.indexOf(item);
                 if (i !== -1) {
@@ -267,7 +267,7 @@ export class ManifestItem {
     spine_order: number;
     linear: boolean;
     seen_in_opf: boolean;
-};
+}
 
 /**
  * Returns an array of {@link ManifestItem} items that are in the _spine_
@@ -288,7 +288,7 @@ export function spineItems(epubConfig: Configuration): ManifestItem[] {
         return 0;
     });
     return spine;
-};
+}
 
 /**
  * For {@link ManifestItem} objects that are in the spine, read the title
@@ -297,38 +297,38 @@ export function spineItems(epubConfig: Configuration): ManifestItem[] {
  * @param epubConfig The {@link Configuration} object
  */
 export async function spineTitles(epubConfig: Configuration): Promise<void> {
-    let epubdir = epubConfig.renderedFullPath;
-    if (epubConfig.opfManifest) for (let item of epubConfig.opfManifest) {
+    const epubdir = epubConfig.renderedFullPath;
+    if (epubConfig.opfManifest) for (const item of epubConfig.opfManifest) {
         if (!item.in_spine) continue;
         // console.log(`spineTitles ${epubdir} ${item.path}`);
-        let docpath = path.join(epubdir, item.path);
-        let doctxt = await fs.readFile(docpath, 'utf8');
+        const docpath = path.join(epubdir, item.path);
+        const doctxt = await fs.readFile(docpath, 'utf8');
         const $ = cheerio.load(doctxt, {
             xmlMode: true,
             decodeEntities: true
         });
-        let title = $('head title').text();
+        const title = $('head title').text();
         // console.log(`spineTitles title ${title}`);
         item.title = title;
     }
-};
+}
 
 let navolcount = 0;
 
 function getNavOLChildrenXML(DOM, navol, tocdir) {
-    let ret = [];
-    let children = navol.childNodes;
-    for (let child of utils.nodeListIterator(children)) {
+    const ret = [];
+    const children = navol.childNodes;
+    for (const child of utils.nodeListIterator(children)) {
         if (child.nodeType === 1 && child.tagName && child.tagName === 'li') { // ELEMENT_NODE
-            let lichildren = child.childNodes;
+            const lichildren = child.childNodes;
             let item;
             let itemchildren;
-            for (let lichild of utils.nodeListIterator(lichildren)) {
+            for (const lichild of utils.nodeListIterator(lichildren)) {
                 if (lichild.nodeType === 1 && lichild.tagName && lichild.tagName === 'a') { // ELEMENT_NODE
-                    let href = lichild.getAttribute('href');
+                    const href = lichild.getAttribute('href');
                     let id;
-                    let childid = child.getAttribute('id');
-                    let liid = child.getAttribute('id');
+                    const childid = child.getAttribute('id');
+                    const liid = child.getAttribute('id');
                     // Get the ID value either from the <a>, or the containing <li>
                     // If neither have it, then concoct an ID.
                     if (childid && childid !== '') {
@@ -362,22 +362,22 @@ export async function tocData(epubConfig: Configuration) {
     // console.log(`tocData ${epubConfig.sourceBookTOCHREF} found ${util.inspect(found)}`);
     // console.log(`tocData ${epubConfig.sourceBookTOCHREF} renderer ${util.inspect(renderer)}`);
 
-    let content = await fs.readFile(
+    const content = await fs.readFile(
                 path.join(epubConfig.renderedFullPath, epubConfig.sourceBookTOCHREF), 
                 'utf8');
 
     // console.log(`tocData ${epubConfig.sourceBookTOCHREF} content ${util.inspect(content)}`);
 
-    let tocdom = new xmldom.DOMParser().parseFromString(content, 'application/xhtml+xml');
+    const tocdom = new xmldom.DOMParser().parseFromString(content, 'application/xhtml+xml');
     if (!tocdom) {
         throw new Error(`epubtools tocData FAIL to read ${epubConfig.renderedFullPath} ${epubConfig.sourceBookTOCHREF}`);
     }
     // let tochtml = tocxhtml.xhtmlText;
     // let tocdom = tocxhtml.xhtmlDOM;
-    let tocid   = epubConfig.sourceBookTOCID;
-    let tocdir  = path.dirname(epubConfig.sourceBookTOCHREF);
+    const tocid   = epubConfig.sourceBookTOCID;
+    const tocdir  = path.dirname(epubConfig.sourceBookTOCHREF);
     let tocnav;
-    for (let nav of utils.nodeListIterator(
+    for (const nav of utils.nodeListIterator(
         tocdom.getElementsByTagName('nav')
     )) {
         // console.log(`tocData found nav epub:type ${nav.getAttribute('epub:type')} id ${nav.getAttribute('id')} tocid ${tocid}`);
@@ -389,9 +389,9 @@ export async function tocData(epubConfig: Configuration) {
     if (!tocnav) {
         throw new Error(`No nav epub:type===toc id===${tocid} in ${epubConfig.TOCpath}`);
     }
-    let tocnavchildren = tocnav.childNodes;
+    const tocnavchildren = tocnav.childNodes;
     let tocnavrootol;
-    for (let child of utils.nodeListIterator(tocnavchildren)) {
+    for (const child of utils.nodeListIterator(tocnavchildren)) {
         if (child.nodeType === 1 && child.tagName && child.tagName === 'ol') { // ELEMENT_NODE
             tocnavrootol = child;
             break;
@@ -401,9 +401,9 @@ export async function tocData(epubConfig: Configuration) {
         throw new Error(`No root 'ol' node in nav epub:type===toc id===${tocid} in ${epubConfig.TOCpath}`);
     }
     navolcount = 0;
-    let tocdata = getNavOLChildrenXML(tocdom, tocnavrootol, tocdir);
+    const tocdata = getNavOLChildrenXML(tocdom, tocnavrootol, tocdir);
     return tocdata;
-};
+}
 
 /**
  * Scans the file system, constructing {@link ManifestItem} items for each,
@@ -417,19 +417,18 @@ export async function from_fs(config: Configuration): Promise<Manifest> {
 
     // TODO Should this scan the source directory or the rendered directory?
     // console.log(config.renderedFullPath);
-    let filez = await glob('**', {
+    const filez = await glob('**', {
         cwd: config.renderedFullPath,
         dot: true,
         // absolute: true,
         filesOnly: true
     })
-    // let filez = await globfs.findAsync(config.renderedFullPath, '**');
 
     // console.log(`files found in ${config.renderedFullPath}`, filez);
 
     // Remove directories
-    let itemz = [];
-    for (let filenm of filez) {
+    const itemz = [];
+    for (const filenm of filez) {
         // Do not include admin files
         if (filenm === 'mimetype') continue;
         if (filenm === 'META-INF/container.xml') continue;
@@ -437,14 +436,14 @@ export async function from_fs(config: Configuration): Promise<Manifest> {
         let stats;
         // Only include files which can be stat'd and are not directories
         // console.log(item);
-        let fullpath = path.join(config.renderedFullPath, filenm);
+        const fullpath = path.join(config.renderedFullPath, filenm);
         try {
             stats = await fs.stat(fullpath);
         } catch (e) { continue; }
         if (!stats.isDirectory()) {
             // Modify the basedir to be renderedFullPath
             // Fill in other base ManifestItem fields
-            let item = new ManifestItem({
+            const item = new ManifestItem({
                 basedir: config.renderedPath,
                 path: filenm,
                 dirname: path.dirname(filenm),
@@ -482,7 +481,7 @@ export async function from_fs(config: Configuration): Promise<Manifest> {
         }
     }
     let itemnum = 0;
-    for (let item of itemz) {
+    for (const item of itemz) {
         // console.log(`from_fs scan ${item.dirname} ${item.path} ${item.in_spine}`);
         if (!item.id) item.id = `item${itemnum++}`;
         if (item.in_spine) {
@@ -495,7 +494,7 @@ export async function from_fs(config: Configuration): Promise<Manifest> {
                     decodeEntities: true
                 });
                 $("nav").each((i, nav) => {
-                    let navtype = $(nav).attr('epub:type');
+                    const navtype = $(nav).attr('epub:type');
                     // console.log(`from_fs scan ${item.path} has nav ${navtype}`);
                     if (navtype === 'toc') {
                         item.is_nav = true;
@@ -507,12 +506,12 @@ export async function from_fs(config: Configuration): Promise<Manifest> {
                 if (item.is_nav) {
                     let order = 0;
                     $("nav li > a").each((i, anchor) => {
-                        let aHref = $(anchor).attr('href');
-                        let aPath = path.normalize(
+                        const aHref = $(anchor).attr('href');
+                        const aPath = path.normalize(
                             path.join(item.dirname, aHref)
                         );
                         // console.log(`from_fs scan ${item.path} toc entry ${aHref} ${aPath}`);
-                        for (let reffed of itemz) {
+                        for (const reffed of itemz) {
                             if (reffed.path === aPath) {
                                 reffed.spine_order = order++;
                                 break;
@@ -520,16 +519,16 @@ export async function from_fs(config: Configuration): Promise<Manifest> {
                         }
                     });
                 }
-                $("math").each((i, mItem) => {
+                $("math").each((/* i, mItem */) => {
                     item.is_mathml = true;
                 });
-                $("svg").each((i, mItem) => {
+                $("svg").each((/* i, mItem */) => {
                     item.is_svg = true;
                 });
                 const checkRemote = (i, link) => {
                     // console.log(link);
-                    let href = $(link).attr('href');
-                    let src = $(link).attr('src');
+                    const href = $(link).attr('href');
+                    const src = $(link).attr('src');
                     let theurl;
                     if (href) theurl = url.parse(href);
                     else if (src) theurl = url.parse(src);
@@ -558,7 +557,7 @@ export async function from_fs(config: Configuration): Promise<Manifest> {
     // console.log(`from_fs `, filez);
 
     return new Manifest(itemz);
-};
+}
 
 /*
 
