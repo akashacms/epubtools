@@ -24,7 +24,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "epubtools": "./dist/cli.js"
+    "epubtools": "./bin/cli.js"
   },
   "scripts": {
     "watch": "npx tsc --watch",

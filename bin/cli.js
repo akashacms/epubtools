@@ -8,11 +8,11 @@ const util = require('util');
 const path = require('path');
 const fs   = require('fs');
 const fsp  = require('fs/promises');
-const manifest = require('./manifest');
+const manifest = require('../dist/manifest');
 const unzip    = require('unzipper');
 const textStatistics = require('text-statistics');
 const glob     = require('tiny-glob');
-const _watcher = import('./watcher.js');
+const _watcher = import('../dist/watcher.js');
 
 process.title = 'epubuilder';
 program.version('0.4.0');
