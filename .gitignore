@@ -40,3 +40,5 @@ epubcheck-4.2.4
 # published in the npm package
 types
 dist
+
+guide/apidocs
