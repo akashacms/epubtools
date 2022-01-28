@@ -1,8 +1,14 @@
 
 import * as path from 'path';
 import { promises as fsp, default as fs } from 'fs';
+import { Configuration } from './Configuration.js';
 
-export async function checkEPUBConfig(config) {
+/**
+ * Run some checks against the {@link Configuration}.  Currently that means verifying
+ * that files in the {@link Manifest} exist.
+ * @param config The {@link Configuration} object
+ */
+export async function checkEPUBConfig(config: Configuration): Promise<void> {
 
     for (let mItem of config.opfManifest) {
         if (!mItem.id || typeof mItem.id !== 'string' || mItem.id === '') {

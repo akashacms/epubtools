@@ -23,24 +23,42 @@ export class Manifest extends Array {
         }
     }
 
-    byID(id) {
+    /**
+     * Finds a {@link ManifestItem} 
+     * 
+     * @param id The ID code for a {@link ManifestItem}
+     * @returns The matching {@link ManifestItem}
+     */
+    byID(id: string): ManifestItem {
         for (let item of this) {
             if (item.id === id) return item;
         }
         return undefined;
     }
 
-    byPath(path2find) {
+    /**
+     * Finds a {@link ManifestItem} 
+     * 
+     * @param path2find The file name for a {@link ManifestItem}
+     * @returns The matching {@link ManifestItem}
+     */
+    byPath(path2find: string): ManifestItem {
         for (let item of this) {
-            console.log(`byPath ${item.path} === ${path2find}`);
+            // console.log(`byPath ${item.path} === ${path2find}`);
             if (item.path === path2find) return item;
         }
         return undefined;
     }
 
-    get spine() {
+    /**
+     * Returns an array of {@link ManifestItem} items that are in the _spine_
+     * 
+     * @returns Array of matching items
+     */
+    get spine(): ManifestItem[] {
         const spine = this.filter(item => {
-            if (item.in_spine) spine.push(item);
+            if (item.in_spine) return true; // spine.push(item);
+            else return false;
         });
         // spine.sort ...
         spine.sort((a, b) => {
@@ -51,7 +69,14 @@ export class Manifest extends Array {
         return spine;
     }
 
-    addItem(newItem) {
+    /**
+     * Either updates a {@link ManifestItem} or adds a new one to the {@link Manifest}.
+     * If the item already exists, it is updated, and otherwise it is
+     * added.
+     * 
+     * @param newItem The new {@link ManifestItem} to add or update
+     */
+    addItem(newItem: ManifestItem): void {
         let mItem = this.byPath(newItem.path);
         if (mItem) {
             mItem.basedir = newItem.basedir;
@@ -67,11 +92,16 @@ export class Manifest extends Array {
                 = typeof newItem.spine_order !== 'undefined' 
                     ? newItem.spine_order : -1;
         } else {
-            this.push(new exports.ManifestItem(newItem));
+            this.push(new ManifestItem(newItem));
         }
     }
 
-    addItems(items) {
+    /**
+     * Adds an array of items to the {@link Manifest}
+     * 
+     * @param items Array of {@link ManifestItem} items
+     */
+    addItems(items: ManifestItem[]): void {
         for (let f of items) {
             this.addItem(f);
         }
@@ -125,14 +155,26 @@ export class Manifest extends Array {
 
     } */
 
-    replaceItems(newItems) {
+
+    /**
+     * First removes all existing {@link ManifestItem} objects from manifest,
+     * then adds the new ones.
+     * 
+     * @param newItems Array of {@link ManifestItem} objects
+     */
+    replaceItems(newItems: ManifestItem[]): void {
         while (this.length > 0) {
             this.pop();
         }
         this.addItems(newItems);
     }
 
-    remove(path2remove) {
+    /**
+     * Remove a {@link ManifestItem} from the {@link Manifest}.
+     * 
+     * @param path2remove The path of the item to remove.
+     */
+    remove(path2remove: string): void {
         for (let item of this) {
             if (item.path === path2remove) {
                 const i = this.indexOf(item);
@@ -227,7 +269,13 @@ export class ManifestItem {
     seen_in_opf: boolean;
 };
 
-export function spineItems(epubConfig) {
+/**
+ * Returns an array of {@link ManifestItem} items that are in the _spine_
+ * 
+ * @param epubConfig The {@link Configuration} object
+ * @returns An array of {@link ManifestItem} objects that are in the spine
+ */
+export function spineItems(epubConfig: Configuration): ManifestItem[] {
     if (!epubConfig || !epubConfig.opfManifest) return [];
     const spine = epubConfig.opfManifest.filter(item => {
         if (item.in_spine) return true;
@@ -242,7 +290,13 @@ export function spineItems(epubConfig) {
     return spine;
 };
 
-export async function spineTitles(epubConfig) {
+/**
+ * For {@link ManifestItem} objects that are in the spine, read the title
+ * from the matching XHTML file, adding it as the _title_ field.
+ * 
+ * @param epubConfig The {@link Configuration} object
+ */
+export async function spineTitles(epubConfig: Configuration): Promise<void> {
     let epubdir = epubConfig.renderedFullPath;
     if (epubConfig.opfManifest) for (let item of epubConfig.opfManifest) {
         if (!item.in_spine) continue;
@@ -351,7 +405,14 @@ export async function tocData(epubConfig: Configuration) {
     return tocdata;
 };
 
-export async function from_fs(config) {
+/**
+ * Scans the file system, constructing {@link ManifestItem} items for each,
+ * and ultimately constructing a {@link Manifest} object.
+ * 
+ * @param config The {@link Configuration} object
+ * @returns Returns a {@link Manifest} object 
+ */
+export async function from_fs(config: Configuration): Promise<Manifest> {
     // console.log(`scanfiles epubdir ${epubdir}`);
 
     // TODO Should this scan the source directory or the rendered directory?
@@ -496,7 +557,7 @@ export async function from_fs(config) {
 
     // console.log(`from_fs `, filez);
 
-    return new exports.Manifest(itemz);
+    return new Manifest(itemz);
 };
 
 /*

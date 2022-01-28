@@ -9,9 +9,14 @@ import * as metadata from './metadata';
 import * as manifest from './manifest';
 import * as opf from './opf';
 import * as checkEPUB from './checkEPUB';
-import * as configurator from './Configuration';
+import * as configurator from './Configuration.js';
+import { Configuration } from './Configuration.js';
 
-export async function bundleEPUB(config) {
+/**
+ * Package the book described by the configuration.
+ * @param config The {@link Configuration} object
+ */
+export async function bundleEPUB(config: Configuration): Promise<void> {
     // read container.xml -- extract OPF file name
     // read OPF file
     // write mimetype file
@@ -25,13 +30,21 @@ export async function bundleEPUB(config) {
     await archiveFiles(config);
 };
 
-export async function doPackageCommand(configFN) {
+/**
+ * Handle the `package` command from `cli.js`.
+ * @param configFN The file name for the {@link Configuration} file
+ */
+export async function doPackageCommand(configFN: string): Promise<void> {
     const bookConfig = await configurator.readConfig(configFN);
     await bookConfig.readTOCData();
     await exports.bundleEPUB(bookConfig);
 };
 
-async function archiveFiles(config) {
+/**
+ * Constructs the EPUB file from the files and data held in the {@link Configuration}
+ * @param config THe {@link Configuration} object
+ */
+async function archiveFiles(config: Configuration): Promise<void> {
 
     // console.log(`archiveFiles`);
     const rendered = config.renderedFullPath;
@@ -144,7 +157,12 @@ async function archiveFiles(config) {
 
 }
 
-async function mkContainerXmlFile(config) {
+/**
+ * Creates text to be stured as `container.xml` in the EPUB
+ * @param config The {@link Configuration} object
+ * @returns The text of the `container.xml` file
+ */
+async function mkContainerXmlFile(config: Configuration): Promise<string> {
     
     // util.log('createContainerXmlFile '+ rendered +' '+ util.inspect(bookYaml));
     
@@ -212,12 +230,17 @@ async function mkContainerXmlFile(config) {
 // TODO Third, in akasharender-epub remove the doMeta function and command
 // TODO Fourth, is it possible to organize these around Classes that have Methods?
 
-export async function doMeta(config) {
+/**
+ * Creates the metadata files, `container.xml`, the OPF file and the NCX file.
+ * @param config The {@link Configuration} object
+ */
+export async function doMeta(config: Configuration): Promise<void> {
     // console.log(`doMeta renderedFullPath ${config.renderedFullPath}`);
     // await fs.mkdirs(config.renderedFullPath);
     await fsp.mkdir(config.renderedFullPath, { recursive: true });
 
-    await fsp.writeFile(path.join(config.renderedFullPath, "mimetype"), "application/epub+zip", 'utf8');
+    await fsp.writeFile(path.join(config.renderedFullPath, "mimetype"),
+                                    "application/epub+zip", 'utf8');
 
     let container_xml = path.join("META-INF", "container.xml");
     let container_xml_full = path.join(config.renderedFullPath, container_xml);
@@ -237,7 +260,11 @@ export async function doMeta(config) {
     }
 }
 
-export async function doMkMetaCommand(configFN) {
+/**
+ * Handles the `mkmeta` command from `cli.js`
+ * @param configFN The name of the {@link Configuration} file
+ */
+export async function doMkMetaCommand(configFN: string): Promise<void> {
     const bookConfig = await configurator.readConfig(configFN);
     await bookConfig.check();
     bookConfig.opfManifest = await manifest.from_fs(bookConfig);
