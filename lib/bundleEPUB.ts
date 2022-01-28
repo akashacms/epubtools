@@ -192,7 +192,7 @@ async function mkContainerXmlFile(config: Configuration): Promise<string> {
     const rootfiles = containerXml.getElementsByTagName("rootfiles");
     let rfs;
     // util.log(util.inspect(rootfile));
-    for (const rfnum = 0; rfnum < rootfiles.length; rfnum++) {
+    for (let rfnum = 0; rfnum < rootfiles.length; rfnum++) {
         const elem = rootfiles.item(rfnum);
         if (elem.nodeName.toUpperCase() === 'rootfiles'.toUpperCase()) rfs = elem;
     }
