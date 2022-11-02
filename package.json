@@ -1,6 +1,6 @@
 {
   "name": "epubtools",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "Generate EPUB3 documents and assets",
   "keywords": [
     "epub-builder",
@@ -24,7 +24,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "epubtools": "./bin/cli.js"
+    "epubtools": "./dist/cli.js"
   },
   "scripts": {
     "watch": "npx tsc --watch",
