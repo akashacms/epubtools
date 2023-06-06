@@ -28,6 +28,7 @@
   },
   "scripts": {
     "watch": "npx tsc --watch",
+    "build": "npm run build:lib",
     "build:lib": "npx tsc",
     "build:docs": "npx typedoc --out guide/apidocs lib/index.ts",
     "eslint": "npx eslint lib",
