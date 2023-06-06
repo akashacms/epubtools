@@ -1,8 +1,9 @@
 
 // import uuid from 'uuid';
-import { promises as fs } from 'fs';
-import path from 'path';
-import util from 'util';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import util from 'node:util';
+
 import yaml from 'js-yaml';
 
 // import epubuild from '../index.js';

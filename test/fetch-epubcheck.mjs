@@ -12,7 +12,9 @@ const epubcheckVersion = process.argv[2];
 
 const streamPipeline = util.promisify(stream.pipeline);
 
-const checkerURL = `https://github.com/IDPF/epubcheck/releases/download/v${epubcheckVersion}/epubcheck-${epubcheckVersion}.zip`;
+const epubCheckURL = 'https://github.com/w3c/epubcheck/releases';
+
+const checkerURL = `${epubCheckURL}/download/v${epubcheckVersion}/epubcheck-${epubcheckVersion}.zip`;
 const saveToDir = '.'; // `epubcheck-${epubcheckVersion}`;
 
 await fsp.mkdir(saveToDir, { recursive: true });

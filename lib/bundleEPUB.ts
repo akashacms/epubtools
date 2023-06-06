@@ -1,9 +1,9 @@
 
+import { promises as fsp, default as fs } from 'node:fs';
+import path from 'node:path';
 import archiver from 'archiver';
 import xmldom from '@xmldom/xmldom';
 import * as utils from './utils.js';
-import { promises as fsp, default as fs } from 'fs';
-import path from 'path';
 // import util from 'util';
 // import * as metadata from './metadata';
 import * as manifest from './manifest';
@@ -37,7 +37,7 @@ export async function bundleEPUB(config: Configuration): Promise<void> {
 export async function doPackageCommand(configFN: string): Promise<void> {
     const bookConfig = await configurator.readConfig(configFN);
     await bookConfig.readTOCData();
-    await exports.bundleEPUB(bookConfig);
+    await bundleEPUB(bookConfig);
 }
 
 /**
@@ -267,5 +267,5 @@ export async function doMkMetaCommand(configFN: string): Promise<void> {
     const bookConfig = await configurator.readConfig(configFN);
     await bookConfig.check();
     bookConfig.opfManifest = await manifest.from_fs(bookConfig);
-    await module.exports.doMeta(bookConfig);
+    await doMeta(bookConfig);
 }

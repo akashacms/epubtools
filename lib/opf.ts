@@ -1,10 +1,10 @@
 
-import util from 'util';
+import util from 'node:util';
+import path from 'node:path';
+import { promises as fsp /*, default as fs */ } from 'node:fs';
 import * as utils from './utils.js';
-import path from 'path';
 import xmldom from '@xmldom/xmldom';
 import { Manifest, ManifestItem, tocData as manifest_tocData } from './manifest';
-import { promises as fsp /*, default as fs */ } from 'fs';
 import { Configuration } from './Configuration.js';
 
 export function findMetadataInOPF(OPFXML) {

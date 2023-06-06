@@ -1,6 +1,7 @@
 
-import * as path from 'path';
-import { promises as fsp, default as fs } from 'fs';
+import * as path from 'node:path';
+import { promises as fsp, default as fs } from 'node:fs';
+
 import { Configuration } from './Configuration.js';
 
 /**
