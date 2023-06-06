@@ -1,9 +1,9 @@
 
-// import { promises as fs } from 'fs';
-import { default as chokidar } from 'chokidar';
-// import * as util from 'util';
-import * as path from 'path';
+// import { promises as fs } from 'node:fs';
+// import * as util from 'node:util';
+import * as path from 'node:path';
 
+import { default as chokidar } from 'chokidar';
 import * as bundleEPUB from './bundleEPUB.js';
 
 let watcher;
