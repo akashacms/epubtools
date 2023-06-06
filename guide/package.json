@@ -4,9 +4,10 @@
   "description": "",
   "main": "config.js",
   "scripts": {
-    "build": "npm-run-all build:copy build:render",
+    "build": "npm-run-all build:docs build:copy build:render",
     "build:copy": "akasharender copy-assets config.js",
     "build:render": "akasharender render config.js",
+    "build:docs": "cd .. && npm run build:docs",
     "watch": "npm-run-all --parallel watcher preview",
     "watcher": "akasharender watch config.js",
     "preview": "live-server out",

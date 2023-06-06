@@ -171,7 +171,7 @@ export class Configuration {
      *       accessible_epub_3/EPUB/package.opf
      */
     get epubPathOPF() {
-        let ret = this.bookOPF.substr(this.renderedFullPath.length + 1);
+        const ret = this.bookOPF.substr(this.renderedFullPath.length + 1);
         // console.log(`epubPathOPF renderedFullPath ${this.renderedFullPath} bookOPF ${this.bookOPF} ret ${ret}`);
         return ret;
     }
@@ -243,8 +243,8 @@ export class Configuration {
     }
 
     get TOCpath() {
-        let tochref = this.sourceBookTOCHREF;
-        let epubdir = this.renderedFullPath;
+        const tochref = this.sourceBookTOCHREF;
+        const epubdir = this.renderedFullPath;
         return path.join(epubdir, tochref);
     }
 
@@ -553,7 +553,8 @@ export class Configuration {
             this[_config_yamlParsed].opf = {};
         }
         // Do this solely to validate the format
-        let ndate = new Date(newBookPublicationDate);
+        const ndate = new Date(newBookPublicationDate);
+        if (!ndate) throw new Error(`Date ${util.inspect(newBookPublicationDate)} was not good`);
         this[_config_yamlParsed].opf.publicationDate = newBookPublicationDate;
     }
 
@@ -569,7 +570,8 @@ export class Configuration {
             this[_config_yamlParsed].opf = {};
         }
         // Do this solely to validate the format
-        let ndate = new Date(newBookModifiedDate);
+        const ndate = new Date(newBookModifiedDate);
+        if (!ndate) throw new Error(`Date ${util.inspect(newBookModifiedDate)} was not good`);
         this[_config_yamlParsed].opf.modifiedDate = newBookModifiedDate;
     }
 
@@ -668,8 +670,8 @@ export class Configuration {
 
 export async function readConfig(fn) {
     const yamlText = await fs.readFile(fn, 'utf8');
-    let config = new Configuration(yamlText);
+    const config = new Configuration(yamlText);
     config.configFileName = fn;
     await config.check();
     return config;
-};
+}

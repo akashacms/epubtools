@@ -1,7 +1,7 @@
 
-import { promises as fs } from 'fs';
+// import { promises as fs } from 'fs';
 import { default as chokidar } from 'chokidar';
-import * as util from 'util';
+// import * as util from 'util';
 import * as path from 'path';
 
 import * as bundleEPUB from './bundleEPUB.js';
@@ -9,7 +9,7 @@ import * as bundleEPUB from './bundleEPUB.js';
 let watcher;
 
 export function setup(config) {
-    const rendered = config.renderedFullPath;
+    // const rendered = config.renderedFullPath;
     const renderedPath = path.normalize(path.join(config.configDirPath, config.renderedPath));
     watcher = chokidar.watch(renderedPath, {
         persistent: true,

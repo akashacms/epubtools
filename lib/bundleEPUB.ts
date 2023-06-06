@@ -4,14 +4,19 @@ import xmldom from '@xmldom/xmldom';
 import * as utils from './utils.js';
 import { promises as fsp, default as fs } from 'fs';
 import path from 'path';
-import util from 'util';
-import * as metadata from './metadata';
+// import util from 'util';
+// import * as metadata from './metadata';
 import * as manifest from './manifest';
 import * as opf from './opf';
 import * as checkEPUB from './checkEPUB';
-import * as configurator from './Configuration';
+import * as configurator from './Configuration.js';
+import { Configuration } from './Configuration.js';
 
-export async function bundleEPUB(config) {
+/**
+ * Package the book described by the configuration.
+ * @param config The {@link Configuration} object
+ */
+export async function bundleEPUB(config: Configuration): Promise<void> {
     // read container.xml -- extract OPF file name
     // read OPF file
     // write mimetype file
@@ -23,15 +28,23 @@ export async function bundleEPUB(config) {
     config.opfManifest = await manifest.from_fs(config);
     await checkEPUB.checkEPUBConfig(config);
     await archiveFiles(config);
-};
+}
 
-export async function doPackageCommand(configFN) {
+/**
+ * Handle the `package` command from `cli.js`.
+ * @param configFN The file name for the {@link Configuration} file
+ */
+export async function doPackageCommand(configFN: string): Promise<void> {
     const bookConfig = await configurator.readConfig(configFN);
     await bookConfig.readTOCData();
     await exports.bundleEPUB(bookConfig);
-};
+}
 
-async function archiveFiles(config) {
+/**
+ * Constructs the EPUB file from the files and data held in the {@link Configuration}
+ * @param config THe {@link Configuration} object
+ */
+async function archiveFiles(config: Configuration): Promise<void> {
 
     // console.log(`archiveFiles`);
     const rendered = config.renderedFullPath;
@@ -50,9 +63,9 @@ async function archiveFiles(config) {
 
     return new Promise(async (resolve, reject) => {
         try {
-            var archive = archiver('zip');
+            const archive = archiver('zip');
             
-            var output = fs.createWriteStream(epubFileName);
+            const output = fs.createWriteStream(epubFileName);
                     
             output.on('close', () => {
                 // logger.info(archive.pointer() + ' total bytes');
@@ -83,7 +96,7 @@ async function archiveFiles(config) {
             // and how can the archive function have a clearer ide of what should
             // be in the meta files?
 
-            let container_xml = path.join("META-INF", "container.xml");
+            const container_xml = path.join("META-INF", "container.xml");
 
             archive.append(
                 fs.createReadStream(path.join(rendered, container_xml)),
@@ -104,20 +117,20 @@ async function archiveFiles(config) {
 
             const OPFXML = await opf.readOpf(path.join(rendered, opfFileName));
 
-            var manifests = OPFXML.getElementsByTagName("manifest");
-            var manifest;
-            for (let elem of utils.nodeListIterator(manifests)) {
+            const manifests = OPFXML.getElementsByTagName("manifest");
+            let manifest;
+            for (const elem of utils.nodeListIterator(manifests)) {
                 if (elem.nodeName.toUpperCase() === 'manifest'.toUpperCase()) manifest = elem;
             }
             if (manifest) {
-                var items = manifest.getElementsByTagName('item');
-                for (let item of utils.nodeListIterator(items)) {
+                const items = manifest.getElementsByTagName('item');
+                for (const item of utils.nodeListIterator(items)) {
                     if (item.nodeName.toUpperCase() === 'item'.toUpperCase()) {
-                        var itemHref = item.getAttribute('href');
+                        const itemHref = item.getAttribute('href');
                         
                         // Don't archive these files because they've already
                         // been added earlier
-                        let normalizedPath = path.normalize(path.join(opfDirName, itemHref));
+                        const normalizedPath = path.normalize(path.join(opfDirName, itemHref));
                         if (itemHref === "mimetype"
                          || itemHref === opfFileName
                          || itemHref === container_xml
@@ -144,7 +157,12 @@ async function archiveFiles(config) {
 
 }
 
-async function mkContainerXmlFile(config) {
+/**
+ * Creates text to be stured as `container.xml` in the EPUB
+ * @param config The {@link Configuration} object
+ * @returns The text of the `container.xml` file
+ */
+async function mkContainerXmlFile(config: Configuration): Promise<string> {
     
     // util.log('createContainerXmlFile '+ rendered +' '+ util.inspect(bookYaml));
     
@@ -152,7 +170,7 @@ async function mkContainerXmlFile(config) {
         throw new Error(`No OPF file specified in ${config.projectName}`);
     }
 
-    var containerXml = new xmldom.DOMParser().parseFromString(
+    const containerXml = new xmldom.DOMParser().parseFromString(
         `<?xml 
                 version="1.0" 
                 encoding="utf-8" 
@@ -163,26 +181,25 @@ async function mkContainerXmlFile(config) {
     	<rootfiles> </rootfiles>
         </container>
     `, 'text/xml');
-    	
-    	
+
     //	<%
     //    rootfiles.forEach(function(rf) {
     //    %>
     //    <rootfile full-path="<%= rf.path %>" media-type="<%= rf.type %>"/><%
     //    });
     //    %>
-    	
-    var rootfiles = containerXml.getElementsByTagName("rootfiles");
-    var rfs;
+
+    const rootfiles = containerXml.getElementsByTagName("rootfiles");
+    let rfs;
     // util.log(util.inspect(rootfile));
-    for (var rfnum = 0; rfnum < rootfiles.length; rfnum++) {
-        let elem = rootfiles.item(rfnum);
+    for (let rfnum = 0; rfnum < rootfiles.length; rfnum++) {
+        const elem = rootfiles.item(rfnum);
         if (elem.nodeName.toUpperCase() === 'rootfiles'.toUpperCase()) rfs = elem;
     }
 
     const addElem = (rfs, path, _mime) => {
-        let elem = containerXml.createElement('rootfile');
-        let mime = _mime ? _mime : 'application/oebps-package+xml';
+        const elem = containerXml.createElement('rootfile');
+        const mime = _mime ? _mime : 'application/oebps-package+xml';
         // ??? if (mime === 'application/oebps-package+xml') addedOPF = true;
         elem.setAttribute('full-path', path);
         elem.setAttribute('media-type', mime);
@@ -194,7 +211,7 @@ async function mkContainerXmlFile(config) {
             addElem(rfs, config.bookOPF, undefined);
         }
         if (config.containerRootfiles) {
-            for (let rootfile of config.containerRootfiles) {
+            for (const rootfile of config.containerRootfiles) {
                 if (config.bookOPF 
                 && config.bookOPF !== '' 
                 && config.bookOPF !== rootfile.fullpath) {
@@ -205,25 +222,30 @@ async function mkContainerXmlFile(config) {
     }
 
     return new xmldom.XMLSerializer().serializeToString(containerXml);
-};
+}
 
 // DONE First, test the mkmeta function to make sure the meta files are created correctly
 // DONE Second, in archiveFiles the functions should only read files rather than create them
 // TODO Third, in akasharender-epub remove the doMeta function and command
 // TODO Fourth, is it possible to organize these around Classes that have Methods?
 
-export async function doMeta(config) {
+/**
+ * Creates the metadata files, `container.xml`, the OPF file and the NCX file.
+ * @param config The {@link Configuration} object
+ */
+export async function doMeta(config: Configuration): Promise<void> {
     // console.log(`doMeta renderedFullPath ${config.renderedFullPath}`);
     // await fs.mkdirs(config.renderedFullPath);
     await fsp.mkdir(config.renderedFullPath, { recursive: true });
 
-    await fsp.writeFile(path.join(config.renderedFullPath, "mimetype"), "application/epub+zip", 'utf8');
+    await fsp.writeFile(path.join(config.renderedFullPath, "mimetype"),
+                                    "application/epub+zip", 'utf8');
 
-    let container_xml = path.join("META-INF", "container.xml");
-    let container_xml_full = path.join(config.renderedFullPath, container_xml);
+    const container_xml = path.join("META-INF", "container.xml");
+    const container_xml_full = path.join(config.renderedFullPath, container_xml);
     // await fs.mkdirs(path.dirname(container_xml_full));
     await fsp.mkdir(path.dirname(container_xml_full), { recursive: true });
-    let CONTAINERXML = await mkContainerXmlFile(config);
+    const CONTAINERXML = await mkContainerXmlFile(config);
     await fsp.writeFile(container_xml_full, CONTAINERXML, 'utf8');
 
     const OPFXML = await opf.makeOpfXml(config);
@@ -237,7 +259,11 @@ export async function doMeta(config) {
     }
 }
 
-export async function doMkMetaCommand(configFN) {
+/**
+ * Handles the `mkmeta` command from `cli.js`
+ * @param configFN The name of the {@link Configuration} file
+ */
+export async function doMkMetaCommand(configFN: string): Promise<void> {
     const bookConfig = await configurator.readConfig(configFN);
     await bookConfig.check();
     bookConfig.opfManifest = await manifest.from_fs(bookConfig);

@@ -35,13 +35,13 @@ export async function openProject(projectFileName) {
     const bookConfig = await readConfig(projectFileName);
     bookConfig.configFileName = projectFileName;
     return bookConfig;
-};
+}
 
 export async function createEmptyProject(fn) {
-    let config = new Configuration("");
+    const config = new Configuration("");
     config.configFileName = fn;
     return config;
-};
+}
 
 /* -- This function was never tested
 
