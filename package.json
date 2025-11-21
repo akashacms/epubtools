@@ -47,7 +47,7 @@
     "cheerio": "1.0.0-rc.10",
     "chokidar": "3.5.2",
     "commander": "8.3.x",
-    "js-yaml": "4.1.0",
+    "js-yaml": "4.1.1",
     "mime": "3.0",
     "sprintf-js": "^1.1.2",
     "text-statistics": "0.1.1",
