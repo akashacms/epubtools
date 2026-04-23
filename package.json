@@ -53,7 +53,7 @@
     "text-statistics": "0.1.1",
     "tiny-glob": "0.2.9",
     "unzipper": "0.10.11",
-    "uuid": "8.3.2"
+    "uuid": "14.0.0"
   },
   "devDependencies": {
     "@types/node": "^18.16.x",
