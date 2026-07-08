@@ -1,6 +1,6 @@
 {
   "name": "epubtools",
-  "version": "0.8.6",
+  "version": "0.10.0",
   "description": "Generate EPUB3 documents and assets",
   "keywords": [
     "epub-builder",
@@ -30,7 +30,6 @@
     "watch": "npx tsc --watch",
     "build:lib": "npx tsc",
     "build:docs": "npx typedoc --out guide/apidocs lib/index.ts",
-    "eslint": "npx eslint lib",
     "dopublish": "npm publish --access public"
   },
   "homepage": "https://akashacms.github.io/epubtools",
@@ -40,26 +39,26 @@
   },
   "author": "David Herron <david@davidherron.com>",
   "license": "ISC",
+  "engines": {
+    "node": ">=24.x"
+  },
   "dependencies": {
-    "@xmldom/xmldom": "0.8.5",
-    "archiver": "5.3.0",
+    "@xmldom/xmldom": "0.9.10",
+    "archiver": "^8.x",
     "cheerio": "1.0.0-rc.10",
     "chokidar": "3.5.2",
     "commander": "8.3.x",
-    "js-yaml": "4.1.0",
+    "js-yaml": "5.2.1",
     "mime": "3.0",
     "sprintf-js": "^1.1.2",
     "text-statistics": "0.1.1",
     "tiny-glob": "0.2.9",
-    "unzipper": "0.10.11",
-    "uuid": "8.3.2"
+    "unzipper": "0.12.5",
+    "uuid": "^11.x"
   },
   "devDependencies": {
     "@types/node": "^17.0.12",
-    "@typescript-eslint/eslint-plugin": "^5.10.1",
-    "@typescript-eslint/parser": "^5.10.1",
-    "eslint": "^8.7.0",
-    "typedoc": "^0.22.11",
-    "typescript": "^4.5.5"
+    "typedoc": "0.28.20",
+    "typescript": "^6.0.x"
   }
 }
