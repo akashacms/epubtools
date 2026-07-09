@@ -24,7 +24,7 @@ export type ContainerXMLData = {
  * @param epubDir The path name of the directory
  * @returns A simple object ({@link ContainerXMLData}) describing the `container.xml` data
  */
-export async function readContainerXml(epubDir: string): Promise<ContainerXMLData> {
+export async function readContainerXml(epubDir: string): Promise<ContainerXMLData | undefined> {
     try {
         const data = await fs.readFile(
             path.join(epubDir, "META-INF", "container.xml"), 
@@ -33,7 +33,7 @@ export async function readContainerXml(epubDir: string): Promise<ContainerXMLDat
             containerXmlText: data,
             containerXml: new xmldom.DOMParser().parseFromString(data, 'text/xml')
         };
-    } catch (e) {
+    } catch (e: any) {
         console.error(`readContainerXml WARNING ${e.stack}`);
         return undefined;
     }
@@ -50,7 +50,7 @@ export type RootFileData = {
  * @param containerXml The _Document_ of the `container.xml` file
  * @returns An array of {@link RootFileData} objects
  */
-export function findRootfiles(containerXml) {
+export function findRootfiles(containerXml: any) {
     const rootfiles = [];
 
     for (const rootfile of utils.nodeListIterator(
@@ -67,7 +67,7 @@ export function findRootfiles(containerXml) {
 }
 
 // MOOT - finds a single OPF file name
-export function findOpfFileName(containerXml) {
+export function findOpfFileName(containerXml: any) {
     const rootfiles = containerXml.getElementsByTagName("rootfile");
     // console.log(util.inspect(rootfile));
     let rootfile;
@@ -80,8 +80,8 @@ export function findOpfFileName(containerXml) {
 }
 
 type OPFData = {
-    opfXmlText: string,
-    opfXml: any
+    opfXmlText?: string,
+    opfXml?: any
 };
 
 /**
@@ -100,7 +100,7 @@ export async function readOPF(epubDir: string, opfName: string): Promise<OPFData
             opfXmlText: data,
             opfXml: new xmldom.DOMParser().parseFromString(data, 'text/xml')
         };
-    } catch (e) {
+    } catch (e: any) {
         console.log(`readOPF ${file2read} FAIL because ${e.stack}`);
         return <OPFData>{
             opfXmlText: undefined,
@@ -122,7 +122,7 @@ export type XHTMLData = {
  * @param xhtmlName The file name for the file to read
  * @returns An object ({@link XHTMLData}) containing data read from the file
  */
-export async function readXHTML(epubDir: string, xhtmlName: string): Promise<XHTMLData> {
+export async function readXHTML(epubDir: string, xhtmlName: string): Promise<XHTMLData | undefined> {
     const file2read = path.join(epubDir, xhtmlName);
     // console.log(`readXHTML ${file2read}`);
     try {
@@ -131,7 +131,7 @@ export async function readXHTML(epubDir: string, xhtmlName: string): Promise<XHT
             xhtmlText: data,
             xhtmlDOM: new xmldom.DOMParser().parseFromString(data, 'application/xhtml+xml')
         };
-    } catch (e) {
+    } catch (e: any) {
         console.error(`epubtools metadata readXHTML ${file2read} FAIL because ${e.stack}`);
         return undefined;
     }

@@ -5,7 +5,7 @@ import util from 'util';
 
 import url from 'url';
 import glob from 'tiny-glob';
-import * as mime from 'mime';
+import mime from 'mime';
 import cheerio from 'cheerio';
 import xmldom from '@xmldom/xmldom';
 // import * as metadata from './metadata.js';
@@ -14,7 +14,7 @@ import { Configuration } from './Configuration.js';
 
 export class Manifest extends Array {
 
-    constructor(toimport) {
+    constructor(toimport: Array<String>) {
         super();
         if (toimport) {
             for (const item of toimport) {
@@ -29,7 +29,7 @@ export class Manifest extends Array {
      * @param id The ID code for a {@link ManifestItem}
      * @returns The matching {@link ManifestItem}
      */
-    byID(id: string): ManifestItem {
+    byID(id: string): ManifestItem | undefined {
         for (const item of this) {
             if (item.id === id) return item;
         }
@@ -42,7 +42,7 @@ export class Manifest extends Array {
      * @param path2find The file name for a {@link ManifestItem}
      * @returns The matching {@link ManifestItem}
      */
-    byPath(path2find: string): ManifestItem {
+    byPath(path2find: string): ManifestItem | undefined {
         for (const item of this) {
             // console.log(`byPath ${item.path} === ${path2find}`);
             if (item.path === path2find) return item;
@@ -188,7 +188,7 @@ export class Manifest extends Array {
 }
 
 export class ManifestItem {
-    constructor(item) {
+    constructor(item: any) {
         this.id = typeof item.id !== 'undefined' ? item.id : "";
         this.basedir = typeof item.basedir !== 'undefined' ? item.basedir : "";
         this.path = typeof item.path !== 'undefined' ? item.path : "--unknown--";
@@ -240,6 +240,13 @@ export class ManifestItem {
         }
         this.seen_in_opf = typeof item.seen_in_opf !== 'undefined' ? item.seen_in_opf : false;
         // console.log(util.inspect(this));
+
+        this.nav_id = '';
+        this.nav_path = '';
+        this.properties = '';
+        this.cover_id = '';
+        this.cover_path = '';
+        this.linear = true;
     }
 
     id: string;
@@ -277,12 +284,12 @@ export class ManifestItem {
  */
 export function spineItems(epubConfig: Configuration): ManifestItem[] {
     if (!epubConfig || !epubConfig.opfManifest) return [];
-    const spine = epubConfig.opfManifest.filter(item => {
+    const spine = epubConfig.opfManifest.filter((item: any) => {
         if (item.in_spine) return true;
         else return false;
     });
     // spine.sort ...
-    spine.sort((a, b) => {
+    spine.sort((a: any, b: any) => {
         if (a.spine_order < b.spine_order) return -1;
         if (a.spine_order > b.spine_order) return 1;
         return 0;
@@ -315,7 +322,7 @@ export async function spineTitles(epubConfig: Configuration): Promise<void> {
 
 let navolcount = 0;
 
-function getNavOLChildrenXML(DOM, navol, tocdir) {
+function getNavOLChildrenXML(DOM: any, navol: any, tocdir: string) {
     const ret = [];
     const children = navol.childNodes;
     for (const child of utils.nodeListIterator(children)) {
@@ -342,14 +349,14 @@ function getNavOLChildrenXML(DOM, navol, tocdir) {
                         text: lichild.textContent,
                         href: path.normalize(path.join(tocdir, href)),
                         id: id, //  lichild.getAttribute('id'),
-                        children: []
+                        children: new Array<any>()
                     };
                 }
                 if (lichild.nodeType === 1 && lichild.tagName && lichild.tagName === 'ol') { // ELEMENT_NODE
                     itemchildren = getNavOLChildrenXML(DOM, lichild, tocdir);
                 }
             }
-            if (itemchildren) item.children = itemchildren;
+            if (item && itemchildren) item.children = itemchildren;
             // console.log(`getNavOLChildrenXML item ${util.inspect(item)}`);
             if (item) ret.push(item);
         }
@@ -427,7 +434,7 @@ export async function from_fs(config: Configuration): Promise<Manifest> {
     // console.log(`files found in ${config.renderedFullPath}`, filez);
 
     // Remove directories
-    const itemz = [];
+    const itemz = new Array<any>();
     for (const filenm of filez) {
         // Do not include admin files
         if (filenm === 'mimetype') continue;
@@ -508,7 +515,9 @@ export async function from_fs(config: Configuration): Promise<Manifest> {
                     $("nav li > a").each((i, anchor) => {
                         const aHref = $(anchor).attr('href');
                         const aPath = path.normalize(
-                            path.join(item.dirname, aHref)
+                            typeof aHref === 'string'
+                                ? path.join(item.dirname, aHref)
+                                : item.dirname
                         );
                         // console.log(`from_fs scan ${item.path} toc entry ${aHref} ${aPath}`);
                         for (const reffed of itemz) {
@@ -525,7 +534,7 @@ export async function from_fs(config: Configuration): Promise<Manifest> {
                 $("svg").each((/* i, mItem */) => {
                     item.is_svg = true;
                 });
-                const checkRemote = (i, link) => {
+                const checkRemote = (i: any, link: any) => {
                     // console.log(link);
                     const href = $(link).attr('href');
                     const src = $(link).attr('src');
@@ -547,7 +556,7 @@ export async function from_fs(config: Configuration): Promise<Manifest> {
                 $("audio > source").each(checkRemote);
                 $("video > source").each(checkRemote);
 
-            } catch (e) {
+            } catch (e: any) {
                 // ignore
                 console.log(`Scanning files caught error ${e.stack}`);
             }

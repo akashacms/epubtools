@@ -26,6 +26,7 @@
   "bin": {
     "epubtools": "./dist/cli.js"
   },
+  "type": "module",
   "scripts": {
     "watch": "npx tsc --watch",
     "build:lib": "npx tsc",
@@ -49,7 +50,7 @@
     "chokidar": "3.5.2",
     "commander": "8.3.x",
     "js-yaml": "5.2.1",
-    "mime": "3.0",
+    "mime": "4.1.0",
     "sprintf-js": "^1.1.2",
     "text-statistics": "0.1.1",
     "tiny-glob": "0.2.9",
@@ -57,7 +58,10 @@
     "uuid": "^11.x"
   },
   "devDependencies": {
-    "@types/node": "^17.0.12",
+    "@types/archiver": "^8.0.0",
+    "@types/node": "^24.0.12",
+    "@types/sprintf-js": "^1.1.4",
+    "@types/unzipper": "^0.10.11",
     "typedoc": "0.28.20",
     "typescript": "^6.0.x"
   }

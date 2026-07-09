@@ -1,11 +1,12 @@
 {
     "include": [ "lib/**/*.ts", "lib/**/*.js", "lib/**/*.mjs" ],
     "compilerOptions": {
-        "lib": [ "es6", "es2021", "esnext" ],
-        "target": "es2021",
-        "module": "commonjs",
-        "moduleResolution": "Node",
+        "lib": [ "esnext" ],
+        "target": "esnext",
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
         "outDir": "./dist",
+        "rootDir": "./lib",
         "allowJs": true,
         "declaration": true,
         "declarationMap": true,

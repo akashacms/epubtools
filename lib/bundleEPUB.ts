@@ -1,14 +1,14 @@
 
-import archiver from 'archiver';
+import { ZipArchive } from "archiver";
 import xmldom from '@xmldom/xmldom';
 import * as utils from './utils.js';
 import { promises as fsp, default as fs } from 'fs';
 import path from 'path';
 // import util from 'util';
 // import * as metadata from './metadata';
-import * as manifest from './manifest';
-import * as opf from './opf';
-import * as checkEPUB from './checkEPUB';
+import * as manifest from './manifest.js';
+import * as opf from './opf.js';
+import * as checkEPUB from './checkEPUB.js';
 import * as configurator from './Configuration.js';
 import { Configuration } from './Configuration.js';
 
@@ -59,11 +59,18 @@ async function archiveFiles(config: Configuration): Promise<void> {
     
     // console.log(`archiveFiles rendered ${rendered} epubFileName ${epubFileName} opfFileName ${opfFileName}`);
 
+    if (typeof opfFileName !== 'string') {
+        throw new Error(`archiveFiles config.bookOPF must contain the OPF file name string`);
+    }
     const opfDirName = path.dirname(opfFileName);
 
     return new Promise(async (resolve, reject) => {
         try {
-            const archive = archiver('zip');
+            // const archive = archiver('zip');
+
+            const archive = new ZipArchive({
+                zlib: { level: 9 }, // Sets the compression level.
+            });
             
             const output = fs.createWriteStream(epubFileName);
                     
@@ -73,7 +80,7 @@ async function archiveFiles(config: Configuration): Promise<void> {
                 resolve(undefined);
             });
             
-            archive.on('error', err => {
+            archive.on('error', (err: any) => {
                 // logger.info('*********** BundleEPUB ERROR '+ err);
                 reject(err);
             });
@@ -190,14 +197,14 @@ async function mkContainerXmlFile(config: Configuration): Promise<string> {
     //    %>
 
     const rootfiles = containerXml.getElementsByTagName("rootfiles");
-    let rfs;
+    let rfs: xmldom.Element | undefined = undefined;
     // util.log(util.inspect(rootfile));
     for (let rfnum = 0; rfnum < rootfiles.length; rfnum++) {
         const elem = rootfiles.item(rfnum);
-        if (elem.nodeName.toUpperCase() === 'rootfiles'.toUpperCase()) rfs = elem;
+        if (elem?.nodeName.toUpperCase() === 'rootfiles'.toUpperCase()) rfs = elem;
     }
 
-    const addElem = (rfs, path, _mime) => {
+    const addElem = (rfs: xmldom.Element, path: string, _mime: string | undefined) => {
         const elem = containerXml.createElement('rootfile');
         const mime = _mime ? _mime : 'application/oebps-package+xml';
         // ??? if (mime === 'application/oebps-package+xml') addedOPF = true;
@@ -240,6 +247,10 @@ export async function doMeta(config: Configuration): Promise<void> {
 
     await fsp.writeFile(path.join(config.renderedFullPath, "mimetype"),
                                     "application/epub+zip", 'utf8');
+
+    if (typeof config.bookOPF !== 'string') {
+        throw new Error(`doMeta config.bookOPF must contain the file name string for the OPF file`);
+    }
 
     const container_xml = path.join("META-INF", "container.xml");
     const container_xml_full = path.join(config.renderedFullPath, container_xml);

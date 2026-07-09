@@ -31,13 +31,13 @@ export {
     makeNCXXML, modifiedDate
 } from './opf.js';
 
-export async function openProject(projectFileName) {
+export async function openProject(projectFileName: string) {
     const bookConfig = await readConfig(projectFileName);
     bookConfig.configFileName = projectFileName;
     return bookConfig;
 }
 
-export async function createEmptyProject(fn) {
+export async function createEmptyProject(fn: string) {
     const config = new Configuration("");
     config.configFileName = fn;
     return config;
